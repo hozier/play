@@ -18,11 +18,12 @@ a loosely defined object and the class's API.
 */
 case class board (path: String) {
 
+  // overview: for each line, parse.
   def parse(str: String):Seq[Seq[Int]] ={
-    val arr:Seq[Seq[Int]] = Seq()
     if(str.contains('=')) null // we are reading the delim
-    else cut(str, arr, sqrt(str.length).toInt)
+    else cut(str, Seq(), sqrt(str.length).toInt)
   }
+
 
   /*
   // overview: considers format delim by newline characters
@@ -31,27 +32,30 @@ case class board (path: String) {
   }
   */
 
-  // overview: implements IO
-  // parses into board structure,
-  // previews board to be solved to standard out,
-  // passes to solver
+  /*overview: implements IO
+    parses into board structure,
+    previews board to be solved to standard out,
+    passes to solver
+  */
   def engine(file:String, algorithms: Seq[algorithm]):Unit ={
 
     for( line <- Source.fromFile(file).getLines()){
       parse(line) match {
         case null => println("Reading new board..")
         case board => {
-          preview(board) //overview: preview the board to be solved.
-          algorithms.foreach((i:algorithm)=> i.solve(board))// called through the algorithm selection engine
+          preview(board) // overview: preview the board to be solved.
+          algorithms.foreach((i:algorithm)=> i.solve(board)) // for each algorithm, apply to current board
         }
       } // end case match.
     }
   }
 
-  // overview: parses linear string
-  // takes the sqrt of the linear string's length,
-  // ie sqrt(str.length) * sqrt(str.length) = N * N =  str.length
-  // returns Seq of rows
+
+  /*overview: parses linear string
+    takes the sqrt of the linear string's length,
+    ie sqrt(str.length) * sqrt(str.length) = N * N =  str.length
+    returns Seq of rows
+  */
   def cut(str: String, arr:Seq[Seq[Int]], n:Int):Seq[Seq[Int]] = {
     if(str.isEmpty) return arr//.filter(!_.isEmpty)
 
@@ -63,6 +67,7 @@ case class board (path: String) {
     arr :+ row, n)
   }
 
+
   // overview: helper: previews the current board's state
   def align(row: Seq[Int]):Unit = {
     row.foreach((i: Int) => i match{
@@ -71,6 +76,8 @@ case class board (path: String) {
     })
     println
   }
+
+
   // overview: previews the current board's state
   def preview(b:Seq[Seq[Int]]):Unit={
     b.foreach(
