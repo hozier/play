@@ -1,6 +1,21 @@
 import scala.io.Source
 import scala.math._
 
+/*
+overview: a very loosely defined abstraction of the game board.
+
+the case class board can represent a set of boards or one board.
+the board itself is quite ephemeral -- as the case class does
+not retain the state of the board beyond the board's initial return
+from the class's parser. functional programs should be stateless, and as
+such, the case class retains no knowledge of the board beyond it's
+being passed to the callback algorithm(s)
+
+it's unbounded abstraction keeps its definition open
+and allows the developer to leverage the interplay between
+a loosely defined object and the class's API.
+
+*/
 case class board (path: String) {
 
   var arr:Seq[String] = Seq()
@@ -35,15 +50,11 @@ case class board (path: String) {
     }
   }
 
-  def solve(board: Seq[Seq[Int]]):Boolean = {
-    true
-  }
   // overview: parses linear string
   // takes the sqrt of the linear string's length,
   // ie sqrt(str.length) * sqrt(str.length) = N * N =  str.length
   // returns Seq of rows
   def cut(str: String, arr:Seq[Seq[Int]], n:Int):Seq[Seq[Int]] = {
-
     if(str.isEmpty) return arr//.filter(!_.isEmpty)
 
     val s:String = str.substring(0, n)
@@ -54,6 +65,7 @@ case class board (path: String) {
     arr :+ row, n)
   }
 
+  // overview: helper: previews the current board's state
   def align(row: Seq[Int]):Unit = {
     row.foreach((i: Int) => i match{
       case 0 => print(". ")
@@ -61,25 +73,23 @@ case class board (path: String) {
     })
     println
   }
-
+  // overview: previews the current board's state
   def preview(b:Seq[Seq[Int]]):Unit={
     b.foreach(
       align(_)
     )
-
     printf("\n\n")
   }
 }
 
 object Test{
   def main(args: Array[String]): Unit = {
-    val build = board("./src/main/resources/trace") // relative to the root dir.
+    val builder = board("./src/main/resources/trace") // relative to the root dir.
 
     // overview: run the engine against a sequence of solver algorithms
     val solvers:Seq[algorithm] = Seq(backtracking)
-    build.engine(build.path, solvers)
-
-    // solvers.foreach((i:algorithm)=> build.engine(build.path, i))
+    builder.engine(builder.path, solvers)
+    // solvers.foreach((i:algorithm)=> build.engine(build.path, i)) // alternate.
   }
 
 }
