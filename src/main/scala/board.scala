@@ -79,15 +79,3 @@ case class board (path: String) {
     printf("\n\n")
   }
 }
-
-object Test{
-  def main(args: Array[String]): Unit = {
-    val builder = board("./src/main/resources/trace") // relative to the root dir.
-
-    // overview: run the engine against a sequence of solver algorithms
-    val solvers:Seq[algorithm] = Seq(backtracking)
-    builder.engine(builder.path, solvers)
-    // solvers.foreach((i:algorithm)=> build.engine(build.path, i)) // alternate.
-  }
-
-}
