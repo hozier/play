@@ -18,8 +18,6 @@ a loosely defined object and the class's API.
 */
 case class board (path: String) {
 
-  var arr:Seq[String] = Seq()
-
   def parse(str: String):Seq[Seq[Int]] ={
     val arr:Seq[Seq[Int]] = Seq()
     if(str.contains('=')) null // we are reading the delim
