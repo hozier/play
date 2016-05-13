@@ -65,18 +65,15 @@ object backtracking extends algorithm{
   def is_valid_grid(parcel: ((Int, Int), Seq[Seq[Int]]), number:Int): Boolean = {
     val position = parcel._1
     val board = parcel._2
-    val board_transpose = board.transpose
-
-    // overview: validate row, validate column
-    if(!validator(board(position._1), number) ||
-    !validator(board_transpose(position._2), number)) return false
 
     // overview: run validator on each cell of box
     val (x, y):(Int, Int) = starting_position(position, board)
     get_box(x,y, board).foreach(
       (row:Seq[Int])=> if(!validator(row, number)) return false
     )
-    true
+
+    // overview: validate row, validate column
+    validator(board(position._1), number) && validator(board.transpose.apply(position._2), number)
   }
 
 
