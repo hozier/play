@@ -21,14 +21,14 @@ object backtracking extends algorithm{
     val board = parcel._2
 
     Range(1, board.length+1).foreach((i:Int)=> {
-      val mutating_board = board.updated(position._1, // update this row of board
-        board(position._1) .updated((position._2), i)) // w this i index
+      if(is_valid_grid((position, board), i)){
+        val mutating_board = board.updated(position._1, // update this row of board
+          board(position._1) .updated((position._2), i)) // w this i index
 
-      // preview mutating_board
-      preview(mutating_board)
+        // preview mutating_board
+        preview(mutating_board)
 
       // overview: check for collisions w new board.
-      if(is_valid_grid((position, mutating_board), i)){
         if(backtrack(next_position(mutating_board), mutating_board)) return true
       }
     })
@@ -78,25 +78,9 @@ object backtracking extends algorithm{
 
 
   // overview: validates row, column and box.
-  def validator(row: Seq[Int], number:Int):Boolean = {
-    var count:Int = 0;
-    row.foreach( (i:Int)=> (i == number) match {
-      case true => {
-        count += 1
-        if(count > 1) return false
-      }
-
-      case false => count
-    })
-    true
-  }
+  def validator(row: Seq[Int], number:Int):Boolean = !row.contains(number)
 
 
-  // overview: find whether all cells are filled.
-  def end_of_grid(board: Seq[Seq[Int]]):Boolean ={
-    board.foreach(_.foreach( // for each list/row
-      (cell:Int) => if(cell == 0) return false
-    ))
-    true
-  }
+  // overview: find whether all cells are filled -- if 0 is present (true), return false
+  def end_of_grid(board: Seq[Seq[Int]]):Boolean = !board.map( _.contains(0)).contains(true)
 }

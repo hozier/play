@@ -9,6 +9,13 @@ current trace [18 9x9, 1 5x5, 1 4x4]
 
 Avg runtime/board ~23 s
 
+--
+
+update
+
+[success] Total time: 104 s, completed May 13, 2016 12:39:37 PM
+
+Avg runtime/board ~5.2 s
 
 # run
 To run: use the `sbt run` command on the cli from root directory
