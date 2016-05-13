@@ -29,9 +29,7 @@ object backtracking extends algorithm{
 
       // overview: check for collisions w new board.
       if(is_valid_grid((position, mutating_board), i)){
-      if(backtrack(next_position(mutating_board), mutating_board)){
-          return true
-        }
+        if(backtrack(next_position(mutating_board), mutating_board)) return true
       }
     })
     false
@@ -58,7 +56,7 @@ object backtracking extends algorithm{
   }
 
 
-  // overview: compute and return box using linear algebra
+  // overview: compute and return box in isolation of grid using linear algebra
   def get_box(x: Int, y: Int, board:Seq[Seq[Int]]) = { board.slice(x, x+ sqrt(board.length).toInt).transpose.slice(y, y+sqrt(board.length).toInt).transpose }
 
 
