@@ -20,7 +20,7 @@ object backtracking extends algorithm{
     val position = parcel._1
     val board = parcel._2
 
-    Range(1, board.length+1).foreach((i:Int)=> {
+    (1 to board.length).foreach((i:Int)=> {
       if(is_valid_grid((position, board), i)){
         val mutating_board = board.updated(position._1, // update this row of board
           board(position._1) .updated((position._2), i)) // w this i index
@@ -68,12 +68,9 @@ object backtracking extends algorithm{
 
     // overview: run validator on each cell of box
     val (x, y):(Int, Int) = starting_position(position, board)
-    get_box(x,y, board).foreach(
-      (row:Seq[Int])=> if(!validator(row, number)) return false
-    )
 
-    // overview: validate row, validate column
-    validator(board(position._1), number) && validator(board.transpose.apply(position._2), number)
+    // overview: validate row, validate column, validate box
+    validator(get_box(x,y, board).flatten, number) && validator(board(position._1), number) && validator(board.transpose.apply(position._2), number)
   }
 
 
