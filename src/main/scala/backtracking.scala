@@ -3,9 +3,7 @@ import scala.math._
 object backtracking extends algorithm{
 
   def solve(board: Seq[Seq[Int]]):Boolean = {
-    if(end_of_grid(board)){
-      return true
-    }
+    if(end_of_grid(board)) return true
     return backtrack((next_position(board), board))
   }
 
@@ -18,12 +16,11 @@ object backtracking extends algorithm{
 
   // overview: accepts the position of a currently empty cell
   def backtrack(parcel: ((Int, Int), Seq[Seq[Int]]) ):Boolean={
+    if(parcel._1 == null) return true // all cells solved.
     val position = parcel._1
     val board = parcel._2
 
-    // 1) try all positions from 1 to n.
     Range(1, board.length+1).foreach((i:Int)=> {
-      // print(i+ " ")
       val mutating_board = board.updated(position._1, // update this row of board
         board(position._1) .updated((position._2), i)) // w this i index
 
@@ -31,10 +28,8 @@ object backtracking extends algorithm{
       preview(mutating_board)
 
       // overview: check for collisions w new board.
-      if(is_valid_grid((position, mutating_board), i) == true){
-        val next = (next_position(mutating_board))
-        if(next == (-1, -1)) return true // all cells solved.
-        if(backtrack(next, mutating_board) == true){
+      if(is_valid_grid((position, mutating_board), i)){
+      if(backtrack(next_position(mutating_board), mutating_board)){
           return true
         }
       }
@@ -50,12 +45,12 @@ object backtracking extends algorithm{
         if(cell == 0){ return (i, j) }
       }
     }
-    return (-1, -1)
+    null
   }
 
 
-  // overview: find starting position of smaller box within grid
-  def boxf(position:(Int, Int), board:Seq[Seq[Int]]):(Int, Int)={
+  // overview: find the starting position of the current cell's "box"
+  def starting_position(position:(Int, Int), board:Seq[Seq[Int]]):(Int, Int)={
     val row = position._1
     val column = position._2
     (row - ((row) % sqrt(board.length).toInt),
@@ -72,33 +67,25 @@ object backtracking extends algorithm{
   def is_valid_grid(parcel: ((Int, Int), Seq[Seq[Int]]), number:Int): Boolean = {
     val position = parcel._1
     val board = parcel._2
+    val board_transpose = board.transpose
 
     // overview: validate row, validate column
-    if(!validate_primary(position._2, board.transpose:Seq[Seq[Int]], number)||
-      !validate_primary(position._1, board, number)) return false
+    if(!validator(board(position._1), number) ||
+    !validator(board_transpose(position._2), number)) return false
 
-    // overview: validate "box"
-    var count = 0
-    val (x, y):(Int, Int) = boxf(position, board)
-    get_box(x,y, board).foreach(_.foreach(
-
-      // iterate through cells of box
-      (i:Int)=> (i == number) match{
-        case true => {
-          count += 1
-          if(count > 1) return false
-        }
-
-        case false => count
-      }))
+    // overview: run validator on each cell of box
+    val (x, y):(Int, Int) = starting_position(position, board)
+    get_box(x,y, board).foreach(
+      (row:Seq[Int])=> if(!validator(row, number)) return false
+    )
     true
   }
 
 
-  // overview: validates row and column.
-  def validate_primary(index:Int, board: Seq[Seq[Int]], number:Int):Boolean = {
+  // overview: validates row, column and box.
+  def validator(row: Seq[Int], number:Int):Boolean = {
     var count:Int = 0;
-    board(index).foreach( (i:Int)=> (i == number) match {
+    row.foreach( (i:Int)=> (i == number) match {
       case true => {
         count += 1
         if(count > 1) return false
