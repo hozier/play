@@ -6,8 +6,13 @@ object backtracking extends algorithm{
     if(end_of_grid(board)){
       return true
     }
-    backtrack(((3,3), board))
-    true
+    return backtrack((next_position(board), board))
+  }
+
+
+  // overview: wrapper around board class' preview utility method
+  def preview(mutating_board:Seq[Seq[Int]]):Unit={
+    board(null).preview(mutating_board)
   }
 
 
@@ -17,16 +22,35 @@ object backtracking extends algorithm{
     val board = parcel._2
 
     // 1) try all positions from 1 to n.
-    Range(0, board.length).foreach((i:Int)=> {
+    Range(1, board.length+1).foreach((i:Int)=> {
       // print(i+ " ")
       val mutating_board = board.updated(position._1, // update this row of board
         board(position._1) .updated((position._2), i)) // w this i index
 
-      // overview: check for collisions w new board.
-      is_valid_grid((position, mutating_board), i)
-    })
+      // preview mutating_board
+      preview(mutating_board)
 
-    true
+      // overview: check for collisions w new board.
+      if(is_valid_grid((position, mutating_board), i) == true){
+        val next = (next_position(mutating_board))
+        if(next == (-1, -1)) return true // all cells solved.
+        if(backtrack(next, mutating_board) == true){
+          return true
+        }
+      }
+    })
+    false
+  }
+
+
+  // overview: return next empty cell position
+  def next_position(board: Seq[Seq[Int]]):(Int, Int) ={
+    for((row,i) <- board.view.zipWithIndex) {
+      for((cell,j) <- row.view.zipWithIndex) {
+        if(cell == 0){ return (i, j) }
+      }
+    }
+    return (-1, -1)
   }
 
 
@@ -40,9 +64,8 @@ object backtracking extends algorithm{
 
 
   // overview: compute and return box using linear algebra
-  def get_box(x: Int, y: Int, board:Seq[Seq[Int]]) = {
-    board.slice(x, x+ sqrt(board.length).toInt).transpose.slice(y, y+sqrt(board.length).toInt).transpose
-  }
+  def get_box(x: Int, y: Int, board:Seq[Seq[Int]]) = { board.slice(x, x+ sqrt(board.length).toInt).transpose.slice(y, y+sqrt(board.length).toInt).transpose }
+
 
   // overview: checks whether the position's units are still valid
   // row, column, boxStartRow
@@ -50,21 +73,29 @@ object backtracking extends algorithm{
     val position = parcel._1
     val board = parcel._2
 
-    // overview: validate columns, validate rows
+    // overview: validate row, validate column
     if(!validate_primary(position._2, board.transpose:Seq[Seq[Int]], number)||
       !validate_primary(position._1, board, number)) return false
 
-    // overview: check "box"
+    // overview: validate "box"
+    var count = 0
     val (x, y):(Int, Int) = boxf(position, board)
     get_box(x,y, board).foreach(_.foreach(
-      // iterate through cells of box
 
-    ))
+      // iterate through cells of box
+      (i:Int)=> (i == number) match{
+        case true => {
+          count += 1
+          if(count > 1) return false
+        }
+
+        case false => count
+      }))
     true
   }
 
 
-  // overview: done.
+  // overview: validates row and column.
   def validate_primary(index:Int, board: Seq[Seq[Int]], number:Int):Boolean = {
     var count:Int = 0;
     board(index).foreach( (i:Int)=> (i == number) match {
@@ -72,15 +103,15 @@ object backtracking extends algorithm{
         count += 1
         if(count > 1) return false
       }
+
       case false => count
     })
     true
   }
 
 
-  // overview: done.
+  // overview: find whether all cells are filled.
   def end_of_grid(board: Seq[Seq[Int]]):Boolean ={
-    // find whether all cells are filled
     board.foreach(_.foreach( // for each list/row
       (cell:Int) => if(cell == 0) return false
     ))
