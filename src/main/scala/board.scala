@@ -43,14 +43,19 @@ case class board (path: String) {
       parse(line) match {
         case null => null //println("Reading new board..\n")
         case board => {
+          require(board(0).length == board.length, "err, matrix length and width are not of the same size") // this is for correct input
           preview(board) // overview: preview the board to be solved.
 
+          // for each algorithm, consume the current board as an arg and solve
           algorithms.foreach((i:algorithm)=> {
             val start = System.nanoTime
-            i.solve(board)
-            val stop = System.nanoTime
-            printf("Algorithm:\n%s\nElapsed: \n[%fs]\n\n\n\n\n", i.toString.split('$')(0), (stop - start)/1000000000.0)
-          }) // for each algorithm, apply to current board
+
+            // run analysis iff the algorithm returns a validated solution
+            if(i.solve(board)){
+              val stop = System.nanoTime
+              printf("Algorithm:\n%s\nElapsed: \n[%fs]\n\n\n\n\n", i.toString.split('$')(0), (stop - start)/1000000000.0)
+            } else printf("[No solution]\n\n\n\n\n")
+          })
         }
       } // end case match.
     }
