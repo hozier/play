@@ -24,20 +24,12 @@ case class board (path: String) {
     else cut(str, Seq(), sqrt(str.length).toInt)
   }
 
-
-  /*
-  // overview: considers format delim by newline characters
-  def sew(str:String, arr:Seq[Seq[Int]]):Seq[Seq[Int]] = {
-    null
-  }
-  */
-
   /*overview: implements IO
     parses into board structure,
     previews board to be solved to standard out,
     passes to solver
   */
-  def engine(file:String, algorithms: Seq[algorithm]):Unit ={
+  def engine(file:String, algorithms: Seq[algorithm], callback: (algorithm, Seq[Seq[Int]]) => Unit):Unit ={
 
     for( line <- Source.fromFile(file).getLines()){
       parse(line) match {
@@ -48,13 +40,7 @@ case class board (path: String) {
 
           // for each algorithm, consume the current board as an arg and solve
           algorithms.foreach((i:algorithm)=> {
-            val start = System.nanoTime
-
-            // run analysis iff the algorithm returns a validated solution
-            if(i.solve(board)){
-              val stop = System.nanoTime
-              printf("Algorithm:\n%s\nElapsed: \n[%fs]\n\n\n\n\n", i.toString.split('$')(0), (stop - start)/1000000000.0)
-            } else printf("[No solution]\n\n\n\n\n")
+            callback(i, board)
           })
         }
       } // end case match.
