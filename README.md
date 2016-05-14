@@ -15,7 +15,7 @@ update
 
 [success] Total time: 15 s, completed May 14, 2016 3:10:04 AM
 
-Avg runtime/board ~1.4 s
+Avg runtime/board ~0.68 s
 
 # run
 To run: use the `sbt run` command on the cli from root directory
