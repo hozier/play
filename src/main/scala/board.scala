@@ -41,10 +41,16 @@ case class board (path: String) {
 
     for( line <- Source.fromFile(file).getLines()){
       parse(line) match {
-        case null => println("Reading new board..")
+        case null => null //println("Reading new board..\n")
         case board => {
           preview(board) // overview: preview the board to be solved.
-          algorithms.foreach((i:algorithm)=> i.solve(board)) // for each algorithm, apply to current board
+
+          algorithms.foreach((i:algorithm)=> {
+            val start = System.nanoTime
+            i.solve(board)
+            val stop = System.nanoTime
+            printf("Algorithm:\n%s\nElapsed: \n[%fs]\n\n\n\n\n", i.toString.split('$')(0), (stop - start)/1000000000.0)
+          }) // for each algorithm, apply to current board
         }
       } // end case match.
     }
@@ -83,6 +89,6 @@ case class board (path: String) {
     b.foreach(
       align(_)
     )
-    printf("\n\n")
+    printf("\n")
   }
 }

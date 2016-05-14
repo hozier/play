@@ -16,7 +16,7 @@ object backtracking extends algorithm{
 
   // overview: accepts the position of a currently empty cell
   def backtrack(parcel: ((Int, Int), Seq[Seq[Int]]) ):Boolean={
-    if(parcel._1 == null) return true // all cells solved.
+    if(parcel._1 == null){ preview(parcel._2); return true } // all cells solved.
     val position = parcel._1
     val board = parcel._2
 
@@ -26,7 +26,7 @@ object backtracking extends algorithm{
           board(position._1) .updated((position._2), i)) // w this i index
 
         // preview mutating_board
-        preview(mutating_board)
+        // preview(mutating_board)
 
       // overview: check for collisions w new board.
         if(backtrack(next_position(mutating_board), mutating_board)) return true
