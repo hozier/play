@@ -1,0 +1,11 @@
+target/
+project/target/
+.git/
+.gitignore
+docker-compose.yml
+Dockerfile
+*.log
+*.iml
+.idea/
+.vscode/
+.DS_STORE
