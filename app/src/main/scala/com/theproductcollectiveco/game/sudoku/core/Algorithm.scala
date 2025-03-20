@@ -1,4 +1,4 @@
-package com.theproductcollectiveco.games.sudoku.clients
+package com.theproductcollectiveco.game.sudoku.core
 
 import cats.effect.{Async, MonadCancelThrow}
 import org.typelevel.log4cats.Logger
