@@ -9,6 +9,7 @@ object Versions {
   val munitCatsEffect         = "2.0.0"
   val weaverCats              = "0.7.6"
   val weaverScalacheck        = "0.7.6"
+  val googleCloudVision       = "3.57.0"
 }
 
 object Dependencies {
@@ -21,8 +22,10 @@ object Dependencies {
   val munitCatsEffect         = "org.typelevel"       %% "munit-cats-effect"          % Versions.munitCatsEffect         % Test
   val weaverCats              = "com.disneystreaming" %% "weaver-cats"                % Versions.weaverCats              % Test
   val weaverScalacheck        = "com.disneystreaming" %% "weaver-scalacheck"          % Versions.weaverScalacheck        % Test
+  val googleCloudVision       = "com.google.cloud"     % "google-cloud-vision"        % Versions.googleCloudVision
 
-  val coreDependencies    = Seq(catsEffect, catsEffectKernel, catsEffectStd)
-  val loggingDependencies = Seq(log4catsSlf4j, logbackClassic)
-  val testDependencies    = Seq(catsEffectTestingSpecs2, munitCatsEffect, weaverCats, weaverScalacheck)
+  val coreDependencies            = Seq(catsEffect, catsEffectKernel, catsEffectStd)
+  val loggingDependencies         = Seq(log4catsSlf4j, logbackClassic)
+  val testDependencies            = Seq(catsEffectTestingSpecs2, munitCatsEffect, weaverCats, weaverScalacheck)
+  val imageProcessingDependencies = Seq(googleCloudVision)
 }

@@ -1,4 +1,4 @@
-package com.theproductcollectiveco.games.sudoku.clients
+package com.theproductcollectiveco.game.sudoku.core
 
 import com.theproductcollectiveco.store.Board
 import com.theproductcollectiveco.store.Board.BoardData

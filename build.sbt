@@ -8,30 +8,30 @@ val commonSettings =
     scalaVersion                := "3.4.0",
     parallelExecution in Global := true,
     fork                        := true,
-    javaOptions += "-Xmx2G",
+    javaOptions += "-XX:+UseG1GC",
     scalafmtOnCompile           := true, // Enable scalafmt on compile
     useCoursier                 := true,
   )
 
 lazy val root =
   (project in file("."))
-    .aggregate(core, tests)
+    .aggregate(app, tests)
     .settings(
       name := "play4s"
     )
     .settings(commonSettings)
 
-lazy val core =
-  (project in file("core"))
+lazy val app =
+  (project in file("app"))
     .settings(
-      name := "play4s-core",
-      libraryDependencies ++= Dependencies.coreDependencies ++ Dependencies.loggingDependencies,
+      name := "play4s-app",
+      libraryDependencies ++= Dependencies.coreDependencies ++ Dependencies.loggingDependencies ++ Dependencies.imageProcessingDependencies,
     )
     .settings(commonSettings)
 
 lazy val tests =
   (project in file("tests"))
-    .dependsOn(core)
+    .dependsOn(app)
     .settings(
       name                     := "play4s-tests",
       Test / scalaSource       := baseDirectory.value / "src" / "scala",
