@@ -15,7 +15,7 @@ object Models {
       Vector(0, 0, 0, 0, 8, 0, 0, 7, 9),
     )
 
-  lazy val updatedBoardData  =
+  lazy val updatedBoardData =
     Vector(
       Vector(5, 3, 4, 6, 7, 8, 9, 1, 2),
       Vector(6, 7, 2, 1, 9, 5, 3, 4, 8),
