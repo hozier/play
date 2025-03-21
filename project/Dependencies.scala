@@ -3,8 +3,8 @@ import sbt.Keys._
 
 object Versions {
   val catsEffect              = "3.5.3"
-  val log4catsSlf4j           = "2.3.0"
-  val logbackClassic          = "1.2.11"
+  val log4catsSlf4j           = "2.7.0"
+  val logbackClassic          = "1.5.18"
   val catsEffectTestingSpecs2 = "1.6.0"
   val munitCatsEffect         = "2.0.0"
   val weaverCats              = "0.7.6"
