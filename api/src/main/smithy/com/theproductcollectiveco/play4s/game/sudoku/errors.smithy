@@ -5,29 +5,33 @@ namespace com.theproductcollectiveco.play4s.game.sudoku
 @error("client")
 @httpError(400)
 structure InvalidInputError {
-    message: String
+    description: String
 }
 
 @error("client")
 @httpError(404)
 structure NoSolutionFoundError {
-    message: String
+    @required
+    description: String
 }
 
 @error("server")
 @httpError(500)
 structure BoardNotCreatedError {
-    message: String
+    @required
+    description: String
 }
 
 @error("server")
 @httpError(500)
 structure InitialStateSettingError {
-    message: String
+    @required
+    description: String
 }
 
 @error("server")
 @httpError(500)
 structure InternalServerError {
-    message: String
+    @required
+    description: String
 }

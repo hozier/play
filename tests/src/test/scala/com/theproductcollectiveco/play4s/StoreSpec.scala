@@ -6,7 +6,8 @@ import weaver.scalacheck.Checkers
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.store.Board
-import com.theproductcollectiveco.play4s.shared.Models
+import com.theproductcollectiveco.play4s.shared.Mocks
+import com.theproductcollectiveco.play4s.game.sudoku.{InitialStateSettingError, BoardNotCreatedError, BoardState}
 
 object StoreSpec extends SimpleIOSuite with Checkers {
 
@@ -14,35 +15,40 @@ object StoreSpec extends SimpleIOSuite with Checkers {
   given Metrics[IO] = Metrics[IO]
 
   test("Board should read initial state correctly") {
-    val initialBoardData = Models.expectedBoardData
+    val initialState = BoardState(Mocks.initialState)
 
     for {
-      ref       <- Ref.of[IO, Option[Board.BoardData]](Some(initialBoardData))
-      gameBoard <- Board[IO](initialBoardData, ref)
+      ref       <- Ref.of[IO, Option[BoardState]](None)
+      gameBoard <- Board[IO](initialState, ref)
       state     <- gameBoard.read()
-    } yield expect(state == initialBoardData)
+    } yield expect(state == initialState)
   }
 
   test("Board should update state correctly") {
-    val initialBoardData = Models.expectedBoardData
-    val updatedBoardData = Models.updatedBoardData
+    val updatedBoardState = BoardState(Mocks.updatedState)
 
     for {
-      ref       <- Ref.of[IO, Option[Board.BoardData]](Some(initialBoardData))
-      gameBoard <- Board[IO](initialBoardData, ref)
-      _         <- gameBoard.update(updatedBoardData)
+      ref       <- Ref.of[IO, Option[BoardState]](None)
+      gameBoard <- Board[IO](BoardState(Mocks.initialState), ref)
+      _         <- gameBoard.update(updatedBoardState)
       state     <- gameBoard.read()
-    } yield expect(state == updatedBoardData)
+    } yield expect(state == updatedBoardState)
   }
 
   test("Board should delete state correctly") {
-    val initialBoardData = Models.expectedBoardData
-
     for {
-      ref         <- Ref.of[IO, Option[Board.BoardData]](Some(initialBoardData))
-      gameBoard   <- Board[IO](initialBoardData, ref)
+      ref         <- Ref.of[IO, Option[BoardState]](None)
+      gameBoard   <- Board[IO](BoardState(Mocks.initialState), ref)
       _           <- gameBoard.delete()
-      isStateless <- gameBoard.read().attempt.map(_.isLeft)
+      isStateless <-
+        gameBoard
+          .read()
+          .attempt
+          .map:
+            case (Left(InitialStateSettingError(_)) | Left(BoardNotCreatedError(_))) => true
+
+            /** Either ran into an unexpected runtime error or returned a state that should have been deleted. */
+            case (Left(_) | Right(_)) => false
     } yield expect(isStateless)
   }
 

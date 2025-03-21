@@ -6,6 +6,7 @@ import cats.implicits.*
 import com.theproductcollectiveco.play4s.Metrics
 import com.theproductcollectiveco.play4s.store.Board
 import cats.Parallel
+import com.theproductcollectiveco.play4s.game.sudoku.{NoSolutionFoundError, BoardState}
 
 trait Algorithm[F[_]] {
   def solve(board: Board[F], search: Search): F[Boolean]
@@ -14,9 +15,9 @@ trait Algorithm[F[_]] {
 trait BacktrackingAlgorithm[F[_]] extends Algorithm[F] {
 
   def run(
-    board: Board.BoardData,
+    board: BoardState,
     search: Search,
-  ): F[Board.BoardData]
+  ): F[BoardState]
 
 }
 
@@ -38,37 +39,35 @@ object BacktrackingAlgorithm {
         }
 
       override def run(
-        boardData: Board.BoardData,
+        state: BoardState,
         search: Search,
-      ): F[Board.BoardData] =
-        Operations
-          .loop(boardData, search, search.fetchEmptyCells(boardData))
-          .liftTo[F](new Exception("No solution found"))
-
+      ): F[BoardState] =
+        search.fetchEmptyCells(state).pure.flatMap { emptyCells =>
+          Operations
+            .loop(state, search, emptyCells)
+            .liftTo[F](NoSolutionFoundError(s"Failed to fill all ${emptyCells.size} empty cells"))
+        }
     }
 
   object Operations {
 
     def loop(
-      data: Board.BoardData,
+      state: BoardState,
       search: Search,
       emptyCells: LazyList[(Int, Int)],
-    ): Option[Board.BoardData] =
+    ): Option[BoardState] =
 
       emptyCells.headOption match {
-        case None             => Some(data)
+        case None             => state.some
         case Some((row, col)) =>
-          (1 to data.size)
+          (1 to state.value.size)
             .to(LazyList)
             .flatMap { next =>
-              Option.when(search.verify(data, row, col, next)) {
-                val updatedBoardData =
-                  data.updated(
-                    row,
-                    data(row)
-                      .updated(col, next),
-                  )
-                loop(updatedBoardData, search, emptyCells.tail)
+              Option.when(search.verify(state, row, col, next)) {
+                val updated =
+                  state.copy:
+                    state.value.updated(row, state.value(row).updated(col, next))
+                loop(updated, search, emptyCells.tail)
               }
             }
             .collectFirst { case Some(solution) => solution }

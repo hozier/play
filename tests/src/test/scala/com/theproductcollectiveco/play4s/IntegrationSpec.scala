@@ -6,7 +6,6 @@ import cats.effect.std.Console
 import cats.implicits.*
 import weaver.SimpleIOSuite
 import weaver.scalacheck.Checkers
-import com.theproductcollectiveco.play4s.store.Board
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Orchestrator, Search}
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudVisionClient}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -17,9 +16,7 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
   def sharedProcess[F[_]: Logger: Parallel: Async: Console](parsedLines: List[String], orchestrator: Orchestrator[F])(using Metrics[F]) =
     parsedLines.parTraverse { line =>
       for {
-        store     <- cats.effect.Ref.of[F, Option[Board.BoardData]](None)
-        boardData  = orchestrator.processLine(line)
-        gameBoard <- Board[F](boardData, store)
+        gameBoard <- orchestrator.createBoard(orchestrator.processLine(line))
         solutions <-
           orchestrator.solve(
             gameBoard,

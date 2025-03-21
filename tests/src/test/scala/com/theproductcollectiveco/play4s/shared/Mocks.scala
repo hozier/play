@@ -1,8 +1,8 @@
 package com.theproductcollectiveco.play4s.shared
 
-object Models {
+object Mocks {
 
-  val expectedBoardData =
+  val initialState =
     Vector(
       Vector(5, 3, 0, 0, 7, 0, 0, 0, 0),
       Vector(6, 0, 0, 1, 9, 5, 0, 0, 0),
@@ -15,7 +15,7 @@ object Models {
       Vector(0, 0, 0, 0, 8, 0, 0, 7, 9),
     )
 
-  val updatedBoardData =
+  val updatedState =
     Vector(
       Vector(5, 3, 4, 6, 7, 8, 9, 1, 2),
       Vector(6, 7, 2, 1, 9, 5, 3, 4, 8),
