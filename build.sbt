@@ -36,8 +36,6 @@ lazy val tests =
     .dependsOn(app, smithy)
     .settings(
       name                     := "play4s-tests",
-      Test / scalaSource       := baseDirectory.value / "src" / "scala",
-      Test / resourceDirectory := baseDirectory.value / "src" / "test" / "resources",
       libraryDependencies ++= testDependencies,
     )
     .settings(commonSettings)

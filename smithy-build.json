@@ -1,14 +1,15 @@
 {
   "version": "2",
   "imports": [
-    "api/src/main/smithy/com/theproductcollectiveco/game/sudoku"
+    "api/src/main/smithy/com/theproductcollectiveco/play4s/game/sudoku",
+    "api/src/main/smithy/com/theproductcollectiveco/play4s"
   ],
   "projections": {
     "scala": {
       "plugins": {
         "smithy4s-codegen": {
-          "service": "com.theproductcollectiveco.game.sudoku.api.public#Play4sService",
-          "package": "com.theproductcollectiveco.game.sudoku.api",
+          "service": "com.theproductcollectiveco.play4s#Play4sService",
+          "package": "com.theproductcollectiveco.play4s",
           "packageVersion": "0.0.1"
         }
       }
