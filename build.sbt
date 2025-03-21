@@ -1,5 +1,6 @@
 import org.typelevel.sbt.tpolecat.TpolecatPlugin.autoImport._
 import org.scalafmt.sbt.ScalafmtPlugin.autoImport._
+import smithy4s.codegen.Smithy4sCodegenPlugin
 import Dependencies._
 
 val commonSettings =
@@ -15,7 +16,7 @@ val commonSettings =
 
 lazy val root =
   (project in file("."))
-    .aggregate(app, tests)
+    .aggregate(app, tests, smithy)
     .settings(
       name := "play4s"
     )
@@ -23,19 +24,29 @@ lazy val root =
 
 lazy val app =
   (project in file("app"))
+    .dependsOn(smithy)
     .settings(
       name := "play4s-app",
-      libraryDependencies ++= Dependencies.coreDependencies ++ Dependencies.loggingDependencies ++ Dependencies.imageProcessingDependencies,
+      libraryDependencies ++= coreDependencies ++ loggingDependencies
     )
     .settings(commonSettings)
 
 lazy val tests =
   (project in file("tests"))
-    .dependsOn(app)
+    .dependsOn(app, smithy)
     .settings(
       name                     := "play4s-tests",
       Test / scalaSource       := baseDirectory.value / "src" / "scala",
       Test / resourceDirectory := baseDirectory.value / "src" / "test" / "resources",
-      libraryDependencies ++= Dependencies.testDependencies,
+      libraryDependencies ++= testDependencies,
+    )
+    .settings(commonSettings)
+
+lazy val smithy =
+  (project in file("api"))
+    .enablePlugins(Smithy4sCodegenPlugin)
+    .settings(
+      name := "play4s-smithy",
+      libraryDependencies ++= smithy4sDependencies(smithy4sVersion.value)
     )
     .settings(commonSettings)
