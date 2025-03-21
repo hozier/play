@@ -1,14 +1,13 @@
 package com.theproductcollectiveco.play4s.game.sudoku.core
 
-import com.theproductcollectiveco.play4s.store.Board
-import com.theproductcollectiveco.play4s.store.Board.BoardData
+import com.theproductcollectiveco.play4s.game.sudoku.BoardState
 
 trait Search {
-  def verifyBoxState(board: BoardData, row: Int, col: Int, target: Int): Boolean
-  def verifyColumnState(board: BoardData, col: Int, target: Int): Boolean
-  def verifyRowState(board: Board.BoardData, row: Int, target: Int): Boolean
-  def verify(boardState: BoardData, row: Int, col: Int, target: Int): Boolean
-  def fetchEmptyCells(board: BoardData): LazyList[(Int, Int)]
+  def verifyBoxState(board: BoardState, row: Int, col: Int, target: Int): Boolean
+  def verifyColumnState(board: BoardState, col: Int, target: Int): Boolean
+  def verifyRowState(board: BoardState, row: Int, target: Int): Boolean
+  def verify(boardState: BoardState, row: Int, col: Int, target: Int): Boolean
+  def fetchEmptyCells(board: BoardState): LazyList[(Int, Int)]
 }
 
 object Search {
@@ -17,13 +16,13 @@ object Search {
     new Search {
 
       override def verifyBoxState(
-        board: BoardData,
+        board: BoardState,
         row: Int,
         col: Int,
         target: Int,
       ): Boolean =
-        val boxSize = Math.sqrt(board.size).toInt
-        !board
+        val boxSize = Math.sqrt(board.value.size).toInt
+        !board.value
           .slice(row / boxSize * boxSize, row / boxSize * boxSize + boxSize)
           .flatMap(
             _.slice(
@@ -34,19 +33,19 @@ object Search {
           .contains(target)
 
       override def verifyColumnState(
-        board: BoardData,
+        board: BoardState,
         col: Int,
         target: Int,
-      ): Boolean = !board.exists(_(col) == target)
+      ): Boolean = !board.value.exists(_(col) == target)
 
       override def verifyRowState(
-        board: BoardData,
+        board: BoardState,
         row: Int,
         target: Int,
-      ): Boolean = !board(row).contains(target)
+      ): Boolean = !board.value(row).contains(target)
 
       override def verify(
-        boardState: BoardData,
+        boardState: BoardState,
         row: Int,
         col: Int,
         target: Int,
@@ -55,11 +54,11 @@ object Search {
           verifyColumnState(boardState, col, target) &&
           verifyRowState(boardState, row, target)
 
-      override def fetchEmptyCells(board: BoardData): LazyList[(Int, Int)] =
+      override def fetchEmptyCells(board: BoardState): LazyList[(Int, Int)] =
         for {
-          row <- LazyList.range(0, board.size)
-          col <- LazyList.range(0, board.size)
-          if board(row)(col) == 0
+          row <- LazyList.range(0, board.value.size)
+          col <- LazyList.range(0, board.value.size)
+          if board.value(row)(col) == 0
         } yield (row, col)
 
     }

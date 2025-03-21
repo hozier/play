@@ -1,6 +1,6 @@
 $version: "2"
 
-namespace com.theproductcollectiveco.play4s.game.sudoku.api
+namespace com.theproductcollectiveco.play4s.game.sudoku
 
 use smithy4s.meta#vector
 
@@ -23,14 +23,14 @@ list NestedVectorList {
 }
 
 // A structure that contains a nested vector of integers.
-structure BoardData {
+structure BoardState {
     @required
-    values: NestedVectorList
+    value: NestedVectorList
 }
 
 structure SudokuSolution {
     @required
-    value: BoardData
+    value: BoardState
 }
 
 @mixin
@@ -42,11 +42,14 @@ structure ComputeRequest {
 @mixin
 structure GameMetadata {
     @required
-    id: GameId    
-    algorithm: Algorithm
+    id: GameId 
+    @required   
+    strategy: Algorithm
+    @required
     duration: Long
     @required
     @timestampFormat("date-time")
     @documentation("UTC timestamp at the time the image was uploaded")
+    @required
     requestedAt: Timestamp
 }
