@@ -1,6 +1,6 @@
 $version: "2"
 
-namespace com.theproductcollectiveco.play4s.game.sudoku.api
+namespace com.theproductcollectiveco.play4s.game.sudoku
 
 use smithy4s.meta#vector
 

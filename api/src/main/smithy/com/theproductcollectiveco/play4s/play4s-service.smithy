@@ -2,12 +2,12 @@ $version: "2"
 
 namespace com.theproductcollectiveco.play4s
 
-use com.theproductcollectiveco.play4s.game.sudoku.api#InvalidInputError
-use com.theproductcollectiveco.play4s.game.sudoku.api#NoSolutionFoundError
-use com.theproductcollectiveco.play4s.game.sudoku.api#BoardNotCreatedError
-use com.theproductcollectiveco.play4s.game.sudoku.api#InitialStateSettingError
-use com.theproductcollectiveco.play4s.game.sudoku.api#InternalServerError
-use com.theproductcollectiveco.play4s.game.sudoku.api.public#ComputeSudoku
+use com.theproductcollectiveco.play4s.game.sudoku#InvalidInputError
+use com.theproductcollectiveco.play4s.game.sudoku#NoSolutionFoundError
+use com.theproductcollectiveco.play4s.game.sudoku#BoardNotCreatedError
+use com.theproductcollectiveco.play4s.game.sudoku#InitialStateSettingError
+use com.theproductcollectiveco.play4s.game.sudoku#InternalServerError
+use com.theproductcollectiveco.play4s.game.sudoku.public#ComputeSudoku
 
 service Play4sService {
     version: "v1"
