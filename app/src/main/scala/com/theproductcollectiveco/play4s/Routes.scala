@@ -1,16 +1,9 @@
 package com.theproductcollectiveco.play4s
 
-import cats.implicits.*
-import cats.effect.IO
-import org.http4s.HttpRoutes
+import cats.effect.{IO, Resource}
 import smithy4s.http4s.SimpleRestJsonBuilder
+import org.http4s.HttpRoutes
 
 object Routes {
-
-  def routes(service: Play4sService[IO]): HttpRoutes[IO] =
-    SimpleRestJsonBuilder
-      .routes(service)
-      .make
-      .fold(_.raiseError, ok => ok)
-
+  def router(service: Play4sService[IO]): Resource[IO, HttpRoutes[IO]] = SimpleRestJsonBuilder.routes(service).resource
 }

@@ -29,11 +29,6 @@ structure BoardState {
     value: NestedVectorList
 }
 
-structure SudokuSolution {
-    @required
-    value: BoardState
-}
-
 @mixin
 structure ComputeRequest {
     @required
@@ -56,5 +51,5 @@ structure GameMetadata {
 }
 
 structure SudokuComputationSummary with [GameMetadata] {
-    solution: SudokuSolution
+    solution: BoardState
 }

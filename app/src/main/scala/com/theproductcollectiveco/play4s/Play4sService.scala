@@ -8,15 +8,13 @@ import cats.Parallel
 import cats.effect.Async
 import cats.effect.std.Console
 import com.theproductcollectiveco.play4s.Play4sApi
-import com.theproductcollectiveco.play4s.game.sudoku.{SudokuComputationSummary, Algorithm}
+import com.theproductcollectiveco.play4s.game.sudoku.{SudokuComputationSummary, Algorithm, GameId, BoardState}
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Orchestrator, Search}
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudVisionClient}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import smithy4s.Timestamp
 import scala.concurrent.duration.DurationLong
-import com.theproductcollectiveco.play4s.game.sudoku.SudokuSolution
-import com.theproductcollectiveco.play4s.game.sudoku.GameId
 
 trait Play4sService[F[_]] extends Play4sApi[F] {}
 
@@ -66,7 +64,7 @@ object Play4sService {
           strategy = Algorithm(backtrackingAlgorithm.getClass().getName()),
           duration = duration,
           requestedAt = requestedAt,
-          solution = headOption.map(SudokuSolution(_)),
+          solution = headOption.map(_.value).map(BoardState.apply),
         )
 
 }
