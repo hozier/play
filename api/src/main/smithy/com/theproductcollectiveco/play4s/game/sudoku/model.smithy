@@ -3,6 +3,7 @@ $version: "2"
 namespace com.theproductcollectiveco.play4s.game.sudoku
 
 use smithy4s.meta#vector
+use com.theproductcollectiveco.play4s.game.sudoku.public#ComputeSudoku
 
 @pattern("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 @documentation("Game ID; should be a UUID")
@@ -52,4 +53,8 @@ structure GameMetadata {
     @documentation("UTC timestamp at the time the image was uploaded")
     @required
     requestedAt: Timestamp
+}
+
+structure SudokuComputationSummary with [GameMetadata] {
+    solution: SudokuSolution
 }

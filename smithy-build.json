@@ -8,9 +8,10 @@
     "scala": {
       "plugins": {
         "smithy4s-codegen": {
-          "service": "com.theproductcollectiveco.play4s#Play4sService",
+          "service": "com.theproductcollectiveco.play4s.game.sudoku#Play4sApi",
           "package": "com.theproductcollectiveco.play4s",
-          "packageVersion": "0.0.1"
+          "packageVersion": "0.0.1",
+          "protocols": ["alloy#simpleRestJson"]
         }
       }
     }

@@ -17,13 +17,7 @@ trait Orchestrator[F[_]] {
   def processTrace(fileName: String): F[List[String]]
   def processLine(line: String): BoardState
   def createBoard(state: BoardState): F[Board[F]]
-
-  def solve(
-    board: Board[F],
-    search: Search,
-    algorithms: Algorithm[F]*
-  ): F[Unit]
-
+  def solve(board: Board[F], search: Search, algorithms: Algorithm[F]*): F[Option[BoardState]]
 }
 
 object Orchestrator {
@@ -47,16 +41,24 @@ object Orchestrator {
 
       override def fetchBytes(fileName: String): F[Array[Byte]] = imageParser.fetchBytes(fileName)
 
+      /**
+       * Overview: Explicitly disallow supporting variadic algorithm arguments by consistently selecting the primary (head) option.
+       *
+       * Review Required: The current handling of variadic arguments needs further assessment.
+       *
+       * Motivation: Originally, variadic argument support was driven by the 1:N relationship between a board's state and its potential algorithms, as
+       * algorithms can often vary significantly in performance and efficiency.
+       */
       override def solve(
         board: Board[F],
         search: Search,
         algorithms: Algorithm[F]*
-      ): F[Unit] =
+      ): F[Option[BoardState]] =
         for {
-          _ <- Logger[F].debug("Solving board")
-          _ <- algorithms.parTraverse(_.solve(board, search))
-          _ <- Logger[F].debug("Board solved")
-        } yield ()
+          _         <- Logger[F].debug("Solving board")
+          solutions <- algorithms.parTraverse(_.solve(board, search))
+          _         <- Logger[F].debug("Board solved")
+        } yield solutions.head
     }
 
 }

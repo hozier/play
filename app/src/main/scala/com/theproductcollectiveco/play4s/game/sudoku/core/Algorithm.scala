@@ -9,7 +9,7 @@ import cats.Parallel
 import com.theproductcollectiveco.play4s.game.sudoku.{NoSolutionFoundError, BoardState}
 
 trait Algorithm[F[_]] {
-  def solve(board: Board[F], search: Search): F[Boolean]
+  def solve(board: Board[F], search: Search): F[Option[BoardState]]
 }
 
 trait BacktrackingAlgorithm[F[_]] extends Algorithm[F] {
@@ -29,12 +29,12 @@ object BacktrackingAlgorithm {
       override def solve(
         board: Board[F],
         search: Search,
-      ): F[Boolean] =
+      ): F[Option[BoardState]] =
         Metrics[F].time("BacktrackingAlgorithm.solve") {
           board.read().flatMap { boardState =>
             run(boardState, search)
-              .flatMap:
-                board.update(_) `as` true
+              .flatMap: solutionState =>
+                board.update(solutionState) `as` solutionState.some
           }
         }
 
@@ -45,6 +45,10 @@ object BacktrackingAlgorithm {
         search.fetchEmptyCells(state).pure.flatMap { emptyCells =>
           Operations
             .loop(state, search, emptyCells)
+            /**
+             * we can optionally "option" to return the option type to the caller as this does save on additional type transformations. the liftTo
+             * might be considered an aggressive evaluation--reconsider passing through unfiltered state to caller (todo)
+             */
             .liftTo[F](NoSolutionFoundError(s"Failed to fill all ${emptyCells.size} empty cells"))
         }
     }
