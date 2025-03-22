@@ -9,13 +9,14 @@ import com.theproductcollectiveco.play4s.Metrics
 import com.theproductcollectiveco.play4s.store.Board
 import com.theproductcollectiveco.play4s.game.sudoku.parser.*
 import cats.Parallel
+import com.theproductcollectiveco.play4s.game.sudoku.BoardState
 
 trait Orchestrator[F[_]] {
   def fetchBytes(fileName: String): F[Array[Byte]]
   def processImage(image: Array[Byte]): F[String]
   def processTrace(fileName: String): F[List[String]]
-  def processLine(line: String): Board.BoardData
-  def createBoard(state: Board.BoardData): F[Board[F]]
+  def processLine(line: String): BoardState
+  def createBoard(state: BoardState): F[Board[F]]
 
   def solve(
     board: Board[F],
@@ -32,9 +33,9 @@ object Orchestrator {
     imageParser: ImageParser[F],
   ): Orchestrator[F] =
     new Orchestrator[F]() {
-      override def createBoard(state: Board.BoardData): F[Board[F]] =
+      override def createBoard(state: BoardState): F[Board[F]] =
         for {
-          ref   <- Ref.of[F, Option[Board.BoardData]](None)
+          ref   <- Ref.of[F, Option[BoardState]](None)
           board <- Logger[F].debug("Creating board") *> Board(state, ref)
         } yield board
 
@@ -42,7 +43,7 @@ object Orchestrator {
 
       override def processTrace(fileName: String): F[List[String]] = traceParser.parseResource(fileName)
 
-      override def processLine(line: String): Board.BoardData = traceParser.parseLine(line)
+      override def processLine(line: String): BoardState = traceParser.parseLine(line)
 
       override def fetchBytes(fileName: String): F[Array[Byte]] = imageParser.fetchBytes(fileName)
 

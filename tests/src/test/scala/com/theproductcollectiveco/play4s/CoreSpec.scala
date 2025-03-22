@@ -3,12 +3,12 @@ package com.theproductcollectiveco.play4s
 import cats.effect.IO
 import weaver.SimpleIOSuite
 import weaver.scalacheck.Checkers
-import com.theproductcollectiveco.play4s.store.Board
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Search, Orchestrator}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudVisionClient}
-import com.theproductcollectiveco.play4s.shared.Models
+import com.theproductcollectiveco.play4s.shared.Mocks
+import com.theproductcollectiveco.play4s.game.sudoku.BoardState
 
 object CoreSpec extends SimpleIOSuite with Checkers {
 
@@ -19,62 +19,47 @@ object CoreSpec extends SimpleIOSuite with Checkers {
   val orchestrator  = Orchestrator[IO](traceParser, imageParser)
 
   test("Orchestrator should parse resource correctly") {
-    val resource = "trace.txt"
-
-    for {
-      lines <- orchestrator.processTrace(resource)
-    } yield expect(lines.nonEmpty)
+    orchestrator
+      .processTrace("trace.txt")
+      .map: lines =>
+        expect(lines.nonEmpty)
   }
 
   test("Orchestrator should parse line correctly") {
-    val line              = "530070000600195000098000060800060003400803001700020006060000280000419005000080079"
-    val boardData         = orchestrator.processLine(line)
-    val expectedBoardData = Models.expectedBoardData
-    IO(expect(boardData == expectedBoardData))
+    val line          = "530070000600195000098000060800060003400803001700020006060000280000419005000080079"
+    val parseState    = orchestrator.processLine(line)
+    val expectedState = Mocks.initialState
+    IO(expect(parseState.value == expectedState))
   }
 
   test("Algorithm should solve Sudoku correctly") {
-    val boardData = Models.expectedBoardData
-    val board     =
-      cats.effect.Ref
-        .of[IO, Option[Board.BoardData]](None)
-        .flatMap: ref =>
-          Board[IO](
-            boardData,
-            ref,
-          )
-    val search    = Search()
-    val algorithm = BacktrackingAlgorithm[IO]()
-
     for {
-      gameBoard <- board
-      solved    <- algorithm.solve(gameBoard, search)
+      gameBoard <- orchestrator.createBoard(BoardState(Mocks.initialState))
+      solved    <- BacktrackingAlgorithm[IO]().solve(gameBoard, Search())
     } yield expect(solved)
   }
 
   test("Search should verify Sudoku constraints correctly") {
-    val boardData = Models.expectedBoardData
-    val search    = Search()
+    val initialState = BoardState(Mocks.initialState)
+    val search       = Search()
 
     for {
-      valid   <- IO(search.verify(boardData, 0, 2, 4))
-      invalid <- IO(search.verify(boardData, 0, 2, 5))
+      valid   <- IO(search.verify(initialState, 0, 2, 4))
+      invalid <- IO(search.verify(initialState, 0, 2, 5))
     } yield expect(valid) and expect(!invalid)
   }
 
   test("BacktrackingAlgorithm.Operations.loop should solve Sudoku correctly") {
-    val boardData = Models.expectedBoardData
-    val search    = Search()
-    val result    =
+    val initialState = BoardState(Mocks.initialState)
+    val search       = Search()
+    val result       =
       BacktrackingAlgorithm.Operations.loop(
-        boardData,
+        initialState,
         search,
-        search.fetchEmptyCells(boardData),
+        search.fetchEmptyCells(initialState),
       )
 
-    val expectedSolvedBoard = Models.updatedBoardData
-
-    IO(expect(result.contains(expectedSolvedBoard)))
+    IO(expect(result.contains(BoardState(Mocks.updatedState))))
   }
 
 }
