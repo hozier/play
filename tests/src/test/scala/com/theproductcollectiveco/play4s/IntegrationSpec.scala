@@ -67,4 +67,18 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
       }
   }
 
+  // test("ImagePayload should correctly decode base64 image from JSON") {
+  //   val jsonFilePath = "payload.json"
+  //   val expectedImageData = "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
+
+  //   val test = for {
+  //     json <- ImagePayload.readJsonFile[IO](jsonFilePath)
+  //     payload <- ImagePayload.decodeImagePayload[IO](json)
+  //   } yield {
+  //     assert(payload.image == Blob(Base64.getDecoder.decode(expectedImageData)))
+  //   }
+
+  //   test.unsafeRunSync()
+  // }
+
 }

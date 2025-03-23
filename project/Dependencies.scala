@@ -30,8 +30,9 @@ object Dependencies {
   val http4sBlazeClient       = "org.http4s"          %% "http4s-blaze-client"        % Versions.http4s
   val http4sDsl               = "org.http4s"          %% "http4s-dsl"                 % Versions.http4s
   val http4sCirce             = "org.http4s"          %% "http4s-circe"               % Versions.http4s
-   val circeGeneric   =  "io.circe" %% "circe-generic" % Versions.circe
-   val circeParser   = "io.circe" %% "circe-parser" %  Versions.circe
+  val circeGeneric            = "io.circe"            %% "circe-generic"              % Versions.circe
+  val circeParser             = "io.circe"            %% "circe-parser"               % Versions.circe
+  val circeCore               = "io.circe"            %% "circe-core"                 % Versions.circe
 
   def smithy4sDependencies(smithy4sVersion: String) = Seq(  
     "com.disneystreaming.smithy4s" %% "smithy4s-core"     % smithy4sVersion, 
@@ -45,7 +46,8 @@ object Dependencies {
     http4sDsl,
     http4sCirce,
     circeGeneric,
-    circeGeneric
+    circeCore,
+    circeParser
   )
   
   val imageProcessingDependencies = Seq(googleCloudVision)

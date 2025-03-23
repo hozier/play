@@ -20,6 +20,7 @@ TODO
 To run the application, use the following command from your project's root directory:
 
 ```shell
+project app
 sbt run
 ```
 
@@ -109,6 +110,7 @@ TODO
 
 **Run the application:**
 ```shell
+project app
 sbt run
 ```
 
@@ -172,8 +174,11 @@ curl -X POST localhost:8080/game/sudoku/solve \
 
 or copy the verified content into Postman exactly as-is.
 
+##### (g) Cloud Vision API by Google Cloud
 
-###### (g) Scala Compiler Configuration (sbt-tpolecat)
+"Cloud Vision API allows developers to easily integrate vision detection features within applications, including image labeling, face and landmark detection, optical character recognition (OCR), and tagging of explicit content." We internally call out to the API to extract insights from game board images.
+
+###### (h) Scala Compiler Configuration (sbt-tpolecat)
 
 This project leverages the [`sbt-tpolecat`](https://github.com/typelevel/sbt-tpolecat/) plugin to apply recommended Scala compiler options. For customization options or to explore other available plugin modes, refer to the [official documentation](https://github.com/typelevel/sbt-tpolecat/).
 
