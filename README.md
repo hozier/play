@@ -134,9 +134,46 @@ Run in production mode:
 docker-compose up app-prod
 ```
 
----
+###### (f.1) Generating new test image data
 
-###### (f) Scala Compiler Configuration (sbt-tpolecat)
+To guarantee correctness, we always safely generate the payload with a JSON-aware tool like `jq`.
+
+Run:
+
+# Step 1: safely create base64 string without newlines
+```shell
+# Step 1 (macOS-compatible, safe Base64 encoding):
+base64 <fully-qualified-or-relative-path-to-test-image> | tr -d '\r\n' > image.txt
+```
+
+```shell
+# Step 2 (Safe JSON payload creation):
+jq -n --arg img "$(cat image.txt)" '{image:$img}' > payload.json
+```
+
+Why use `jq`?
+
+`jq` automatically escapes special characters (e.g., quotes, $) safely.
+
+Ensures 100% valid JSON.
+
+🟢 Confirm JSON validity:
+```shell
+cat payload.json
+```
+
+Then POST your request, either with `curl`:
+
+```shell
+curl -X POST localhost:8080/game/sudoku/solve \
+-H "Content-Type: application/json" \
+-d @payload.json
+````
+
+or copy the verified content into Postman exactly as-is.
+
+
+###### (g) Scala Compiler Configuration (sbt-tpolecat)
 
 This project leverages the [`sbt-tpolecat`](https://github.com/typelevel/sbt-tpolecat/) plugin to apply recommended Scala compiler options. For customization options or to explore other available plugin modes, refer to the [official documentation](https://github.com/typelevel/sbt-tpolecat/).
 

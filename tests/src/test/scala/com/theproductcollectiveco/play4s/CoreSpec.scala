@@ -36,7 +36,7 @@ object CoreSpec extends SimpleIOSuite with Checkers {
     for {
       gameBoard <- orchestrator.createBoard(BoardState(Mocks.initialState))
       solved    <- BacktrackingAlgorithm[IO]().solve(gameBoard, Search())
-    } yield expect(solved)
+    } yield expect(solved.isDefined)
   }
 
   test("Search should verify Sudoku constraints correctly") {
