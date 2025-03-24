@@ -11,7 +11,6 @@ import com.theproductcollectiveco.play4s.Play4sApi
 import com.theproductcollectiveco.play4s.game.sudoku.{SudokuComputationSummary, Algorithm, GameId, BoardState}
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Orchestrator, Search}
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudVisionClient}
-import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import smithy4s.Timestamp
 import scala.concurrent.duration.DurationLong
@@ -20,10 +19,9 @@ trait Play4sService[F[_]] extends Play4sApi[F] {}
 
 object Play4sService {
 
-  def apply[F[_]: MonadCancelThrow: Async: Logger: Console: Parallel]: Play4sService[F] =
+  def apply[F[_]: MonadCancelThrow: Async: Logger: Console: Parallel: Metrics]: Play4sService[F] =
     new Play4sService[F] with Play4sApi[F]:
       override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] =
-
         for {
           start                <- Clock[F].monotonic
           requestedAt          <-
@@ -33,8 +31,6 @@ object Play4sService {
               Timestamp(seconds, nanos.toInt)
             }
           gameId               <- UUIDGen[F].randomUUID.map(uuid => GameId(uuid.toString))
-          given Logger[F]       = Slf4jLogger.getLogger[F]
-          given Metrics[F]      = Metrics[F]
           imageParser           = GoogleCloudVisionClient[F]
           traceParser           = TraceClient[F]
           orchestrator          = Orchestrator[F](traceParser, imageParser)

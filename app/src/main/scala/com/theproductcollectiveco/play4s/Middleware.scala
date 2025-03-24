@@ -3,12 +3,9 @@ package com.theproductcollectiveco.play4s
 import cats.effect.Concurrent
 import cats.syntax.all.*
 import org.http4s.*
-import org.http4s.dsl.Http4sDsl
 import org.http4s.multipart.*
 import org.http4s.circe.*
 import io.circe.{Encoder, Json}
-import io.circe.generic.auto.* // Automatically derive encoders
-import io.circe.syntax.*
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.game.sudoku.{GameId, Algorithm}
 import smithy4s.Blob
@@ -18,57 +15,38 @@ object Middleware {
   given gameIdEncoder: Encoder[GameId.T]       = Encoder.encodeString.contramap(_.toString)
   given algorithmEncoder: Encoder[Algorithm.T] = Encoder.instance(algorithm => Json.fromString(algorithm.toString))
 
-  def decodeContent[F[_]: Concurrent](service: Play4sService[F])(req: Request[F])(implicit logger: Logger[F]): F[Response[F]] = {
-    val dsl = new Http4sDsl[F] {}
-    import dsl.*
-
+  def decodeContent[F[_]: Concurrent: Logger](service: Play4sService[F])(req: Request[F]): F[Blob] =
     req.headers.get[org.http4s.headers.`Content-Type`].map(_.mediaType) match {
-      case Some(mediaType) if mediaType.mainType.equals("multipart") && mediaType.subType.equals("form-data") => handleMultipartRequest(req, service)
-      case Some(MediaType.application.json)                                                                   => handleJsonRequest(req, service)
-      case _                                                                                                  => BadRequest("Unsupported content type")
+      case Some(mediaType) if mediaType.mainType.equals("multipart") && mediaType.subType.equals("form-data") => decodeMultipartToBlob(req)
+      case Some(MediaType.application.json)                                                                   => decodeJsonToBlob(req)
+      case _                                                                                                  => Exception("Unsupported content type").raiseError
     }
-  }
 
-  private def handleJsonRequest[F[_]: Concurrent](req: Request[F], service: Play4sService[F])(implicit logger: Logger[F]): F[Response[F]] = {
-    val dsl = new Http4sDsl[F] {}
-    import dsl.*
-
-    req.decode[Json] { json =>
-      json.hcursor.downField("image").as[String] match {
-        case Right(imageBase64) =>
-          val bytes = java.util.Base64.getDecoder.decode(imageBase64)
-          val blob  = Blob(bytes)
-          for {
-            result   <- service.computeSudoku(blob)
-            response <- Ok(result.asJson)
-          } yield response
-        case Left(error)        =>
-          logger.error(s"Failed to decode JSON: $error") *>
-            BadRequest("Invalid JSON format")
-      }
+  private def decodeMultipartToBlob[F[_]: Concurrent: Logger](req: Request[F]): F[Blob] =
+    req.attemptAs[Multipart[F]].value.flatMap {
+      case Right(multipart) =>
+        multipart.parts
+          .find(_.name.contains("image"))
+          .map(_.body.compile.toVector.map(_.toArray))
+          .map(_.map(Blob(_)))
+          .get
+      case Left(error)      => Exception(s"Failed to decode Multipart: ${error.getMessage}").raiseError
     }
-  }
 
-  private def handleMultipartRequest[F[_]: Concurrent](req: Request[F], service: Play4sService[F])(implicit logger: Logger[F]): F[Response[F]] = {
-    val dsl = new Http4sDsl[F] {}
-    import dsl.*
-
-    req.decode[Multipart[F]] { m =>
-      logger.info(s"Received multipart request with parts: ${m.parts.map(_.name).mkString(", ")}") *> {
-        m.parts.find(_.name.contains("image")) match {
-          case Some(imagePart) =>
-            for {
-              bytes    <- imagePart.body.compile.toVector.map(_.toArray)
-              blob      = Blob(bytes)
-              result   <- service.computeSudoku(blob)
-              response <- Ok(result.asJson)
-            } yield response
-          case None            =>
-            logger.error("Image part not found") *>
-              BadRequest("Image part not found")
-        }
-      }
+  private def decodeJsonToBlob[F[_]: Concurrent: Logger](req: Request[F]): F[Blob] =
+    req.attemptAs[Json].value.flatMap {
+      case Right(json) =>
+        json.hcursor
+          .downField("image")
+          .as[String]
+          .fold(
+            error => Exception(s"Failed to decode image field: ${error.getMessage}").raiseError,
+            imageBase64 => {
+              val bytes = java.util.Base64.getDecoder.decode(imageBase64)
+              Concurrent[F].pure(Blob(bytes))
+            },
+          )
+      case Left(error) => Exception(s"Failed to decode JSON: ${error.getMessage}").raiseError
     }
-  }
 
 }
