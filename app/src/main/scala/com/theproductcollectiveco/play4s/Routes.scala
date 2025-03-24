@@ -12,16 +12,14 @@ given Logger[IO] = Slf4jLogger.getLogger[IO]
 
 object Routes {
 
-  def router(service: Play4sService[IO]): Resource[IO, HttpRoutes[IO]] = {
-    val jsonRoutes = SimpleRestJsonBuilder.routes(service).resource
-
-    val customRoutes = HttpRoutes.of[IO] { case req @ POST -> Root / "game" / "sudoku" / "solve" => Middleware.decodeContent(service)(req) }
-
-    jsonRoutes.flatMap { jsonR =>
-      Resource.pure[IO, HttpRoutes[IO]] {
-        customRoutes <+> jsonR
-      }
-    }
-  }
+  def router(service: Play4sService[IO]): Resource[IO, HttpRoutes[IO]] =
+    for {
+      jsonRoutes  <- SimpleRestJsonBuilder.routes(service).resource
+      customRoutes = HttpRoutes.of[IO] { case req @ POST -> Root / "game" / "sudoku" / "solve" => Middleware.decodeContent(service)(req) }
+      allRoutes   <-
+        Resource.pure[IO, HttpRoutes[IO]] {
+          customRoutes <+> jsonRoutes
+        }
+    } yield allRoutes
 
 }
