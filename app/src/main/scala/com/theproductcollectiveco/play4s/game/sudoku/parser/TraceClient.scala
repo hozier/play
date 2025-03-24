@@ -15,17 +15,17 @@ object TraceClient {
   def apply[F[_]: MonadCancelThrow: Async: Logger]: TraceParser[F] =
     new TraceParser[F] with Parser[F] {
       override def parseResource(fileName: String): F[List[String]] =
-        Logger[F].debug(s"Reading file $fileName") *> {
-        Resource.fromAutoCloseable:
-          Async[F].delay(Source.fromResource(fileName))
-        .use { source =>
-          Async[F].delay:
-            source
-              .getLines()
-              .toList
-              .filterNot(_.contains("="))
-          }
-        }
+        Logger[F].debug(s"Reading file $fileName") *>
+          Resource
+            .fromAutoCloseable:
+              Async[F].delay(Source.fromResource(fileName))
+            .use { source =>
+              Async[F].delay:
+                source
+                  .getLines()
+                  .toList
+                  .filterNot(_.contains("="))
+            }
 
     }
 
