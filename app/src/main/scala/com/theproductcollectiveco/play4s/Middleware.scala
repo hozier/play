@@ -15,7 +15,7 @@ object Middleware {
   given gameIdEncoder: Encoder[GameId.T]       = Encoder.encodeString.contramap(_.toString)
   given algorithmEncoder: Encoder[Algorithm.T] = Encoder.instance(algorithm => Json.fromString(algorithm.toString))
 
-  def decodeContent[F[_]: Concurrent: Logger](service: Play4sService[F])(req: Request[F]): F[Blob] =
+  def decodeContent[F[_]: Concurrent: Logger](req: Request[F]): F[Blob] =
     req.headers.get[org.http4s.headers.`Content-Type`].map(_.mediaType) match {
       case Some(mediaType) if mediaType.mainType.equals("multipart") && mediaType.subType.equals("form-data") => decodeMultipartToBlob(req)
       case Some(MediaType.application.json)                                                                   => decodeJsonToBlob(req)
