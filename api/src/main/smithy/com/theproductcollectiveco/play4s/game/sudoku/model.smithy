@@ -29,11 +29,6 @@ structure BoardState {
     value: NestedVectorList
 }
 
-structure SudokuSolution {
-    @required
-    value: BoardState
-}
-
 @mixin
 structure ComputeRequest {
     @required
