@@ -21,7 +21,7 @@ object Routes {
         HttpRoutes.of[IO]:
           case req @ POST -> Root / "game" / "sudoku" / "solve" =>
             Middleware
-              .decodeContent(req)
+              .decodeContent(req, "image")
               .flatMap: blob =>
                 service
                   .computeSudoku(blob)

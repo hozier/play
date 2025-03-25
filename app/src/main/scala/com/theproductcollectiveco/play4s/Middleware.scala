@@ -1,6 +1,6 @@
 package com.theproductcollectiveco.play4s
 
-import cats.effect.Concurrent
+import cats.effect.{Concurrent, MonadCancelThrow}
 import cats.syntax.all.*
 import org.http4s.*
 import org.http4s.multipart.*
@@ -9,44 +9,44 @@ import io.circe.{Encoder, Json}
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.game.sudoku.{GameId, Algorithm}
 import smithy4s.Blob
+import cats.ApplicativeError
 
 object Middleware {
 
   given gameIdEncoder: Encoder[GameId.T]       = Encoder.encodeString.contramap(_.toString)
   given algorithmEncoder: Encoder[Algorithm.T] = Encoder.instance(algorithm => Json.fromString(algorithm.toString))
 
-  def decodeContent[F[_]: Concurrent: Logger](req: Request[F]): F[Blob] =
+  def decodeContent[F[_]: Concurrent: Logger](req: Request[F], field: String): F[Blob] =
     req.headers.get[org.http4s.headers.`Content-Type`].map(_.mediaType) match {
-      case Some(mediaType) if mediaType.mainType.equals("multipart") && mediaType.subType.equals("form-data") => decodeMultipartToBlob(req)
-      case Some(MediaType.application.json)                                                                   => decodeJsonToBlob(req)
+      case Some(mediaType) if mediaType.mainType.equals("multipart") && mediaType.subType.equals("form-data") => decodeMultipartToBlob(req, field)
+      case Some(MediaType.application.json)                                                                   => decodeJsonToBlob(req, field)
       case _                                                                                                  => Exception("Unsupported content type").raiseError
     }
 
-  private def decodeMultipartToBlob[F[_]: Concurrent: Logger](req: Request[F]): F[Blob] =
-    req.attemptAs[Multipart[F]].value.flatMap {
-      case Right(multipart) =>
-        multipart.parts
-          .find(_.name.contains("image"))
-          .map(_.body.compile.toVector.map(_.toArray))
-          .map(_.map(Blob(_)))
-          .get
-      case Left(error)      => Exception(s"Failed to decode Multipart: ${error.getMessage}").raiseError
-    }
+  private def decodeMultipartToBlob[F[_]: Concurrent: Logger: MonadCancelThrow](req: Request[F], field: String): F[Blob] =
+    req
+      .attemptAs[Multipart[F]]
+      .value
+      .flatMap: multipart =>
+        multipart.toOption
+          .flatMap:
+            _.parts
+              .find(_.name.contains(field))
+              .map(_.body.compile.toVector.map(_.toArray).map(Blob(_)))
+          .getOrElse(ApplicativeError[F, Throwable].raiseError(new Exception("Failed to decode Multipart")))
 
-  private def decodeJsonToBlob[F[_]: Concurrent: Logger](req: Request[F]): F[Blob] =
-    req.attemptAs[Json].value.flatMap {
-      case Right(json) =>
-        json.hcursor
-          .downField("image")
-          .as[String]
-          .fold(
-            error => Exception(s"Failed to decode image field: ${error.getMessage}").raiseError,
-            imageBase64 => {
-              val bytes = java.util.Base64.getDecoder.decode(imageBase64)
-              Concurrent[F].pure(Blob(bytes))
-            },
-          )
-      case Left(error) => Exception(s"Failed to decode JSON: ${error.getMessage}").raiseError
-    }
+  private def decodeJsonToBlob[F[_]: Concurrent: MonadCancelThrow: Logger](req: Request[F], field: String): F[Blob] =
+    req
+      .attemptAs[Json]
+      .value
+      .flatMap: json =>
+        json
+          .flatMap:
+            _.hcursor
+              .downField(field)
+              .as[String]
+          .map(base64Str => java.util.Base64.getDecoder.decode(base64Str))
+          .map(Blob(_).pure)
+          .getOrElse(ApplicativeError[F, Throwable].raiseError(new Exception("Failed to decode JSON")))
 
 }

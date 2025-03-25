@@ -15,10 +15,10 @@ object MiddlewareSpec extends SimpleIOSuite with Checkers {
   given Logger[IO] = Slf4jLogger.getLogger[IO]
 
   test("decodeJsonToBlob should decode JSON content") {
-    val json = Json.obj("image" -> Json.fromString("Y29tLnRoZXByb2R1Y3Rjb2xsZWN0aXZlY28ucGxheTRzLk1pZGRsZXdhcmVTcGVj")) 
+    val json = Json.obj("testField" -> Json.fromString("Y29tLnRoZXByb2R1Y3Rjb2xsZWN0aXZlY28ucGxheTRzLk1pZGRsZXdhcmVTcGVj")) 
     val req = Request[IO](method = Method.POST).withEntity(json)
 
-    Middleware.decodeContent[IO](req).map { blob =>
+    Middleware.decodeContent[IO](req, "testField").map { blob =>
       expect(blob.toArray.sameElements("com.theproductcollectiveco.play4s.MiddlewareSpec".getBytes))
     }
   }
