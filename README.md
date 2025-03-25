@@ -3,7 +3,6 @@
 ###### (a) Current Development
 
 This project explores various puzzle-solving algorithms, with a current emphasis on Sudoku puzzles. One of the main algorithms implemented is the backtracking algorithm. All compute solutions are now accessible as a service as of latest refactor.
-This project explores various puzzle-solving algorithms, with a current emphasis on Sudoku puzzles. One of the main algorithms implemented is the backtracking algorithm. All compute solutions are now accessible as a service as of latest refactor.
 
 ###### (b.1) Performance Progress: v1
 
