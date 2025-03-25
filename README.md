@@ -2,7 +2,7 @@
 
 ###### (a) Current Development
 
-This project explores various puzzle-solving algorithms, with a current emphasis on Sudoku puzzles. One of the main algorithms implemented is the backtracking algorithm.
+This project explores various puzzle-solving algorithms, with a current emphasis on Sudoku puzzles. One of the main algorithms implemented is the backtracking algorithm. All compute solutions are now accessible as a service as of latest refactor.
 
 ###### (b.1) Performance Progress: v1
 
@@ -14,15 +14,52 @@ With optimization, runtime drastically improved:
 
 - **May 14, 2016**: Reduced total runtime to **15 seconds**, bringing the average runtime per board down to around **0.68 seconds**.
 ###### (b.2) Performance Progress: v2 (Functional Approach)
-TODO
+Compute request (_Content-Type: multipart/form-data_):
+```
+5 3 . . 7 . . . .
+6 . . 1 9 5 . . .
+. 9 8 . . . . 6 .
+8 . . . 6 . . . 3
+4 . . 8 . 3 . . 1
+7 . . . 2 . . . 6
+. 6 . . . . 2 8 .
+. . . 4 1 9 . . 5
+. . . . 8 . . 7 9
+```
+
+Solution:
+```
+5 3 4 6 7 8 9 1 2
+6 7 2 1 9 5 3 4 8
+1 9 8 3 4 2 5 6 7
+8 5 9 7 6 1 4 2 3
+4 2 6 8 5 3 7 9 1
+7 1 3 9 2 4 8 5 6
+9 6 1 5 3 7 2 8 4
+2 8 7 4 1 9 6 3 5
+3 4 5 2 8 6 1 7 9
+```
+
+Sudoku Computation Summary:
+```
+{
+    "id": "c2244951-e297-41d1-abff-fbc59b803e41",
+    "strategy": "com.theproductcollectiveco.play4s.game.sudoku.core.BacktrackingAlgorithm$$anon$1",
+    "duration": 2298,
+    "requestedAt": {
+        "epochSecond": 1742916339,
+        "nano": 587805000
+    },
+    "solution": {
+        "value": [
+          ...
+    }
+}
+```
+
 ###### (c) How to Run
 
-To run the application, use the following command from your project's root directory:
-
-```shell
-project app
-sbt run
-```
+See section (e).
 
 ###### (d.1) Example Puzzle Analytics: v1
 
@@ -102,21 +139,22 @@ Algorithm used: **Backtracking**
 Elapsed time: **0.000629 seconds**
 
 ###### (d.2) Example Puzzle Analytics: v2 (Functional Approach)
-TODO
-
----
+See (b.2).
 
 ###### (e) Commands Reference
 
+Once inside the `sbt` shell, run the following commands:
+
 **Run the application:**
+
 ```shell
-project app
-sbt run
+project app; run
 ```
 
 **Run tests:**
+
 ```shell
-sbt test
+test
 ```
 
 **Docker Compose Setup:**
@@ -142,9 +180,8 @@ To guarantee correctness, we always safely generate the payload with a JSON-awar
 
 Run:
 
-# Step 1: safely create base64 string without newlines
 ```shell
-# Step 1 (macOS-compatible, safe Base64 encoding):
+# Step 1 Safely create base64 string without newlines:
 base64 <fully-qualified-or-relative-path-to-test-image> | tr -d '\r\n' > image.txt
 ```
 
