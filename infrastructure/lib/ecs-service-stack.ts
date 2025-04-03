@@ -43,7 +43,7 @@ export class EcsServiceStack extends cdk.Stack {
         'ecr:DescribeRepositories',
         'ecr:BatchGetImage',
       ],
-      resources: ['*'], // allow actions on all resources // [repository.repositoryArn], // Use specific ECR repository ARN
+      resources: ['*'], // allow actions on all resources
     }));
 
     // Create a CloudWatch log group
@@ -82,13 +82,6 @@ export class EcsServiceStack extends cdk.Stack {
       vpc,
     });
 
-    // Allow traffic from the load balancer to the Fargate service
-    serviceSecurityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(), // Allow traffic from the load balancer
-      ec2.Port.tcp(8080),
-      'Allow traffic from ALB to Fargate service'
-    );
-
     // Create an Application Load Balancer
     const loadBalancer = new elbv2.ApplicationLoadBalancer(this, 'LoadBalancer', {
       vpc,
@@ -98,11 +91,18 @@ export class EcsServiceStack extends cdk.Stack {
     // Create a security group for the load balancer
     const loadBalancerSecurityGroup = loadBalancer.connections.securityGroups[0];
 
-    // Allow traffic from the load balancer to the Fargate service
-    loadBalancerSecurityGroup.addEgressRule(
-      ec2.Peer.securityGroupId(serviceSecurityGroup.securityGroupId),
+    // Allow traffic from ALB to Fargate service
+    serviceSecurityGroup.addIngressRule(
+      ec2.Peer.securityGroupId(loadBalancerSecurityGroup.securityGroupId),
       ec2.Port.tcp(8080),
       'Allow traffic from ALB to Fargate service'
+    );
+
+    // Allow traffic from Fargate service to ALB
+    loadBalancerSecurityGroup.addIngressRule(
+      ec2.Peer.securityGroupId(serviceSecurityGroup.securityGroupId),
+      ec2.Port.tcp(8080),
+      'Allow traffic from Fargate service to ALB'
     );
 
     const targetGroup = new elbv2.ApplicationTargetGroup(this, 'TargetGroup', {
@@ -110,6 +110,7 @@ export class EcsServiceStack extends cdk.Stack {
       port: 8080,
       protocol: elbv2.ApplicationProtocol.HTTP,
       targetType: elbv2.TargetType.IP,
+      deregistrationDelay: cdk.Duration.seconds(30), // Reduce deregistration delay for faster recovery
     });
 
     // Add a health check to the target group
@@ -118,15 +119,20 @@ export class EcsServiceStack extends cdk.Stack {
       port: '8080',
       protocol: elbv2.Protocol.HTTP,
       healthyHttpCodes: '200',
+      interval: cdk.Duration.seconds(30), // Reduce interval for faster detection
+      timeout: cdk.Duration.seconds(5),  // Allow more time for responses
+      healthyThresholdCount: 2,          // Require fewer successes
+      unhealthyThresholdCount: 5,        // Allow more failures
     });
 
     const listener = loadBalancer.addListener('Listener', {
-      port: 80,
+      port: 8080,
       open: true,
     });
 
-    listener.addTargetGroups('DefaultTargetGroup', {
-      targetGroups: [targetGroup],
+    // Add a listener rule to forward traffic to the target group
+    listener.addAction('ForwardToTargetGroup', {
+      action: elbv2.ListenerAction.forward([targetGroup]),
     });
 
     const fargateService = new ecs.FargateService(this, 'FargateService', {
@@ -136,6 +142,7 @@ export class EcsServiceStack extends cdk.Stack {
       securityGroups: [serviceSecurityGroup],
       desiredCount: 1,
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      healthCheckGracePeriod: cdk.Duration.seconds(180), // Allow 3 minutes for initialization
     });
 
     // Attach the Fargate service to the target group
