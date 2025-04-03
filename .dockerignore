@@ -1,4 +1,3 @@
-target/
 project/target/
 .git/
 .gitignore
@@ -9,3 +8,9 @@ Dockerfile
 .idea/
 .vscode/
 .DS_STORE
+logs
+*.tmp
+*.bak
+*.swp
+
+target/

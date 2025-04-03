@@ -9,27 +9,33 @@ import io.circe.generic.auto.* // Automatically derive encoders
 import io.circe.syntax.*
 import org.typelevel.log4cats.Logger
 import smithy4s.http4s.SimpleRestJsonBuilder
+import com.theproductcollectiveco.play4s.api.Play4sService
+import com.theproductcollectiveco.play4s.internal.meta.health.ServiceMetaApi
 
 object Routes {
 
   import com.theproductcollectiveco.play4s.Middleware.{algorithmEncoder, gameIdEncoder}
 
-  def router(service: Play4sService[IO])(using Logger[IO]): Resource[IO, HttpRoutes[IO]] =
+  def router(
+    play4sService: Play4sService[IO],
+    serviceMetaApi: ServiceMetaApi[IO],
+  )(using Logger[IO]): Resource[IO, HttpRoutes[IO]] =
     for {
-      jsonRoutes  <- SimpleRestJsonBuilder.routes(service).resource
-      customRoutes =
+      play4sRoutes      <- SimpleRestJsonBuilder.routes(play4sService).resource
+      serviceMetaRoutes <- SimpleRestJsonBuilder.routes(serviceMetaApi).resource
+      customRoutes       =
         HttpRoutes.of[IO]:
           case req @ POST -> Root / "game" / "sudoku" / "solve" =>
             Middleware
               .decodeContent(req, "image")
               .flatMap: blob =>
-                service
+                play4sService
                   .computeSudoku(blob)
                   .flatMap: summary =>
                     Ok(summary.asJson)
-      allRoutes   <-
+      allRoutes         <-
         Resource.pure[IO, HttpRoutes[IO]] {
-          customRoutes <+> jsonRoutes
+          customRoutes <+> play4sRoutes <+> serviceMetaRoutes
         }
     } yield allRoutes
 

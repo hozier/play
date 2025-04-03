@@ -6,6 +6,7 @@ import org.http4s.implicits.*
 import cats.effect.kernel.Resource
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
+import com.theproductcollectiveco.play4s.api.{Play4sService, HealthService}
 
 object MainApp extends ResourceApp.Forever {
 
@@ -16,7 +17,7 @@ object MainApp extends ResourceApp.Forever {
       given Metrics[IO] = Metrics[IO]
       _                <-
         Routes
-          .router(Play4sService[IO])
+          .router(Play4sService[IO], HealthService[IO])
           .map(_.orNotFound)
           .flatMap: httpApp =>
             Resource.eval:

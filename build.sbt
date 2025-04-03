@@ -1,4 +1,3 @@
-import org.typelevel.sbt.tpolecat.TpolecatPlugin.autoImport._
 import org.scalafmt.sbt.ScalafmtPlugin.autoImport._
 import smithy4s.codegen.Smithy4sCodegenPlugin
 import Dependencies._
@@ -7,27 +6,46 @@ val commonSettings =
   Seq(
     organization                := "com.theproductcollectiveco",
     scalaVersion                := "3.4.0",
-    parallelExecution in Global := true,
+    Compile / parallelExecution := true,
     fork                        := true,
-    javaOptions += "-XX:+UseG1GC",
-    scalafmtOnCompile           := true, // Enable scalafmt on compile
+    javaOptions                 ++= Seq(
+      "-Xms12G",
+      "-Xmx12G",
+      "-XX:+UseParallelGC",
+      "-Dcats.effect.threads.bounded=16",
+      "-Dcats.effect.threads.blocking=32"
+    ),
     useCoursier                 := true,
+    scalafmtOnCompile           := true,
+    Compile / run / fork        := true,
+    Compile / concurrentRestrictions := Seq(Tags.limitAll(4))
   )
 
 lazy val root =
   (project in file("."))
     .aggregate(app, tests, smithy)
-    .settings(
-      name := "play4s"
-    )
+    .settings(name := "play4s")
     .settings(commonSettings)
 
 lazy val app =
   (project in file("app"))
     .dependsOn(smithy)
+    .enablePlugins(JavaAppPackaging, DockerPlugin)
     .settings(
       name := "play4s-app",
-      libraryDependencies ++= coreDependencies ++ loggingDependencies
+      version := "0.1.0-SNAPSHOT",
+      libraryDependencies ++= coreDependencies ++ loggingDependencies,
+      dockerBaseImage := "openjdk:21-slim",
+      dockerExposedPorts := Seq(8080),
+      dockerBuildOptions ++= Seq("--platform", "linux/amd64"),
+      dockerAlias := DockerAlias(
+        Some("154006474850.dkr.ecr.us-east-2.amazonaws.com"),
+        None,
+        "theproductcollectiveco/play4s-service-prod",
+        Some("latest")
+      ),
+      Compile / mainClass := Some("com.theproductcollectiveco.play4s.MainApp"),
+       dockerEntrypoint := Seq("/opt/docker/bin/play4s-app")
     )
     .settings(commonSettings)
 
@@ -35,8 +53,9 @@ lazy val tests =
   (project in file("tests"))
     .dependsOn(app, smithy)
     .settings(
-      name                     := "play4s-tests",
-      libraryDependencies ++= testDependencies,
+      name := "play4s-tests",
+      publish / skip := true,
+      libraryDependencies ++= testDependencies
     )
     .settings(commonSettings)
 

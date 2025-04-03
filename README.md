@@ -53,9 +53,11 @@ Sudoku Computation Summary:
 }
 ```
 
-###### (c) How to Run
+###### (c) Endpoints
 
-See section (e).
+| Environment | Endpoints                                                |
+| ----------- | ---------------------------------------------------------|
+| PROD        | `<load-balancer-id>.us-east-2.elb.amazonaws.com` |
 
 ###### (d.1) Example Puzzle Analytics: v1
 
@@ -153,24 +155,21 @@ project app; run
 test
 ```
 
-**Docker Compose Setup:**
+**Docker Setup:**
 
 Build Docker images:
+
+> (Optional)  Clear caches
+>
+> `sbt docker:clean && # Clear sbt Docker artifacts`
+>
+> `docker system prune -a --volumes # Clear Docker cache`
+
 ```shell
-docker-compose build
+sbt app/docker:publishLocal
 ```
 
-Run for active Scala development (interactive mode):
-```shell
-docker-compose up app
-```
-
-Run in production mode:
-```shell
-docker-compose up app-prod
-```
-
-###### (f.1) Generating new test image data
+###### (f) Generating new test image data
 
 To guarantee correctness, we always safely generate the payload with a JSON-aware tool like `jq`.
 
