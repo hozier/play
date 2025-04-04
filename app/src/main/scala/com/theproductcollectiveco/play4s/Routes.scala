@@ -18,12 +18,12 @@ object Routes {
 
   def router(
     play4sService: Play4sService[IO],
-    serviceMetaApi: ServiceMetaApi[IO],
+    metaService: ServiceMetaApi[IO],
   )(using Logger[IO]): Resource[IO, HttpRoutes[IO]] =
     for {
-      play4sRoutes      <- SimpleRestJsonBuilder.routes(play4sService).resource
-      serviceMetaRoutes <- SimpleRestJsonBuilder.routes(serviceMetaApi).resource
-      customRoutes       =
+      play4sRoutes <- SimpleRestJsonBuilder.routes(play4sService).resource
+      metaRoutes   <- SimpleRestJsonBuilder.routes(metaService).resource
+      customRoutes  =
         HttpRoutes.of[IO]:
           case req @ POST -> Root / "game" / "sudoku" / "solve" =>
             Middleware
@@ -33,9 +33,9 @@ object Routes {
                   .computeSudoku(blob)
                   .flatMap: summary =>
                     Ok(summary.asJson)
-      allRoutes         <-
+      allRoutes    <-
         Resource.pure[IO, HttpRoutes[IO]] {
-          customRoutes <+> play4sRoutes <+> serviceMetaRoutes
+          customRoutes <+> play4sRoutes <+> metaRoutes
         }
     } yield allRoutes
 

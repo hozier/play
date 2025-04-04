@@ -1,24 +1,25 @@
 import org.scalafmt.sbt.ScalafmtPlugin.autoImport._
 import smithy4s.codegen.Smithy4sCodegenPlugin
+import com.typesafe.sbt.packager.docker.Cmd
 import Dependencies._
 
 val commonSettings =
   Seq(
-    organization                := "com.theproductcollectiveco",
-    scalaVersion                := "3.4.0",
-    Compile / parallelExecution := true,
-    fork                        := true,
-    javaOptions                 ++= Seq(
+    organization                     := "com.theproductcollectiveco",
+    scalaVersion                     := "3.4.0",
+    Compile / parallelExecution      := true,
+    fork                             := true,
+    javaOptions ++= Seq(
       "-Xms12G",
       "-Xmx12G",
       "-XX:+UseParallelGC",
       "-Dcats.effect.threads.bounded=16",
-      "-Dcats.effect.threads.blocking=32"
+      "-Dcats.effect.threads.blocking=32",
     ),
-    useCoursier                 := true,
-    scalafmtOnCompile           := true,
-    Compile / run / fork        := true,
-    Compile / concurrentRestrictions := Seq(Tags.limitAll(4))
+    useCoursier                      := true,
+    scalafmtOnCompile                := true,
+    Compile / run / fork             := true,
+    Compile / concurrentRestrictions := Seq(Tags.limitAll(4)),
   )
 
 lazy val root =
@@ -32,20 +33,25 @@ lazy val app =
     .dependsOn(smithy)
     .enablePlugins(JavaAppPackaging, DockerPlugin)
     .settings(
-      name := "play4s-app",
-      version := "0.1.0-SNAPSHOT",
+      name                := "play4s-app",
+      version             := "0.1.0-SNAPSHOT",
       libraryDependencies ++= coreDependencies ++ loggingDependencies,
-      dockerBaseImage := "openjdk:21-slim",
-      dockerExposedPorts := Seq(8080),
+      dockerBaseImage     := "openjdk:21-slim",
+      dockerExposedPorts  := Seq(8080),
       dockerBuildOptions ++= Seq("--platform", "linux/amd64"),
-      dockerAlias := DockerAlias(
+      dockerCommands ++= Seq(
+        Cmd("USER", "root"),         // Switch to root user
+        Cmd("RUN", "apt-get update && apt-get install -y curl"),
+        Cmd("USER", "demiourgos728"), // Switch back to the non-root user
+      ),
+      dockerAlias         := DockerAlias(
         Some("154006474850.dkr.ecr.us-east-2.amazonaws.com"),
         None,
         "theproductcollectiveco/play4s-service-prod",
-        Some("latest")
+        Some("latest"),
       ),
       Compile / mainClass := Some("com.theproductcollectiveco.play4s.MainApp"),
-       dockerEntrypoint := Seq("/opt/docker/bin/play4s-app")
+      dockerEntrypoint    := Seq("/opt/docker/bin/play4s-app"),
     )
     .settings(commonSettings)
 
@@ -53,9 +59,9 @@ lazy val tests =
   (project in file("tests"))
     .dependsOn(app, smithy)
     .settings(
-      name := "play4s-tests",
+      name           := "play4s-tests",
       publish / skip := true,
-      libraryDependencies ++= testDependencies
+      libraryDependencies ++= testDependencies,
     )
     .settings(commonSettings)
 
@@ -64,6 +70,6 @@ lazy val smithy =
     .enablePlugins(Smithy4sCodegenPlugin)
     .settings(
       name := "play4s-smithy",
-      libraryDependencies ++= smithy4sDependencies(smithy4sVersion.value)
+      libraryDependencies ++= smithy4sDependencies(smithy4sVersion.value),
     )
     .settings(commonSettings)

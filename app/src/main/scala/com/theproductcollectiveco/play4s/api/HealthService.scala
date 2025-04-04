@@ -6,8 +6,11 @@ import cats.implicits.*
 import cats.effect.Async
 
 object HealthService {
-  def apply[F[_]: Async]: ServiceMetaApi[F] = new ServiceMetaApi[F] {
-    override def checkHealth(): F[CheckHealthOutput] = CheckHealthOutput(HEALTHY).pure
-     
-  }
+
+  def apply[F[_]: Async]: ServiceMetaApi[F] =
+    new ServiceMetaApi[F] {
+      override def checkHealth(): F[CheckHealthOutput] = CheckHealthOutput(HEALTHY).pure
+
+    }
+
 }
