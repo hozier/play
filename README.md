@@ -55,9 +55,20 @@ Sudoku Computation Summary:
 
 ###### (c) Endpoints
 
-| Environment | Endpoints                                                |
-| ----------- | ---------------------------------------------------------|
-| PROD        | `<load-balancer-id>.us-east-2.elb.amazonaws.com` |
+**Load Balancer Endpoint:**
+
+| Environment | Load Balancer URL                                         |
+| ----------- | --------------------------------------------------------- |
+| PROD        | `http://app-pl-loadb-ux4nwivdg4ox-2085270498.us-east-2.elb.amazonaws.com` |
+
+To ensure you have the latest Load Balancer endpoint, simply re-trigger the GitHub Actions workflow Deploy to AWS. The updated endpoint will be queried and displayed under the Deploy job in the Query Load Balancer DNS Name step.
+
+**API Endpoints:**
+
+| Endpoint Path                  | Description                     |
+| ------------------------------ | ------------------------------- |
+| `/internal/meta/health`        | Health check endpoint           |
+| `/game/sudoku/solve`           | Sudoku puzzle-solving endpoint  |
 
 ###### (d.1) Example Puzzle Analytics: v1
 

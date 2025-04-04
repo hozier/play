@@ -53,26 +53,31 @@ export class LoadBalancerConstruct extends Construct {
         id: 'LoadBalancerDNSName',
         value: this.loadBalancer.loadBalancerDnsName,
         description: 'The DNS name of the load balancer',
+        exportName: 'LoadBalancerDNSNameExport',
       },
       {
         id: 'TargetGroupArn',
         value: this.targetGroup.targetGroupArn,
         description: 'The ARN of the target group',
+        exportName: 'TargetGroupArnExport',
       },
       {
         id: 'VpcId',
         value: vpc.vpcId,
         description: 'The ID of the VPC',
+        exportName: 'VpcIdExport',
       },
       {
         id: 'PublicSubnetIds',
         value: vpc.publicSubnets.map(subnet => subnet.subnetId).join(','),
         description: 'The IDs of the public subnets',
+        exportName: 'PublicSubnetIdsExport',
       },
       {
         id: 'ListenerArn',
         value: listener.listenerArn,
         description: 'The ARN of the load balancer listener',
+        exportName: 'ListenerArnExport',
       },
     ];
 
@@ -80,6 +85,7 @@ export class LoadBalancerConstruct extends Construct {
       new cdk.CfnOutput(this, output.id, {
         value: output.value,
         description: output.description,
+        exportName: output.exportName,
       })
     );
 
