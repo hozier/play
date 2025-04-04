@@ -18,7 +18,7 @@ on:
 
 jobs:
   build-and-publish:
-    name: Build and Publish
+    name: Build and publishLocal
     runs-on: ubuntu-latest
 
     env:
@@ -67,7 +67,7 @@ jobs:
           path: image.tar
 
   push-to-ecr:
-    name: Push Docker Image
+    name: Push
     runs-on: ubuntu-latest
     needs: build-and-publish
 

@@ -18,6 +18,17 @@
           "protocols": ["alloy#simpleRestJson"]
         }
       }
+    },
+    "openapi": {
+      "plugins": {
+        "openapi": {
+          "service": [
+            "com.theproductcollectiveco.play4s.game.sudoku#Play4sApi",
+            "com.theproductcollectiveco.play4s.internal.meta.health#ServiceMetaApi"
+          ],
+          "outputFile": "build/openapi/openapi.json"
+        }
+      }
     }
   }
 }

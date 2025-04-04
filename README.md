@@ -53,7 +53,7 @@ Sudoku Computation Summary:
 }
 ```
 
-###### (c) Endpoints
+###### (c.1) Endpoints
 
 **Load Balancer Endpoint:**
 
@@ -61,7 +61,7 @@ Sudoku Computation Summary:
 | ----------- | --------------------------------------------------------- |
 | PROD        | `http://app-pl-loadb-ux4nwivdg4ox-2085270498.us-east-2.elb.amazonaws.com` |
 
-To ensure you have the latest Load Balancer endpoint, simply re-trigger the GitHub Actions workflow Deploy to AWS. The updated endpoint will be queried and displayed under the Deploy job in the Query Load Balancer DNS Name step.
+To ensure you have the latest Load Balancer endpoint, simply re-trigger the GitHub Actions workflow `Deploy to AWS`. The updated endpoint will be queried and displayed under the `Deploy` job in the `Query Load Balancer DNS Name` step.
 
 **API Endpoints:**
 
@@ -69,6 +69,11 @@ To ensure you have the latest Load Balancer endpoint, simply re-trigger the GitH
 | ------------------------------ | ------------------------------- |
 | `/internal/meta/health`        | Health check endpoint           |
 | `/game/sudoku/solve`           | Sudoku puzzle-solving endpoint  |
+
+
+###### (c.2) Read the docs
+
+`Smithy4s` will automatically generate an openapi "view" for this service. By default, the documentation is routed under the `/docs` path.
 
 ###### (d.1) Example Puzzle Analytics: v1
 
