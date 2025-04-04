@@ -53,9 +53,22 @@ Sudoku Computation Summary:
 }
 ```
 
-###### (c) How to Run
+###### (c) Endpoints
 
-See section (e).
+**Load Balancer Endpoint:**
+
+| Environment | Load Balancer URL                                         |
+| ----------- | --------------------------------------------------------- |
+| PROD        | `http://app-pl-loadb-ux4nwivdg4ox-2085270498.us-east-2.elb.amazonaws.com` |
+
+To ensure you have the latest Load Balancer endpoint, simply re-trigger the GitHub Actions workflow Deploy to AWS. The updated endpoint will be queried and displayed under the Deploy job in the Query Load Balancer DNS Name step.
+
+**API Endpoints:**
+
+| Endpoint Path                  | Description                     |
+| ------------------------------ | ------------------------------- |
+| `/internal/meta/health`        | Health check endpoint           |
+| `/game/sudoku/solve`           | Sudoku puzzle-solving endpoint  |
 
 ###### (d.1) Example Puzzle Analytics: v1
 
@@ -153,24 +166,21 @@ project app; run
 test
 ```
 
-**Docker Compose Setup:**
+**Docker Setup:**
 
 Build Docker images:
+
+> (Optional)  Clear caches
+>
+> `sbt docker:clean && # Clear sbt Docker artifacts`
+>
+> `docker system prune -a --volumes # Clear Docker cache`
+
 ```shell
-docker-compose build
+sbt app/docker:publishLocal
 ```
 
-Run for active Scala development (interactive mode):
-```shell
-docker-compose up app
-```
-
-Run in production mode:
-```shell
-docker-compose up app-prod
-```
-
-###### (f.1) Generating new test image data
+###### (f) Generating new test image data
 
 To guarantee correctness, we always safely generate the payload with a JSON-aware tool like `jq`.
 

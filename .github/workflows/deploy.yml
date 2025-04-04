@@ -1,0 +1,138 @@
+name: Deploy to AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: "AWS region to deploy to"
+        type: choice
+        options:
+          - us-east-2
+        default: "us-east-2"
+      stage:
+        description: "AWS environment to deploy to"
+        type: choice
+        options:
+          - prod
+        default: "prod"
+
+jobs:
+  build-and-publish:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKER_IMAGE_TAG: latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Install sbt
+        run: |
+          echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list
+          curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x99E82A75642AC823" | sudo apt-key add
+          sudo apt-get update
+          sudo apt-get install -y sbt
+
+      - name: Cache sbt dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.ivy2/cache
+            ~/.sbt
+            ~/.coursier
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+
+      - name: Clean, compile, and build Docker image
+        run: |
+          sbt clean compile app/docker:publishLocal
+
+      - name: Save Docker image as tarball
+        run: |
+          docker save -o image.tar 154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com/theproductcollectiveco/play4s-service-prod:latest
+
+      - name: Upload Docker image
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: image.tar
+
+  push-to-ecr:
+    name: Push Docker Image
+    runs-on: ubuntu-latest
+    needs: build-and-publish
+
+    steps:
+      - name: Download Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+
+      - name: Load Docker image
+        run: |
+          docker load -i image.tar
+
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.region }}
+
+      - name: Log in to AWS ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        env:
+          AWS_REGION: ${{ inputs.region }}
+
+      - name: Push Docker image to ECR
+        env:
+          REGISTRY: 154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com
+          REPOSITORY: theproductcollectiveco/play4s-service-prod
+          IMAGE_TAG: latest
+        run: |
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: push-to-ecr
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.region }}
+
+      - name: CDK prepare
+        working-directory: ./infrastructure
+        run: npm ci
+
+      - name: Deploy with CDK
+        working-directory: ./infrastructure
+        run: |
+          if ! command -v cdk &> /dev/null; then
+            npm install -g aws-cdk
+          fi
+          cdk synth
+          cdk deploy --all --require-approval never --outputs-file cdk-outputs.json
+
+      - name: Query Load Balancer DNS Name
+        working-directory: ./infrastructure
+        run: |
+          echo "Load Balancer DNS Name:"
+          cat cdk-outputs.json | jq -r '.["app-play4s-service-prod-load-balanced-fargate-service-stack"] | to_entries[] | select(.key | startswith("LoadBalancerConstructLoadBalancerDNSName")) | .value'
