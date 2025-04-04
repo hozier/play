@@ -1,0 +1,118 @@
+name: Deploy to AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: "AWS region to deploy to"
+        required: true
+        type: choice
+        options:
+          - us-east-2
+          # - us-east-1
+          # - us-west-2
+        default: "us-east-2"
+      stage:
+        description: "AWS environment to deploy to"
+        type: choice
+        required: true
+        options:
+          # - dev
+          # - test
+          - prod
+        default: "prod"
+      branch:
+        description: "Branch to deploy from"
+        required: true
+        default: "main"
+
+jobs:
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKER_IMAGE_TAG: latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Install sbt
+        run: |
+          echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list
+          echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | sudo tee /etc/apt/sources.list.d/sbt_old.list
+          curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x99E82A75642AC823" | sudo apt-key add
+          sudo apt-get update
+          sudo apt-get install -y sbt
+
+      - name: Cache sbt dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.ivy2/cache
+            ~/.sbt
+            ~/.coursier
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+
+      - name: Clean, compile, and build Docker image
+        run: |
+          sbt clean compile app/docker:publishLocal
+
+      - name: Upload Docker image metadata
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-image-metadata
+          path: ./target/docker
+
+  deploy:
+    name: Deploy to AWS
+    runs-on: ubuntu-latest
+    needs: build
+
+    env:
+      DOCKER_IMAGE_TAG: latest
+
+    steps:
+      - name: Download Docker image metadata
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-image-metadata
+
+      - name: Log in to AWS ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          region: ${{ inputs.region }}
+
+      - name: Push Docker image to ECR
+        env:
+          ECR_REPOSITORY:
+            154006474850.dkr.ecr.${{ inputs.region
+            }}.amazonaws.com/theproductcollectiveco/play4s-service-${{
+            inputs.stage }}
+        run: |
+          docker push $ECR_REPOSITORY:$DOCKER_IMAGE_TAG
+
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.region }}
+
+      - name: Deploy with CDK
+        run: |
+          npm install -g aws-cdk
+          cdk synth
+          cdk deploy --all --require-approval never
