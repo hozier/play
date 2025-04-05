@@ -65,17 +65,17 @@ jobs:
 
       - name: Debug Git SHA
         run: |
-          echo "GIT_SHA=$GIT_SHA"
+          echo "GIT_SHA=${{ steps.set-git-sha.outputs.git_sha }}"
 
       - name: Clean, compile, and build Docker image
         run: |
           sbt clean compile app/docker:publishLocal
         env:
-          GIT_SHA: ${{ needs.build-and-publish.outputs.git_sha }}
+          GIT_SHA: ${{ steps.set-git-sha.outputs.git_sha }}
 
       - name: Save Docker image as tarball
         run: |
-          docker save -o image.tar $REGISTRY/$REPOSITORY:$GIT_SHA
+          docker save -o image.tar $REGISTRY/$REPOSITORY:${{ steps.set-git-sha.outputs.git_sha }}
 
       - name: Upload Docker image
         uses: actions/upload-artifact@v4
@@ -126,7 +126,7 @@ jobs:
         env:
           REGISTRY: $REGISTRY
           REPOSITORY: $REPOSITORY
-          IMAGE_TAG: ${{ needs.push-to-ecr.outputs.git_sha }}
+          IMAGE_TAG: ${{ needs.build-and-publish.outputs.git_sha }}
         run: |
           if ! command -v cdk &> /dev/null; then
             npm install -g aws-cdk
