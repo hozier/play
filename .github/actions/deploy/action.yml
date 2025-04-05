@@ -16,6 +16,10 @@ inputs:
   aws_secret_access_key:
     description: "AWS Secret Access Key"
     required: true
+  git_sha:
+    description: "Docker image tag"
+    required: true
+
 runs:
   using: "composite"
   steps:
