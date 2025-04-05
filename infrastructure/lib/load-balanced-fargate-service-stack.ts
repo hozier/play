@@ -22,7 +22,7 @@ export class LoadBalancedFargateServiceStack extends cdk.Stack {
 
     const taskDefinition = new TaskDefinitionConstruct(this, 'TaskDefinitionConstruct', {
       repository,
-      imageDigest: imageTag
+      imageTag: imageTag
     });
 
     const loadBalancer = new LoadBalancerConstruct(this, 'LoadBalancerConstruct', {

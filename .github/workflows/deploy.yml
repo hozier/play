@@ -59,8 +59,9 @@ jobs:
       - name: Set Git SHA
         id: set-git-sha
         run: |
-          echo "git_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "::set-output name=git_sha::$(git rev-parse --short HEAD)"
+          GIT_SHA=$(git rev-parse --short HEAD)
+          echo "git_sha=$GIT_SHA" >> $GITHUB_ENV
+          echo "git_sha=$GIT_SHA" >> $GITHUB_OUTPUT
 
       - name: Clean, compile, and build Docker image
         run: |
@@ -116,7 +117,7 @@ jobs:
         env:
           REGISTRY: $REGISTRY
           REPOSITORY: $REPOSITORY
-          IMAGE_TAG: $GIT_SHA
+          IMAGE_TAG: ${{ needs.push-to-ecr.outputs.git_sha }}
         run: |
           if ! command -v cdk &> /dev/null; then
             npm install -g aws-cdk
