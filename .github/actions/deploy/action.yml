@@ -33,7 +33,7 @@ runs:
       env:
         REGISTRY: ${{ inputs.registry }}
         REPOSITORY: ${{ inputs.repository }}
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: ${{ inputs.git_sha }}
         AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
         AWS_REGION: ${{ inputs.region }}
@@ -43,3 +43,10 @@ runs:
         fi
         cdk synth
         cdk deploy --all --require-approval never --outputs-file cdk-outputs.json
+
+    - name: Query Load Balancer DNS Name
+      working-directory: ./infrastructure
+      shell: bash
+      run: |
+        echo "Load Balancer DNS Name:"
+        cat cdk-outputs.json | jq -r '.["app-play4s-service-prod-load-balanced-fargate-service-stack"] | to_entries[] | select(.key | startswith("LoadBalancerConstructLoadBalancerDNSName")) | .value'

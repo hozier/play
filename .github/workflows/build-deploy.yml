@@ -1,4 +1,4 @@
-name: Deploy to AWS
+name: Build & Deploy
 
 on:
   workflow_dispatch:
@@ -112,11 +112,15 @@ jobs:
       - build-and-publish
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
       - name: Deploy with CDK
         uses: ./.github/actions/deploy
         with:
-          region: ${{ inputs.region }}
           registry: ${{ env.REGISTRY }}
           repository: ${{ env.REPOSITORY }}
+          git_sha: ${{ needs.build-and-publish.outputs.git_sha }}
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ inputs.region }}
