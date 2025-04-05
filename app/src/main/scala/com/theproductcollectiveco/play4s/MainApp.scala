@@ -20,7 +20,7 @@ object MainApp extends ResourceApp.Forever {
           IO.fromOption(sys.env.get("SECRET_JSON"))(
             new RuntimeException("Error: SECRET_JSON environment variable is not set")
           )
-        secretsPath = Paths.get("/secrets/credentials.json")
+        secretsPath = Paths.get("/tmp/secrets/credentials.json")
 
         _ <- IO.println(s"========== secretJson: $secretJson ==========")
         _ <- IO(Files.write(secretsPath, secretJson.getBytes(StandardCharsets.UTF_8)))

@@ -53,7 +53,7 @@ export class TaskDefinitionConstruct extends Construct {
       }),
       environment: {
         NODE_ENV: 'production',
-        GOOGLE_APPLICATION_CREDENTIALS: '/secrets/credentials.json', // Path for the credentials file
+        GOOGLE_APPLICATION_CREDENTIALS: '/tmp/secrets/credentials.json', // Path for the credentials file
         SECRET_JSON: secretJson!, // Pass the secret JSON directly as an environment variable
       },
     });
@@ -70,7 +70,7 @@ export class TaskDefinitionConstruct extends Construct {
     });
 
     container.addMountPoints({
-      containerPath: '/secrets',
+      containerPath: '/tmp/secrets',
       sourceVolume: 'SecretsVolume',
       readOnly: false,
     });
