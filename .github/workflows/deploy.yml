@@ -125,6 +125,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: CDK prepare
+        working-directory: ./infrastructure
+        run: npm ci
+        
       - name: Deploy with CDK
         working-directory: ./infrastructure
         env:
