@@ -25,38 +25,21 @@ jobs:
     name: Build and publishLocal
     runs-on: ubuntu-latest
 
+    outputs:
+      git_sha: ${{ steps.set-git-sha.outputs.git_sha }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: "21"
-          distribution: "temurin"
-
-      - name: Install sbt
+      - name: Set Git SHA
+        id: set-git-sha
         run: |
-          echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list
-          curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x99E82A75642AC823" | sudo apt-key add
-          sudo apt-get update
-          sudo apt-get install -y sbt
-
-      - name: Cache sbt dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.ivy2/cache
-            ~/.sbt
-            ~/.coursier
-          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
-          restore-keys: |
-            ${{ runner.os }}-sbt-
+          echo "git_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "::set-output name=git_sha::$(git rev-parse --short HEAD)"
 
       - name: Clean, compile, and build Docker image
         run: |
-          GIT_SHA=$(git rev-parse --short HEAD)
-          echo "GIT_SHA=$GIT_SHA" >> $GITHUB_ENV
           sbt clean compile app/docker:publishLocal
           docker tag $REGISTRY/$REPOSITORY:latest $REGISTRY/$REPOSITORY:$GIT_SHA
 
@@ -92,8 +75,8 @@ jobs:
         run: |
           docker load -i image.tar
           aws ecr get-login-password --region ${{ inputs.region }} | docker login --username AWS --password-stdin $REGISTRY
-          docker tag $REGISTRY/$REPOSITORY:latest $REGISTRY/$REPOSITORY:$GIT_SHA
-          docker push $REGISTRY/$REPOSITORY:$GIT_SHA
+          docker tag $REGISTRY/$REPOSITORY:latest $REGISTRY/$REPOSITORY:${{ needs.build-and-publish.outputs.git_sha }}
+          docker push $REGISTRY/$REPOSITORY:${{ needs.build-and-publish.outputs.git_sha }}
 
   deploy:
     name: Deploy
