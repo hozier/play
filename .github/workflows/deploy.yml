@@ -55,12 +55,13 @@ jobs:
 
       - name: Clean, compile, and build Docker image
         run: |
+          GIT_SHA=$(git rev-parse --short HEAD)
+          echo "GIT_SHA=$GIT_SHA" >> $GITHUB_ENV
           sbt clean compile app/docker:publishLocal
+          docker tag $REGISTRY/$REPOSITORY:latest $REGISTRY/$REPOSITORY:$GIT_SHA
 
       - name: Save Docker image as tarball
         run: |
-          GIT_SHA=$(git rev-parse --short HEAD)
-          echo "GIT_SHA=$GIT_SHA" >> $GITHUB_ENV
           docker save -o image.tar $REGISTRY/$REPOSITORY:$GIT_SHA
 
       - name: Upload Docker image
