@@ -42,6 +42,7 @@ lazy val app =
       dockerCommands ++= Seq(
         Cmd("USER", "root"),         // Switch to root user
         Cmd("RUN", "apt-get update && apt-get install -y curl"),
+        Cmd("USER", "demiourgos728"), // Switch back to the non-root user
       ),
       dockerAlias := DockerAlias(
         sys.env.get("AWS_ACCOUNT_ID").map(accountId => s"$accountId.dkr.ecr.us-east-2.amazonaws.com"),

@@ -7,7 +7,7 @@ import { Construct } from 'constructs';
 
 interface TaskDefinitionConstructProps {
   repository: ecr.IRepository;
-  imageTag: string; // Change property name to reflect digest usage
+  imageTag: string;
 }
 
 export class TaskDefinitionConstruct extends Construct {
@@ -32,12 +32,10 @@ export class TaskDefinitionConstruct extends Construct {
       executionRole: taskExecutionRole,
     });
 
-    // Reference the Google Cloud credentials secret
-    const googleCredentialsSecret = secretsmanager.Secret.fromSecretNameV2(
-      this,
-      'GoogleCredentialsSecret',
-      'google-credentials-key'
-    );
+    // Reference the Google Cloud credentials secret with explicit region
+    const googleCredentialsSecret = secretsmanager.Secret.fromSecretAttributes(this, 'GoogleCredentialsSecret', {
+      secretCompleteArn: 'arn:aws:secretsmanager:us-east-2:123456789012:secret:google-credentials-key',
+    });
 
     const container = this.taskDefinition.addContainer('AppContainer', {
       image: ecs.ContainerImage.fromEcrRepository(repository, imageTag),
@@ -63,17 +61,21 @@ export class TaskDefinitionConstruct extends Construct {
         'sh',
         '-c',
         `
-        # Ensure the CREDENTIALS_JSON environment variable is set
+        echo "========== STARTING CONTAINER ==========" && \
+        echo "CREDENTIALS_JSON: $CREDENTIALS_JSON" && \
         if [ -z "$CREDENTIALS_JSON" ]; then
-          echo "Error: CREDENTIALS_JSON is not set" >&2
+          echo "========== ERROR: CREDENTIALS_JSON is not set ==========" >&2
           exit 1
         fi && \
-        # Create the /secrets directory if it doesn't exist
         mkdir -p /secrets && \
-        # Write the CREDENTIALS_JSON environment variable to /secrets/credentials.json
-        echo "$CREDENTIALS_JSON" > /secrets/credentials.json || exit 1
+        echo "$CREDENTIALS_JSON" > /secrets/credentials.json && \
+        echo "========== CREDENTIALS FILE CREATED ==========" && \
+        echo "Contents of /secrets/credentials.json:" && \
+        cat /secrets/credentials.json && \
+        echo "========== CONTAINER INITIALIZATION COMPLETE =========="
         `,
       ],
+      user: "root",
     });
 
     container.addPortMappings({
