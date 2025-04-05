@@ -63,10 +63,15 @@ jobs:
           echo "git_sha=$GIT_SHA" >> $GITHUB_ENV
           echo "git_sha=$GIT_SHA" >> $GITHUB_OUTPUT
 
+      - name: Debug Git SHA
+        run: |
+          echo "GIT_SHA=$GIT_SHA"
+
       - name: Clean, compile, and build Docker image
         run: |
           sbt clean compile app/docker:publishLocal
-          docker tag $REGISTRY/$REPOSITORY:latest $REGISTRY/$REPOSITORY:$GIT_SHA
+        env:
+          GIT_SHA: ${{ needs.build-and-publish.outputs.git_sha }}
 
       - name: Save Docker image as tarball
         run: |
@@ -102,6 +107,10 @@ jobs:
           aws ecr get-login-password --region ${{ inputs.region }} | docker login --username AWS --password-stdin $REGISTRY
           docker tag $REGISTRY/$REPOSITORY:latest $REGISTRY/$REPOSITORY:${{ needs.build-and-publish.outputs.git_sha }}
           docker push $REGISTRY/$REPOSITORY:${{ needs.build-and-publish.outputs.git_sha }}
+
+      - name: Debug Git SHA from Output
+        run: |
+          echo "Git SHA from build-and-publish: ${{ needs.build-and-publish.outputs.git_sha }}"
 
   deploy:
     name: Deploy

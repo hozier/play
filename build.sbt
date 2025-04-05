@@ -45,11 +45,11 @@ lazy val app =
         Cmd("USER", "demiourgos728"), // Switch back to the non-root user
       ),
       dockerAlias := DockerAlias(
-        Some("154006474850.dkr.ecr.us-east-2.amazonaws.com"), // Replace with your ECR registry
+        Some("154006474850.dkr.ecr.us-east-2.amazonaws.com"),
         Some("theproductcollectiveco"),
         "play4s-service-prod",
-        Some("latest")
-      ),
+        Some(sys.env.getOrElse("GIT_SHA", "latest"))
+      )
       Compile / mainClass := Some("com.theproductcollectiveco.play4s.MainApp"),
       dockerEntrypoint    := Seq("/opt/docker/bin/play4s-app")
     )
