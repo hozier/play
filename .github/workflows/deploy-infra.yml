@@ -20,7 +20,7 @@ on:
         required: true
 
 env:
-  REGISTRY: "154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com"
+  REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region }}.amazonaws.com"
   REPOSITORY: "theproductcollectiveco/play4s-service-prod"
 
 jobs:
