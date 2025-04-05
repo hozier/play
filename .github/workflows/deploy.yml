@@ -105,8 +105,12 @@ jobs:
         run: |
           docker load -i image.tar
           aws ecr get-login-password --region ${{ inputs.region }} | docker login --username AWS --password-stdin $REGISTRY
-          docker tag $REGISTRY/$REPOSITORY:latest $REGISTRY/$REPOSITORY:${{ needs.build-and-publish.outputs.git_sha }}
+          docker tag $REGISTRY/$REPOSITORY:${{ needs.build-and-publish.outputs.git_sha }} $REGISTRY/$REPOSITORY:${{ needs.build-and-publish.outputs.git_sha }}
           docker push $REGISTRY/$REPOSITORY:${{ needs.build-and-publish.outputs.git_sha }}
+
+      - name: Debug Docker Images
+        run: |
+          docker images
 
       - name: Debug Git SHA from Output
         run: |
