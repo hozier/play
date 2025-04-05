@@ -7,33 +7,24 @@ inputs:
   repository:
     description: "Docker repository name"
     required: true
-outputs:
   git_sha:
     description: "Git SHA of the built image"
-    value: ${{ steps.set-git-sha.outputs.git_sha }}
+    required: true
 
 runs:
   using: "composite"
   steps:
-    - name: Set Git SHA
-      id: set-git-sha
-      shell: bash
-      run: |
-        GIT_SHA=$(git rev-parse --short HEAD)
-        echo "git_sha=$GIT_SHA" >> $GITHUB_ENV
-        echo "git_sha=$GIT_SHA" >> $GITHUB_OUTPUT
-
     - name: Build Docker Image
       shell: bash
       run: |
         sbt clean compile app/docker:publishLocal
       env:
-        GIT_SHA: ${{ steps.set-git-sha.outputs.git_sha }}
+        GIT_SHA: ${{ input.git_sha }}
 
     - name: Save Docker Image
       shell: bash
       run: |
-        docker save -o image.tar ${{ inputs.registry }}/${{ inputs.repository }}:${{ steps.set-git-sha.outputs.git_sha }}
+        docker save -o image.tar ${{ inputs.registry }}/${{ inputs.repository }}:${{ input.git_sha }}
 
     - name: Upload Docker Image
       uses: actions/upload-artifact@v4
