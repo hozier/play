@@ -45,7 +45,7 @@ lazy val app =
         Cmd("USER", "demiourgos728"), // Switch back to the non-root user
       ),
       dockerAlias := DockerAlias(
-        sys.env.get("AWS_ACCOUNT_ID").map(s"${_}.dkr.ecr.us-east-2.amazonaws.com"),
+        sys.env.get("AWS_ACCOUNT_ID").map(accountId => s"$accountId.dkr.ecr.us-east-2.amazonaws.com"),
         Some("theproductcollectiveco"),
         "play4s-service-prod",
         Some(sys.env.getOrElse("GIT_SHA", "latest"))
