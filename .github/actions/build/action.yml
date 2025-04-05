@@ -1,0 +1,42 @@
+name: "Build Docker Image"
+description: "Builds a Docker image and saves it as a tarball"
+inputs:
+  registry:
+    description: "Docker registry URL"
+    required: true
+  repository:
+    description: "Docker repository name"
+    required: true
+outputs:
+  git_sha:
+    description: "Git SHA of the built image"
+    value: ${{ steps.set-git-sha.outputs.git_sha }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set Git SHA
+      id: set-git-sha
+      shell: bash
+      run: |
+        GIT_SHA=$(git rev-parse --short HEAD)
+        echo "git_sha=$GIT_SHA" >> $GITHUB_ENV
+        echo "git_sha=$GIT_SHA" >> $GITHUB_OUTPUT
+
+    - name: Build Docker Image
+      shell: bash
+      run: |
+        sbt clean compile app/docker:publishLocal
+      env:
+        GIT_SHA: ${{ steps.set-git-sha.outputs.git_sha }}
+
+    - name: Save Docker Image
+      shell: bash
+      run: |
+        docker save -o image.tar ${{ inputs.registry }}/${{ inputs.repository }}:${{ steps.set-git-sha.outputs.git_sha }}
+
+    - name: Upload Docker Image
+      uses: actions/upload-artifact@v4
+      with:
+        name: docker-image
+        path: image.tar
