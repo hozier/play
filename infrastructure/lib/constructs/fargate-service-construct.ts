@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import { ForceDeploymentConstruct } from './force-deployment';
 import { Construct } from 'constructs';
 
 interface FargateServiceConstructProps {
@@ -21,8 +22,13 @@ export class FargateServiceConstruct extends Construct {
       assignPublicIp: true,
       desiredCount: 1,
       vpcSubnets: { subnetType: cdk.aws_ec2.SubnetType.PUBLIC },
+      circuitBreaker: { rollback: true },
     });
 
     fargateService.attachToApplicationTargetGroup(targetGroup);
+
+    // Force new deployment on task definition changes
+    fargateService.node.addDependency(taskDefinition);
+    new ForceDeploymentConstruct(this, 'ForceDeploymentConstruct', fargateService, cluster);
   }
 }
