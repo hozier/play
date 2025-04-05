@@ -56,20 +56,6 @@ export class TaskDefinitionConstruct extends Construct {
         GOOGLE_APPLICATION_CREDENTIALS: '/secrets/credentials.json', // Path for the credentials file
         SECRET_JSON: secretJson!, // Pass the secret JSON directly as an environment variable
       },
-      // command: [
-      //   'sh',
-      //   '-c',
-      //   `
-      //   echo "========== STARTING CONTAINER ==========" && \
-      //   mkdir -p /secrets && \
-      //   echo "$SECRET_JSON" > /secrets/credentials.json && \
-      //   echo "========== CREDENTIALS FILE CREATED ==========" && \
-      //   echo "Contents of /secrets/credentials.json:" && \
-      //   cat /secrets/credentials.json && \
-      //   echo "========== CONTAINER INITIALIZATION COMPLETE =========="
-      //   `,
-      // ],
-      // user: "root",
     });
 
     container.addPortMappings({
@@ -77,16 +63,16 @@ export class TaskDefinitionConstruct extends Construct {
       protocol: ecs.Protocol.TCP,
     });
 
-    // // Add a volume for the credentials file
-    // this.taskDefinition.addVolume({
-    //   name: 'SecretsVolume',
-    //   host: {}, // Use an emptyDir volume
-    // });
+    // Add a volume for the credentials file
+    this.taskDefinition.addVolume({
+      name: 'SecretsVolume',
+      host: {}, // Use an emptyDir volume
+    });
 
-    // container.addMountPoints({
-    //   containerPath: '/secrets',
-    //   sourceVolume: 'SecretsVolume',
-    //   readOnly: false,
-    // });
+    container.addMountPoints({
+      containerPath: '/secrets',
+      sourceVolume: 'SecretsVolume',
+      readOnly: false,
+    });
   }
 }

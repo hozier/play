@@ -14,18 +14,19 @@ import java.nio.charset.StandardCharsets
 object MainApp extends ResourceApp.Forever {
 
   override def run(args: List[String]): Resource[IO, Unit] = {
-    val setupSecrets: IO[Unit] = for {
-      secretJson <- IO.fromOption(sys.env.get("SECRET_JSON"))(
-        new RuntimeException("Error: SECRET_JSON environment variable is not set")
-      )
-      secretsPath = Paths.get("/secrets/credentials.json")
-      
-      _ <- IO.println(s"========== secretJson: ${secretJson} ==========")
-      _ <- IO(Files.createDirectories(secretsPath.getParent))
-      _ <- IO(Files.write(secretsPath, secretJson.getBytes(StandardCharsets.UTF_8)))
-      _ <- IO.println("========== CREDENTIALS FILE CREATED ==========")
-      _ <- IO.println(new String(Files.readAllBytes(secretsPath), StandardCharsets.UTF_8))
-    } yield ()
+    val setupSecrets: IO[Unit] =
+      for {
+        secretJson <-
+          IO.fromOption(sys.env.get("SECRET_JSON"))(
+            new RuntimeException("Error: SECRET_JSON environment variable is not set")
+          )
+        secretsPath = Paths.get("/secrets/credentials.json")
+
+        _ <- IO.println(s"========== secretJson: $secretJson ==========")
+        _ <- IO(Files.write(secretsPath, secretJson.getBytes(StandardCharsets.UTF_8)))
+        _ <- IO.println("========== CREDENTIALS FILE CREATED ==========")
+        _ <- IO.println(new String(Files.readAllBytes(secretsPath), StandardCharsets.UTF_8))
+      } yield ()
 
     val startApp: Resource[IO, Unit] =
       for {
@@ -47,4 +48,5 @@ object MainApp extends ResourceApp.Forever {
 
     Resource.eval(setupSecrets) *> startApp
   }
+
 }
