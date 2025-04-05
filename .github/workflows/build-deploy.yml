@@ -61,6 +61,8 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           repository: ${{ env.REPOSITORY }}
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ inputs.region }}
           git_sha: ${{ needs.build-and-publish.outputs.git_sha }}
 
