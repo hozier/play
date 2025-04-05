@@ -1,10 +1,12 @@
 package com.theproductcollectiveco.play4s.game.sudoku.parser
 
 import com.theproductcollectiveco.play4s.game.sudoku.shared.Parser
-import cats.effect.Async
-import com.google.cloud.vision.v1.{ImageAnnotatorClient, Image, Feature, AnnotateImageRequest, TextAnnotation}
+import cats.effect.{Async, Resource}
+import com.google.cloud.vision.v1.{ImageAnnotatorClient, Image, Feature, AnnotateImageRequest, TextAnnotation, ImageAnnotatorSettings}
+import com.google.auth.oauth2.GoogleCredentials
 import com.google.protobuf.ByteString
 import scala.jdk.CollectionConverters.*
+import java.io.IOException
 
 trait ImageParser[F[_]] extends Parser[F] {
   def parseImage(image: Array[Byte]): F[String]
@@ -12,23 +14,42 @@ trait ImageParser[F[_]] extends Parser[F] {
 
 object GoogleCloudVisionClient {
 
+  def createClient[F[_]: Async]: Resource[F, ImageAnnotatorClient] = {
+    Resource.make {
+      Async[F].delay {
+        try {
+          val credentials = GoogleCredentials.getApplicationDefault()
+          val settings = ImageAnnotatorSettings.newBuilder()
+            .setCredentialsProvider(() => credentials)
+            .build()
+          ImageAnnotatorClient.create(settings)
+        } catch {
+          case e: IOException =>
+            throw new RuntimeException("Failed to initialize Google Cloud credentials. Ensure GOOGLE_APPLICATION_CREDENTIALS is set.", e)
+        }
+      }
+    } { client =>
+      Async[F].delay(client.close())
+    }
+  }
+
   def apply[F[_]: Async]: ImageParser[F] =
     new ImageParser[F] with Parser[F] {
 
       override def parseImage(image: Array[Byte]): F[String] =
-        Async[F].delay {
-          val visionClient = ImageAnnotatorClient.create()
-          val imgBytes     = ByteString.copyFrom(image)
-          val img          = Image.newBuilder().setContent(imgBytes).build()
-          val feature      = Feature.newBuilder().setType(Feature.Type.TEXT_DETECTION).build()
-          val request      = AnnotateImageRequest.newBuilder().addFeatures(feature).setImage(img).build()
-          val response     = visionClient.batchAnnotateImages(java.util.Arrays.asList(request))
-          val annotation   = response.getResponsesList.get(0).getFullTextAnnotation
+        createClient[F].use { visionClient =>
+          Async[F].delay {
+            val imgBytes     = ByteString.copyFrom(image)
+            val img          = Image.newBuilder().setContent(imgBytes).build()
+            val feature      = Feature.newBuilder().setType(Feature.Type.TEXT_DETECTION).build()
+            val request      = AnnotateImageRequest.newBuilder().addFeatures(feature).setImage(img).build()
+            val response     = visionClient.batchAnnotateImages(java.util.Arrays.asList(request))
+            val annotation   = response.getResponsesList.get(0).getFullTextAnnotation
 
-          // Use the positional data to robustly parse the board.
-          val board = parseOCRAnnotation(annotation)
-          visionClient.close()
-          board
+            // Use the positional data to robustly parse the board.
+            val board = parseOCRAnnotation(annotation)
+            board
+          }
         }
 
       /**

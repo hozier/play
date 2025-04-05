@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 
 interface TaskDefinitionConstructProps {
@@ -31,9 +32,16 @@ export class TaskDefinitionConstruct extends Construct {
       executionRole: taskExecutionRole,
     });
 
+    // Reference the Google Cloud credentials secret
+    const googleCredentialsSecret = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      'GoogleCredentialsSecret',
+      'google-credentials-key'
+    );
+
     const container = this.taskDefinition.addContainer('AppContainer', {
-      image: ecs.ContainerImage.fromEcrRepository(repository, imageTag), // Use the digest
-      memoryReservationMiB: 256,
+      image: ecs.ContainerImage.fromEcrRepository(repository, imageTag),
+      memoryReservationMiB: 2048,
       healthCheck: {
         timeout: cdk.Duration.seconds(5),
         interval: cdk.Duration.seconds(15),
@@ -46,12 +54,38 @@ export class TaskDefinitionConstruct extends Construct {
       }),
       environment: {
         NODE_ENV: 'production',
+        GOOGLE_APPLICATION_CREDENTIALS: '/secrets/credentials.json', // Path for the credentials file
       },
+      secrets: {
+        CREDENTIALS_JSON: ecs.Secret.fromSecretsManager(googleCredentialsSecret), // Inject the secret
+      },
+      command: [
+        'sh',
+        '-c',
+        `
+        # Create the /secrets directory if it doesn't exist
+        mkdir -p /secrets && \
+        # Write the CREDENTIALS_JSON environment variable to /secrets/credentials.json
+        echo "$CREDENTIALS_JSON" > /secrets/credentials.json || exit 1
+        `,
+      ],
     });
 
     container.addPortMappings({
       containerPort: 8080,
       protocol: ecs.Protocol.TCP,
+    });
+
+    // Add a volume for the credentials file
+    this.taskDefinition.addVolume({
+      name: 'SecretsVolume',
+      host: {}, // Use an emptyDir volume
+    });
+
+    container.addMountPoints({
+      containerPath: '/secrets',
+      sourceVolume: 'SecretsVolume',
+      readOnly: false,
     });
   }
 }
