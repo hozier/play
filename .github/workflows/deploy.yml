@@ -77,16 +77,16 @@ jobs:
       - name: Load Docker image
         id: load-image
         run: |
-          docker load -i image.tar | tee image-load-output.txt
-          IMAGE_DIGEST=$(cat image-load-output.txt | grep -oE 'sha256:[a-f0-9]{64}')
-          echo "IMAGE_DIGEST=$IMAGE_DIGEST" >> $GITHUB_ENV
+          docker load -i image.tar
+          IMAGE_ID=$(docker inspect --format='{{.Id}}' 154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com/theproductcollectiveco/play4s-service-prod:latest)
+          echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_ENV
 
       - name: Define image variables
         id: define-image
         run: |
           REGISTRY="154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com"
           REPOSITORY="theproductcollectiveco/play4s-service-prod"
-          IMAGE_TAG="$IMAGE_DIGEST"
+          IMAGE_TAG="$IMAGE_ID"
 
       - name: Tag Docker image with digest
         run: |
@@ -133,16 +133,16 @@ jobs:
       - name: Load Docker image
         id: load-image
         run: |
-          docker load -i image.tar | tee image-load-output.txt
-          IMAGE_DIGEST=$(cat image-load-output.txt | grep -oE 'sha256:[a-f0-9]{64}')
-          echo "IMAGE_DIGEST=$IMAGE_DIGEST" >> $GITHUB_ENV
+          docker load -i image.tar
+          IMAGE_ID=$(docker inspect --format='{{.Id}}' 154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com/theproductcollectiveco/play4s-service-prod:latest)
+          echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_ENV
 
       - name: Define image variables
         id: define-image
         run: |
           REGISTRY="154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com"
           REPOSITORY="theproductcollectiveco/play4s-service-prod"
-          IMAGE_TAG="$IMAGE_DIGEST"
+          IMAGE_TAG="$IMAGE_ID"
 
       - name: CDK prepare
         working-directory: ./infrastructure
