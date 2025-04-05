@@ -78,8 +78,22 @@ jobs:
           name: docker-image
 
       - name: Load Docker image
+        id: load-image
         run: |
-          docker load -i image.tar
+          docker load -i image.tar | tee image-load-output.txt
+          IMAGE_DIGEST=$(cat image-load-output.txt | grep -oE 'sha256:[a-f0-9]{64}')
+          echo "IMAGE_DIGEST=$IMAGE_DIGEST" >> $GITHUB_ENV
+
+      - name: Define image variables
+        id: define-image
+        run: |
+          REGISTRY="154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com"
+          REPOSITORY="theproductcollectiveco/play4s-service-prod"
+          IMAGE_TAG="$IMAGE_DIGEST"
+
+      - name: Tag Docker image with digest
+        run: |
+          docker tag $REGISTRY/$REPOSITORY:latest $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
       - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v2
@@ -95,10 +109,6 @@ jobs:
           AWS_REGION: ${{ inputs.region }}
 
       - name: Push Docker image to ECR
-        env:
-          REGISTRY: 154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com
-          REPOSITORY: theproductcollectiveco/play4s-service-prod
-          IMAGE_TAG: latest
         run: |
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
@@ -118,12 +128,35 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ inputs.region }}
 
+      - name: Download Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+
+      - name: Load Docker image
+        id: load-image
+        run: |
+          docker load -i image.tar | tee image-load-output.txt
+          IMAGE_DIGEST=$(cat image-load-output.txt | grep -oE 'sha256:[a-f0-9]{64}')
+          echo "IMAGE_DIGEST=$IMAGE_DIGEST" >> $GITHUB_ENV
+
+      - name: Define image variables
+        id: define-image
+        run: |
+          REGISTRY="154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com"
+          REPOSITORY="theproductcollectiveco/play4s-service-prod"
+          IMAGE_TAG="$IMAGE_DIGEST"
+
       - name: CDK prepare
         working-directory: ./infrastructure
         run: npm ci
 
       - name: Deploy with CDK
         working-directory: ./infrastructure
+        env:
+          REGISTRY: $REGISTRY
+          REPOSITORY: $REPOSITORY
+          IMAGE_TAG: $IMAGE_TAG
         run: |
           if ! command -v cdk &> /dev/null; then
             npm install -g aws-cdk

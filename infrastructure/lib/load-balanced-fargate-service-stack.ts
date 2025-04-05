@@ -11,16 +11,18 @@ import { HealthCheckConstruct } from './constructs/health-check-construct';
 interface LoadBalancedFargateServiceStackProps extends cdk.StackProps {
   cluster: ecs.Cluster;
   repository: ecr.IRepository;
+  imageTag: string;
 }
 
 export class LoadBalancedFargateServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: LoadBalancedFargateServiceStackProps) {
     super(scope, id, props);
 
-    const { cluster, repository } = props;
+    const { cluster, repository, imageTag } = props;
 
     const taskDefinition = new TaskDefinitionConstruct(this, 'TaskDefinitionConstruct', {
       repository,
+      imageDigest: imageTag
     });
 
     const loadBalancer = new LoadBalancerConstruct(this, 'LoadBalancerConstruct', {

@@ -6,6 +6,7 @@ import { Construct } from 'constructs';
 
 interface TaskDefinitionConstructProps {
   repository: ecr.IRepository;
+  imageDigest: string; // Change property name to reflect digest usage
 }
 
 export class TaskDefinitionConstruct extends Construct {
@@ -14,7 +15,7 @@ export class TaskDefinitionConstruct extends Construct {
   constructor(scope: Construct, id: string, props: TaskDefinitionConstructProps) {
     super(scope, id);
 
-    const { repository } = props;
+    const { repository, imageDigest } = props;
 
     const taskExecutionRole = new iam.Role(this, 'TaskExecutionRole', {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
@@ -31,7 +32,7 @@ export class TaskDefinitionConstruct extends Construct {
     });
 
     const container = this.taskDefinition.addContainer('AppContainer', {
-      image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
+      image: ecs.ContainerImage.fromEcrRepository(repository, imageDigest), // Use the digest
       memoryReservationMiB: 256,
       healthCheck: {
         timeout: cdk.Duration.seconds(5),

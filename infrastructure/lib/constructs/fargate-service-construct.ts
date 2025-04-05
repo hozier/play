@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
-import { ForceDeploymentConstruct } from './force-deployment';
 import { Construct } from 'constructs';
 
 interface FargateServiceConstructProps {
@@ -26,9 +25,5 @@ export class FargateServiceConstruct extends Construct {
     });
 
     fargateService.attachToApplicationTargetGroup(targetGroup);
-
-    // Force new deployment on task definition changes
-    fargateService.node.addDependency(taskDefinition);
-    new ForceDeploymentConstruct(this, 'ForceDeploymentConstruct', fargateService, cluster);
   }
 }
