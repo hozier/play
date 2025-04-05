@@ -17,7 +17,7 @@ on:
         default: "prod"
 
 env:
-  REGISTRY: "154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com"
+  REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region }}.amazonaws.com"
   REPOSITORY: "theproductcollectiveco/play4s-service-prod"
 
 jobs:
@@ -68,6 +68,7 @@ jobs:
           sbt clean compile app/docker:publishLocal
         env:
           GIT_SHA: ${{ steps.set-git-sha.outputs.git_sha }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
       - name: Save Docker image as tarball
         run: |
