@@ -34,7 +34,7 @@ export class TaskDefinitionConstruct extends Construct {
 
     // Reference the Google Cloud credentials secret with explicit region
     const googleCredentialsSecret = secretsmanager.Secret.fromSecretAttributes(this, 'GoogleCredentialsSecret', {
-      secretCompleteArn: 'arn:aws:secretsmanager:us-east-2:123456789012:secret:google-credentials-key',
+      secretCompleteArn: 'arn:aws:secretsmanager:us-east-2:154006474850:secret:google-credentials-key-78vsme',
     });
 
     const container = this.taskDefinition.addContainer('AppContainer', {
