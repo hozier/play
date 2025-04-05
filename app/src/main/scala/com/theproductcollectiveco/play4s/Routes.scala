@@ -26,7 +26,7 @@ object Routes {
     for {
       play4sRoutes <- SimpleRestJsonBuilder.routes(play4sService).resource
       metaRoutes   <- SimpleRestJsonBuilder.routes(metaService).resource
-      swaggerRoutes = docs[IO].withPath("/docs")(Play4sApi, ServiceMetaApi)
+      swaggerRoutes = docs[IO](Play4sApi, ServiceMetaApi)
       customRoutes  =
         HttpRoutes.of[IO] { case req @ POST -> Root / "game" / "sudoku" / "solve" =>
           req.body.compile.drain *> // Ensure the body is fully consumed

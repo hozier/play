@@ -16,8 +16,8 @@ on:
           - prod
         default: "prod"
       gitsha:
-        description: "Optional Git SHA to deploy"
-        required: false
+        description: "Git SHA to deploy"
+        required: true
 
 env:
   REGISTRY: "154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com"
