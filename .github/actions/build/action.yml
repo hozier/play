@@ -19,12 +19,12 @@ runs:
       run: |
         sbt clean compile app/docker:publishLocal
       env:
-        GIT_SHA: ${{ input.git_sha }}
+        GIT_SHA: ${{ inputs.git_sha }}
 
     - name: Save Docker Image
       shell: bash
       run: |
-        docker save -o image.tar ${{ inputs.registry }}/${{ inputs.repository }}:${{ input.git_sha }}
+        docker save -o image.tar ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.git_sha }}
 
     - name: Upload Docker Image
       uses: actions/upload-artifact@v4
