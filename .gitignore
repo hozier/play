@@ -84,3 +84,6 @@ hs_err_pid*
 .*.swp
 
 .DS_Store
+META-INF
+*.test.ts
+cdk.context.json

@@ -1,4 +1,4 @@
-package com.theproductcollectiveco.play4s
+package com.theproductcollectiveco.play4s.api
 
 import cats.implicits.*
 import cats.effect.Clock
@@ -7,8 +7,8 @@ import cats.effect.kernel.MonadCancelThrow
 import cats.Parallel
 import cats.effect.Async
 import cats.effect.std.Console
-import com.theproductcollectiveco.play4s.Play4sApi
-import com.theproductcollectiveco.play4s.game.sudoku.{SudokuComputationSummary, Algorithm, GameId, BoardState}
+import com.theproductcollectiveco.play4s.{Play4sApi, Metrics}
+import com.theproductcollectiveco.play4s.game.sudoku.{SudokuComputationSummary, Algorithm, GameId}
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Orchestrator, Search}
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudVisionClient}
 import org.typelevel.log4cats.Logger
@@ -60,7 +60,7 @@ object Play4sService {
           strategy = Algorithm(backtrackingAlgorithm.getClass().getName()),
           duration = duration,
           requestedAt = requestedAt,
-          solution = headOption.map(_.value).map(BoardState.apply),
+          solution = headOption,
         )
 
 }

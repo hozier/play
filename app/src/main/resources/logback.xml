@@ -15,5 +15,5 @@
   <!-- Override log levels for specific packages or classes -->
   <!-- <logger name="com.theproductcollectiveco" level="DEBUG" /> -->
   <logger name="com.theproductcollectiveco.Metrics" level="INFO" />
-
+  <!-- <logger name="org.http4s" level="DEBUG"/> -->
 </configuration>

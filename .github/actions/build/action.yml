@@ -1,0 +1,64 @@
+name: "Build Docker Image"
+description: "Builds a Docker image and saves it as a tarball"
+inputs:
+  registry:
+    description: "Docker registry URL"
+    required: true
+  repository:
+    description: "Docker repository name"
+    required: true
+  git_sha:
+    description: "Git SHA of the built image"
+    required: true
+  aws_account_id:
+    description: "AWS Account Id"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: "21"
+        distribution: "temurin"
+
+    - name: Install sbt
+      shell: bash
+      run: |
+        echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list
+        curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x99E82A75642AC823" | sudo apt-key add
+        sudo apt-get update
+        sudo apt-get install -y sbt
+
+    - name: Cache sbt dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier
+        key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+        restore-keys: |
+          ${{ runner.os }}-sbt-
+
+    - name: Clean, compile, and build Docker image
+      shell: bash
+      run: |
+        sbt clean compile app/docker:publishLocal
+      env:
+        GIT_SHA: ${{ inputs.git_sha }}
+        AWS_ACCOUNT_ID: ${{ inputs.aws_account_id }}
+
+    - name: Save Docker image as tarball
+      shell: bash
+      run: |
+        docker save -o image.tar ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.git_sha }}
+
+    - name: Upload Docker image
+      uses: actions/upload-artifact@v4
+      with:
+        name: docker-image
+        path: image.tar

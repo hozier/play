@@ -1,0 +1,44 @@
+name: "Push Docker Image"
+description: "Pushes a Docker image to ECR"
+inputs:
+  registry:
+    description: "Docker registry URL"
+    required: true
+  repository:
+    description: "Docker repository name"
+    required: true
+  git_sha:
+    description: "Git SHA of the image to push"
+    required: true
+  aws_access_key_id:
+    description: "AWS account details"
+    required: true
+  aws_secret_access_key:
+    description: "AWS account details"
+    required: true
+  region:
+    description: "AWS region"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS CLI
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ inputs.aws_access_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: ${{ inputs.region }}
+
+    - name: Download Docker Image
+      uses: actions/download-artifact@v4
+      with:
+        name: docker-image
+
+    - name: Load and Push Docker Image
+      shell: bash
+      run: |
+        docker load -i image.tar
+        aws ecr get-login-password --region ${{ inputs.region }} | docker login --username AWS --password-stdin ${{ inputs.registry }}
+        docker tag ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.git_sha }} ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.git_sha }}
+        docker push ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.git_sha }}
