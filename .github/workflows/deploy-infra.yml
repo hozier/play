@@ -15,6 +15,9 @@ on:
         options:
           - prod
         default: "prod"
+      gitsha:
+        description: "Optional Git SHA to deploy"
+        required: false
 
 env:
   REGISTRY: "154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com"
@@ -32,7 +35,11 @@ jobs:
       - name: Set Git SHA
         id: set-git-sha
         run: |
-          GIT_SHA=$(git rev-parse --short HEAD)
+          if [ "${{ inputs.gitsha }}" != "" ]; then
+            GIT_SHA=${{ inputs.gitsha }}
+          else
+            GIT_SHA=$(git rev-parse --short HEAD)
+          fi
           echo "git_sha=$GIT_SHA" >> $GITHUB_ENV
           echo "git_sha=$GIT_SHA" >> $GITHUB_OUTPUT
 
