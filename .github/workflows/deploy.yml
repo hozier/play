@@ -16,6 +16,10 @@ on:
           - prod
         default: "prod"
 
+env:
+  REGISTRY: "154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com"
+  REPOSITORY: "theproductcollectiveco/play4s-service-prod"
+
 jobs:
   build-and-publish:
     name: Build and publishLocal
@@ -55,7 +59,8 @@ jobs:
 
       - name: Save Docker image as tarball
         run: |
-          docker save -o image.tar 154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com/theproductcollectiveco/play4s-service-prod:latest
+          IMAGE_TAG="latest"
+          docker save -o image.tar $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
       - name: Upload Docker image
         uses: actions/upload-artifact@v4
@@ -78,36 +83,21 @@ jobs:
         id: load-image
         run: |
           docker load -i image.tar
-          IMAGE_ID=$(docker inspect --format='{{.Id}}' 154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com/theproductcollectiveco/play4s-service-prod:latest)
-          echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_ENV
 
-      - name: Define image variables
-        id: define-image
+      - name: Push Docker image to ECR
         run: |
-          REGISTRY="154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com"
-          REPOSITORY="theproductcollectiveco/play4s-service-prod"
-          IMAGE_TAG="$IMAGE_ID"
+          docker tag $REGISTRY/$REPOSITORY:latest $REGISTRY/$REPOSITORY:latest
+          docker push $REGISTRY/$REPOSITORY:latest
+
+      - name: Extract IMAGE_DIGEST
+        id: extract-digest
+        run: |
+          IMAGE_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $REGISTRY/$REPOSITORY:latest | grep -oE 'sha256:[a-f0-9]{64}')
+          echo "IMAGE_TAG=$IMAGE_DIGEST" >> $GITHUB_ENV
 
       - name: Tag Docker image with digest
         run: |
           docker tag $REGISTRY/$REPOSITORY:latest $REGISTRY/$REPOSITORY:$IMAGE_TAG
-
-      - name: Configure AWS CLI
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ inputs.region }}
-
-      - name: Log in to AWS ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-        env:
-          AWS_REGION: ${{ inputs.region }}
-
-      - name: Push Docker image to ECR
-        run: |
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
   deploy:
     name: Deploy
@@ -133,15 +123,14 @@ jobs:
       - name: Load Docker image
         id: load-image
         run: |
+          IMAGE_TAG="latest"
           docker load -i image.tar
-          IMAGE_ID=$(docker inspect --format='{{.Id}}' 154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com/theproductcollectiveco/play4s-service-prod:latest)
+          IMAGE_ID=$(docker inspect --format='{{.Id}}' $REGISTRY/$REPOSITORY:$IMAGE_TAG)
           echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_ENV
 
       - name: Define image variables
         id: define-image
         run: |
-          REGISTRY="154006474850.dkr.ecr.${{ inputs.region }}.amazonaws.com"
-          REPOSITORY="theproductcollectiveco/play4s-service-prod"
           IMAGE_TAG="$IMAGE_ID"
 
       - name: CDK prepare
