@@ -63,6 +63,11 @@ export class TaskDefinitionConstruct extends Construct {
         'sh',
         '-c',
         `
+        # Ensure the CREDENTIALS_JSON environment variable is set
+        if [ -z "$CREDENTIALS_JSON" ]; then
+          echo "Error: CREDENTIALS_JSON is not set" >&2
+          exit 1
+        fi && \
         # Create the /secrets directory if it doesn't exist
         mkdir -p /secrets && \
         # Write the CREDENTIALS_JSON environment variable to /secrets/credentials.json
