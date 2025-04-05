@@ -31,6 +31,22 @@ runs:
       shell: bash
       run: npm ci
 
+    - name: Fetch Secret from AWS Secrets Manager
+      id: fetch-secret
+      shell: bash
+      env:
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
+        AWS_REGION: ${{ inputs.region }}
+      run: |
+        SECRET_JSON=$(aws secretsmanager get-secret-value \
+          --secret-id google-credentials-key \
+          --region $AWS_REGION \
+          --query SecretString \
+          --output text)
+        echo "SECRET_JSON=$SECRET_JSON" >> $GITHUB_ENV
+        echo "SECRET_JSON=$SECRET_JSON" >> $GITHUB_OUTPUT
+
     - name: Deploy with CDK
       working-directory: ./infrastructure
       shell: bash
@@ -41,6 +57,7 @@ runs:
         AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
         AWS_REGION: ${{ inputs.region }}
+        SECRET_JSON: ${{ steps.fetch-secret.outputs.SECRET_JSON }}
       run: |
         if ! command -v cdk &> /dev/null; then
           npm install -g aws-cdk

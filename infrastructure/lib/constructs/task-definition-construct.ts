@@ -5,6 +5,12 @@ import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 
+const secretJson = process.env.SECRET_JSON;
+
+if (!secretJson) {
+  throw new Error('SECRET_JSON environment variable is not set');
+}
+
 interface TaskDefinitionConstructProps {
   repository: ecr.IRepository;
   imageTag: string;
@@ -32,11 +38,6 @@ export class TaskDefinitionConstruct extends Construct {
       executionRole: taskExecutionRole,
     });
 
-    // Reference the Google Cloud credentials secret with explicit region
-    const googleCredentialsSecret = secretsmanager.Secret.fromSecretAttributes(this, 'GoogleCredentialsSecret', {
-      secretCompleteArn: 'arn:aws:secretsmanager:us-east-2:154006474850:secret:google-credentials-key-78vsme',
-    });
-
     const container = this.taskDefinition.addContainer('AppContainer', {
       image: ecs.ContainerImage.fromEcrRepository(repository, imageTag),
       memoryReservationMiB: 2048,
@@ -53,29 +54,22 @@ export class TaskDefinitionConstruct extends Construct {
       environment: {
         NODE_ENV: 'production',
         GOOGLE_APPLICATION_CREDENTIALS: '/secrets/credentials.json', // Path for the credentials file
+        SECRET_JSON: secretJson!, // Pass the secret JSON directly as an environment variable
       },
-      secrets: {
-        CREDENTIALS_JSON: ecs.Secret.fromSecretsManager(googleCredentialsSecret), // Inject the secret
-      },
-      command: [
-        'sh',
-        '-c',
-        `
-        echo "========== STARTING CONTAINER ==========" && \
-        echo "CREDENTIALS_JSON: $CREDENTIALS_JSON" && \
-        if [ -z "$CREDENTIALS_JSON" ]; then
-          echo "========== ERROR: CREDENTIALS_JSON is not set ==========" >&2
-          exit 1
-        fi && \
-        mkdir -p /secrets && \
-        echo "$CREDENTIALS_JSON" > /secrets/credentials.json && \
-        echo "========== CREDENTIALS FILE CREATED ==========" && \
-        echo "Contents of /secrets/credentials.json:" && \
-        cat /secrets/credentials.json && \
-        echo "========== CONTAINER INITIALIZATION COMPLETE =========="
-        `,
-      ],
-      user: "root",
+      // command: [
+      //   'sh',
+      //   '-c',
+      //   `
+      //   echo "========== STARTING CONTAINER ==========" && \
+      //   mkdir -p /secrets && \
+      //   echo "$SECRET_JSON" > /secrets/credentials.json && \
+      //   echo "========== CREDENTIALS FILE CREATED ==========" && \
+      //   echo "Contents of /secrets/credentials.json:" && \
+      //   cat /secrets/credentials.json && \
+      //   echo "========== CONTAINER INITIALIZATION COMPLETE =========="
+      //   `,
+      // ],
+      // user: "root",
     });
 
     container.addPortMappings({
@@ -83,16 +77,16 @@ export class TaskDefinitionConstruct extends Construct {
       protocol: ecs.Protocol.TCP,
     });
 
-    // Add a volume for the credentials file
-    this.taskDefinition.addVolume({
-      name: 'SecretsVolume',
-      host: {}, // Use an emptyDir volume
-    });
+    // // Add a volume for the credentials file
+    // this.taskDefinition.addVolume({
+    //   name: 'SecretsVolume',
+    //   host: {}, // Use an emptyDir volume
+    // });
 
-    container.addMountPoints({
-      containerPath: '/secrets',
-      sourceVolume: 'SecretsVolume',
-      readOnly: false,
-    });
+    // container.addMountPoints({
+    //   containerPath: '/secrets',
+    //   sourceVolume: 'SecretsVolume',
+    //   readOnly: false,
+    // });
   }
 }
