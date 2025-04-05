@@ -44,6 +44,7 @@ jobs:
           registry: ${{ env.REGISTRY }}
           repository: ${{ env.REPOSITORY }}
           git_sha: ${{ steps.set-git-sha.outputs.git_sha }}
+          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
 
   push-to-ecr:
     name: Push

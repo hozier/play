@@ -10,7 +10,9 @@ inputs:
   git_sha:
     description: "Git SHA of the built image"
     required: true
-
+  aws_account_id:
+    description: "AWS Account Id"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -48,7 +50,7 @@ runs:
         sbt clean compile app/docker:publishLocal
       env:
         GIT_SHA: ${{ inputs.git_sha }}
-        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+        AWS_ACCOUNT_ID: ${{ inputs.aws_account_id }}
 
     - name: Save Docker image as tarball
       shell: bash
