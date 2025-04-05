@@ -21,9 +21,6 @@ jobs:
     name: Build and publishLocal
     runs-on: ubuntu-latest
 
-    env:
-      DOCKER_IMAGE_TAG: latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
