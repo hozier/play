@@ -48,6 +48,7 @@ runs:
         sbt clean compile app/docker:publishLocal
       env:
         GIT_SHA: ${{ inputs.git_sha }}
+        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
     - name: Save Docker image as tarball
       shell: bash
