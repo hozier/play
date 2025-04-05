@@ -49,7 +49,7 @@ lazy val app =
         Some("theproductcollectiveco"),
         "play4s-service-prod",
         Some(sys.env.getOrElse("GIT_SHA", "latest"))
-      )
+      ),
       Compile / mainClass := Some("com.theproductcollectiveco.play4s.MainApp"),
       dockerEntrypoint    := Seq("/opt/docker/bin/play4s-app")
     )
