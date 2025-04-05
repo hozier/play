@@ -113,7 +113,7 @@ jobs:
 
     steps:
       - name: Deploy with CDK
-        uses: ./.github/actions/deploy-action
+        uses: ./.github/actions/deploy
         with:
           region: ${{ inputs.region }}
           registry: ${{ env.REGISTRY }}

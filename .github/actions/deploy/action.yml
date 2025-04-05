@@ -1,6 +1,5 @@
 name: "Deploy with CDK"
 description: "Deploy infrastructure and services using AWS CDK"
-author: "theproductcollectiveco"
 inputs:
   region:
     description: "AWS region to deploy to"
@@ -25,10 +24,12 @@ runs:
 
     - name: CDK prepare
       working-directory: ./infrastructure
+      shell: bash
       run: npm ci
 
     - name: Deploy with CDK
       working-directory: ./infrastructure
+      shell: bash
       env:
         REGISTRY: ${{ inputs.registry }}
         REPOSITORY: ${{ inputs.repository }}
@@ -42,9 +43,3 @@ runs:
         fi
         cdk synth
         cdk deploy --all --require-approval never --outputs-file cdk-outputs.json
-
-    - name: Query Load Balancer DNS Name
-      working-directory: ./infrastructure
-      run: |
-        echo "Load Balancer DNS Name:"
-        cat cdk-outputs.json | jq -r '.["app-play4s-service-prod-load-balanced-fargate-service-stack"] | to_entries[] | select(.key | startswith("LoadBalancerConstructLoadBalancerDNSName")) | .value'
