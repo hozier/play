@@ -3,6 +3,7 @@ import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
 import { Construct } from 'constructs';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
 interface TaskDefinitionConstructProps {
   repository: ecr.IRepository;
@@ -31,9 +32,17 @@ export class TaskDefinitionConstruct extends Construct {
       executionRole: taskExecutionRole,
     });
 
+    const googleCredentialsSecret = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      'GoogleCredentialsSecret',
+      'google-credentials-key'
+    );
+
+
+
     const container = this.taskDefinition.addContainer('AppContainer', {
-      image: ecs.ContainerImage.fromEcrRepository(repository, imageTag), // Use the digest
-      memoryReservationMiB: 256,
+      image: ecs.ContainerImage.fromEcrRepository(repository, imageTag),
+      memoryReservationMiB: 2048,
       healthCheck: {
         timeout: cdk.Duration.seconds(5),
         interval: cdk.Duration.seconds(15),
@@ -46,6 +55,8 @@ export class TaskDefinitionConstruct extends Construct {
       }),
       environment: {
         NODE_ENV: 'production',
+        GOOGLE_APPLICATION_CREDENTIALS: '/tmp/secrets/credentials.json',
+        GOOGLE_CLOUD_API_SAKEY: googleCredentialsSecret.secretValue.unsafeUnwrap(),
       },
     });
 
