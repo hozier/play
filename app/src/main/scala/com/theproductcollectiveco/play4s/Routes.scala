@@ -29,7 +29,6 @@ object Routes {
       swaggerRoutes = docs[IO](Play4sApi, ServiceMetaApi)
       customRoutes  =
         HttpRoutes.of[IO] { case req @ POST -> Root / "game" / "sudoku" / "solve" =>
-          req.body.compile.drain *> // Ensure the body is fully consumed
             Middleware
               .decodeContent(req, "image")
               .flatMap { blob =>
