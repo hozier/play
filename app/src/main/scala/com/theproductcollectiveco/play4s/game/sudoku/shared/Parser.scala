@@ -34,11 +34,10 @@ trait Parser[F[_]] {
           new RuntimeException(s"Environment variable $envVar is not set"),
         )
 
-      _                    <- Files[F].createDirectories(Path(filePath).parent.getOrElse(Path("."))) // Ensure the directory exists
-      formattedEscapedJson <- JsonFormatter.formatEscapedJson(envValue)
-      _                    <-
+      _ <- Files[F].createDirectories(Path(filePath).parent.getOrElse(Path("."))) // Ensure the directory exists
+      _ <-
         fs2.Stream
-          .emits(formattedEscapedJson.getBytes)
+          .emits(envValue.getBytes)
           .covary[F]
           .through(Files[F].writeAll(Path(filePath)))
           .compile
