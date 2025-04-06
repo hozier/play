@@ -27,6 +27,6 @@ jobs:
         uses: ./.github/actions/build
         with:
           registry: ${{ env.REGISTRY }}
-          repository:  ${{ env.REGISTRY }}
+          repository:  ${{ env.REPOSITORY }}
           git_sha: ${{ github.sha }}
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
