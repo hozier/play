@@ -18,7 +18,7 @@ object MainApp extends ResourceApp.Forever {
       given Metrics[IO] = Metrics[IO]
       _                <-
         new Parser[IO] {}
-          .envVarToFileResource[IO](envVar = "GOOGLE_CLOUD_API_SAKEY", filePath = "/tmp/secrets/credentials.json")
+          .envVarToFileResource[IO](envVar = "GOOGLE_CLOUD_API_SAKEY", filePath = System.getenv("GOOGLE_APPLICATION_CREDENTIALS"))
           .toResource
       _                <-
         Routes
