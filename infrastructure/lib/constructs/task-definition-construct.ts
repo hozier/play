@@ -38,8 +38,6 @@ export class TaskDefinitionConstruct extends Construct {
       'google-credentials-key'
     );
 
-
-
     const container = this.taskDefinition.addContainer('AppContainer', {
       image: ecs.ContainerImage.fromEcrRepository(repository, imageTag),
       memoryReservationMiB: 2048,
@@ -56,7 +54,12 @@ export class TaskDefinitionConstruct extends Construct {
       environment: {
         NODE_ENV: 'production',
         GOOGLE_APPLICATION_CREDENTIALS: '/tmp/secrets/credentials.json',
-        GOOGLE_CLOUD_API_SAKEY: googleCredentialsSecret.secretValue.unsafeUnwrap(),
+      },
+      secrets: {
+        GOOGLE_CLOUD_API_SAKEY: ecs.Secret.fromSecretsManager(
+          googleCredentialsSecret,
+          'CREDENTIALS_JSON' // Extract only the value of the CREDENTIALS_JSON key
+        ),
       },
     });
 
