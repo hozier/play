@@ -33,7 +33,8 @@ trait Parser[F[_]] {
         )
 
       _ <- Files[F].createDirectories(Path(filePath).parent.getOrElse(Path(".")))
-      _ <- fs2.Stream
+      _ <-
+        fs2.Stream
           .emits(envValue.getBytes)
           .covary[F]
           .through(Files[F].writeAll(Path(filePath)))
@@ -50,4 +51,3 @@ trait Parser[F[_]] {
       .string
 
 }
-

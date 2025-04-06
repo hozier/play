@@ -1,4 +1,6 @@
-export const SERVICE_NAME = "play4s-service-prod";
+export const APP_NAME = "play4s"
+export const AWS_ENV = "prod";
+export const SERVICE_NAME = `${APP_NAME}-${AWS_ENV}`;
 
 export const env = {
   account: process.env.CDK_DEFAULT_ACCOUNT,

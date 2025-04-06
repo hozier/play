@@ -29,13 +29,13 @@ object Routes {
       swaggerRoutes = docs[IO](Play4sApi, ServiceMetaApi)
       customRoutes  =
         HttpRoutes.of[IO] { case req @ POST -> Root / "game" / "sudoku" / "solve" =>
-            Middleware
-              .decodeContent(req, "image")
-              .flatMap { blob =>
-                play4sService
-                  .computeSudoku(blob)
-                  .flatMap(summary => Ok(summary.asJson))
-              }
+          Middleware
+            .decodeContent(req, "image")
+            .flatMap { blob =>
+              play4sService
+                .computeSudoku(blob)
+                .flatMap(summary => Ok(summary.asJson))
+            }
         }
       allRoutes     = customRoutes <+> play4sRoutes <+> metaRoutes <+> swaggerRoutes
     } yield Http4sLogger.httpRoutes(logHeaders = true, logBody = true)(allRoutes)

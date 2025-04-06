@@ -10,7 +10,7 @@ trait ImageParser[F[_]] extends Parser[F] {
   def parseImage(image: Array[Byte]): F[String]
 }
 
-object GoogleCloudVisionClient {
+object GoogleCloudClient {
 
   def apply[F[_]: Async]: ImageParser[F] =
     new ImageParser[F] with Parser[F] {

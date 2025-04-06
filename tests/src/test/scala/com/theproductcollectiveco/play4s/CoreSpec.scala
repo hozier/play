@@ -6,7 +6,7 @@ import weaver.scalacheck.Checkers
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Search, Orchestrator}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
-import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudVisionClient}
+import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudClient}
 import com.theproductcollectiveco.play4s.shared.Mocks
 import com.theproductcollectiveco.play4s.game.sudoku.BoardState
 
@@ -15,7 +15,7 @@ object CoreSpec extends SimpleIOSuite with Checkers {
   given Logger[IO]  = Slf4jLogger.getLogger[IO]
   given Metrics[IO] = Metrics[IO]
   val traceParser   = TraceClient[F]
-  val imageParser   = GoogleCloudVisionClient[F]
+  val imageParser   = GoogleCloudClient[F]
   val orchestrator  = Orchestrator[IO](traceParser, imageParser)
 
   test("Orchestrator should parse resource correctly") {
