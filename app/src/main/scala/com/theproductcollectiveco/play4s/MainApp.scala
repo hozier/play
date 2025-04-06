@@ -7,6 +7,7 @@ import cats.effect.kernel.Resource
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.api.{Play4sService, HealthService}
+import com.theproductcollectiveco.play4s.game.sudoku.shared.Parser
 
 object MainApp extends ResourceApp.Forever {
 
@@ -15,6 +16,10 @@ object MainApp extends ResourceApp.Forever {
     for {
       given Logger[IO] <- Slf4jLogger.create[IO].toResource
       given Metrics[IO] = Metrics[IO]
+      _                <-
+        new Parser[IO] {}
+          .envVarToFileResource[IO](envVar = "GOOGLE_CLOUD_API_SAKEY", filePath = System.getenv("GOOGLE_APPLICATION_CREDENTIALS"))
+          .toResource
       _                <-
         Routes
           .router(Play4sService[IO], HealthService[IO])
