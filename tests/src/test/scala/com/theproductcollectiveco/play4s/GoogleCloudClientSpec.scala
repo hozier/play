@@ -2,17 +2,17 @@ package com.theproductcollectiveco.play4s
 
 import cats.effect.IO
 import weaver.SimpleIOSuite
-import com.theproductcollectiveco.play4s.game.sudoku.parser.GoogleCloudVisionClient
+import com.theproductcollectiveco.play4s.game.sudoku.parser.GoogleCloudClient
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.shared.Mocks
 
-object GoogleCloudVisionClientSpec extends SimpleIOSuite {
+object GoogleCloudClientSpec extends SimpleIOSuite {
   given Logger[IO] = Slf4jLogger.getLogger[IO]
 
-  test("GoogleCloudVisionClient should correctly parse a Sudoku image") {
+  test("GoogleCloudClient should correctly parse a Sudoku image") {
     val expectedState = Mocks.initialState
-    val parser        = GoogleCloudVisionClient[IO]
+    val parser        = GoogleCloudClient[IO]
 
     for {
       imageBytes      <- parser.fetchBytes("sudoku_test_image_v0.0.1.png")

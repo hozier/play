@@ -2,82 +2,20 @@
 
 ###### (a) Current Development
 
-This project explores various puzzle-solving algorithms, with a current emphasis on Sudoku puzzles. One of the main algorithms implemented is the backtracking algorithm. All compute solutions are now accessible as a service as of latest refactor.
+This project focuses on exploring and implementing various puzzle-solving algorithms, with a primary emphasis on Sudoku puzzles. The backtracking algorithm is one of the key implementations, and recent refactors have made all compute solutions accessible as a service.
 
-###### (b.1) Performance Progress: v1
+###### (b) Performance Progress and Example Analytics
 
-Initially, the backtracking algorithm had significant runtime:
+The performance of the backtracking algorithm has improved significantly over time, with optimizations and a shift to a functional approach.
 
-- **May 12, 2016**: Total runtime was **461 seconds** for solving multiple puzzles (20 puzzles of 9x9, one 16x16, one 5x5, one 4x4). The average runtime per board was approximately **23 seconds**.
+###### **v1: Initial Implementation**
 
-With optimization, runtime drastically improved:
+- **May 12, 2016**: The total runtime was **461 seconds** for solving multiple puzzles (20 puzzles of 9x9, one 16x16, one 5x5, and one 4x4). The average runtime per board was approximately **23 seconds**.
+- **May 14, 2016**: Through optimization efforts, the total runtime was reduced to **15 seconds**, with the average runtime per board dropping to around **0.68 seconds**.
 
-- **May 14, 2016**: Reduced total runtime to **15 seconds**, bringing the average runtime per board down to around **0.68 seconds**.
-###### (b.2) Performance Progress: v2 (Functional Approach)
-Compute request (_Content-Type: multipart/form-data_):
-```
-5 3 . . 7 . . . .
-6 . . 1 9 5 . . .
-. 9 8 . . . . 6 .
-8 . . . 6 . . . 3
-4 . . 8 . 3 . . 1
-7 . . . 2 . . . 6
-. 6 . . . . 2 8 .
-. . . 4 1 9 . . 5
-. . . . 8 . . 7 9
-```
+**Analytics (v1)**
 
-Sudoku Computation Summary:
-```
-{
-    "id": "c2244951-e297-41d1-abff-fbc59b803e41",
-    "strategy": "com.theproductcollectiveco.play4s.game.sudoku.core.BacktrackingAlgorithm$$anon$1",
-    "duration": 2298,
-    "requestedAt": {
-        "epochSecond": 1742916339,
-        "nano": 587805000
-    },
-    "solution": {
-        "value": [
-          [5,3,4,6,7,8,9,1,2],
-          [6,7,2,1,9,5,3,4,8],
-          [1,9,8,3,4,2,5,6,7],
-          [8,5,9,7,6,1,4,2,3],
-          [4,2,6,8,5,3,7,9,1],
-          [7,1,3,9,2,4,8,5,6],
-          [9,6,1,5,3,7,2,8,4],
-          [2,8,7,4,1,9,6,3,5],
-          [3,4,5,2,8,6,1,7,9]
-      ]
-    }
-}
-```
-
-###### (c.1) Endpoints
-
-**Load Balancer Endpoint:**
-
-| Environment | Load Balancer URL                                         |
-| ----------- | --------------------------------------------------------- |
-| PROD        | `app-pl-LoadB-g8oJhj03r5OI-1073683086.us-east-2.elb.amazonaws.com` |
-
-To ensure you have the latest Load Balancer endpoint, simply re-trigger the GitHub Actions workflow `Deploy to AWS`. The updated endpoint will be queried and displayed under the `Deploy` job in the `Query Load Balancer DNS Name` step.
-
-**API Endpoints:**
-
-| Endpoint Path                  | Description                     |
-| ------------------------------ | ------------------------------- |
-| `/internal/meta/health`        | Health check endpoint           |
-| `/game/sudoku/solve`           | Sudoku puzzle-solving endpoint  |
-
-
-###### (c.2) Read the docs
-
-`Smithy4s` will automatically generate an openapi "view" for this service. By default, the documentation is routed under the `/docs` path.
-
-###### (d.1) Example Puzzle Analytics: v1
-
-###### 9x9 Sudoku Example
+**9x9 Sudoku Example**
 
 **Puzzle:**
 ```
@@ -105,128 +43,136 @@ To ensure you have the latest Load Balancer endpoint, simply re-trigger the GitH
 5 2 6 9 8 1 4 7 3
 ```
 
-Algorithm used: **Backtracking**  
-Elapsed time: **0.316678 seconds**
+Algorithm: **Backtracking**  
+Elapsed Time: **0.316678 seconds**
 
-###### 5x5 Sudoku Example
 
-**Puzzle:**
-```
-. 1 . . 2
-. 3 . . .
-. 4 . . 3
-. 5 . . 1
-. 2 . . .
-```
+###### **v2: Functional Approach**
 
-**Solution:**
+The functional approach further improved the performance of the backtracking algorithm. Below is an example of a compute request and its corresponding summary.
+
+**Compute Request (_Content-Type: multipart/form-data_):**
 ```
-4 1 3 5 2
-5 3 1 2 4
-2 4 5 1 3
-3 5 2 4 1
-1 2 4 3 5
+5 3 . . 7 . . . .
+6 . . 1 9 5 . . .
+. 9 8 . . . . 6 .
+8 . . . 6 . . . 3
+4 . . 8 . 3 . . 1
+7 . . . 2 . . . 6
+. 6 . . . . 2 8 .
+. . . 4 1 9 . . 5
+. . . . 8 . . 7 9
 ```
 
-Algorithm used: **Backtracking**  
-Elapsed time: **0.002222 seconds**
-
-###### 4x4 Sudoku Example
-
-**Puzzle:**
+**Sudoku Computation Summary:**
 ```
-4 . 1 .
-1 2 . .
-. 1 . .
-. 4 . 1
+{
+    "id": "c2244951-e297-41d1-abff-fbc59b803e41",
+    "strategy": "com.theproductcollectiveco.play4s.game.sudoku.core.BacktrackingAlgorithm$$anon$1",
+    "duration": 2298,
+    "requestedAt": {
+        "epochSecond": 1742916339,
+        "nano": 587805000
+    },
+    "solution": {
+        "value": [
+          [5,3,4,6,7,8,9,1,2],
+          [6,7,2,1,9,5,3,4,8],
+          [1,9,8,3,4,2,5,6,7],
+          [8,5,9,7,6,1,4,2,3],
+          [4,2,6,8,5,3,7,9,1],
+          [7,1,3,9,2,4,8,5,6],
+          [9,6,1,5,3,7,2,8,4],
+          [2,8,7,4,1,9,6,3,5],
+          [3,4,5,2,8,6,1,7,9]
+      ]
+    }
+}
 ```
 
-**Solution:**
-```
-4 3 1 2
-1 2 3 4
-2 1 4 3
-3 4 2 1
-```
+###### (c) Endpoints
 
-Algorithm used: **Backtracking**  
-Elapsed time: **0.000629 seconds**
+**Load Balancer Endpoint:**
 
-###### (d.2) Example Puzzle Analytics: v2 (Functional Approach)
-See (b.2).
+| Environment | Load Balancer URL                                         |
+| ----------- | --------------------------------------------------------- |
+| PROD        | `app-pl-LoadB-g8oJhj03r5OI-1073683086.us-east-2.elb.amazonaws.com` |
 
-###### (e) Commands Reference
+To retrieve the latest Load Balancer endpoint, re-trigger the GitHub Actions workflow `Deploy to AWS`. The updated endpoint will appear under the `Deploy` job in the `Query Load Balancer DNS Name` step.
 
-Once inside the `sbt` shell, run the following commands:
+**API Endpoints:**
+
+| Endpoint Path                  | Description                     |
+| ------------------------------ | ------------------------------- |
+| `/internal/meta/health`        | Health check endpoint           |
+| `/game/sudoku/solve`           | Sudoku puzzle-solving endpoint  |
+
+###### (d) Documentation
+
+`Smithy4s` automatically generates an OpenAPI view for this service. By default, the documentation is available at the `/docs` path.
+
+###### (e) Environment Variables
+
+| **Category**                  | **Environment Variable**         | **Description**                                              |
+|-------------------------------|-----------------------------------|--------------------------------------------------------------|
+| **GitHub Actions Workflows**  | `AWS_ACCOUNT_ID`                 | The AWS account ID used for deployment.                     |
+|                               | `GIT_SHA`                        | The Git commit SHA used to tag builds or track changes.      |
+|                               | `REGISTRY`                       | The container registry URL (e.g., AWS ECR, Docker Hub).      |
+|                               | `REPOSITORY`                     | The name of the repository in the container registry.        |
+|                               | `IMAGE_TAG`                      | The tag assigned to the container image (e.g., latest, GIT_SHA). |
+|                               | `AWS_ACCESS_KEY_ID`              | AWS access key for authentication.                          |
+|                               | `AWS_SECRET_ACCESS_KEY`          | AWS secret access key for authentication.                   |
+| **Infrastructure/Application**| `GOOGLE_CLOUD_API_SAKEY`         | The service account key for Google Cloud API access.         |
+|                               | `GOOGLE_APPLICATION_CREDENTIALS` | The file path to the Google Cloud service account credentials. |
+
+###### (f) Commands Reference
 
 **Run the application:**
-
 ```shell
 project app; run
 ```
 
 **Run tests:**
-
 ```shell
 test
 ```
 
-**Docker Setup:**
-
-Build Docker images:
-
-> (Optional)  Clear caches
->
-> `sbt docker:clean && # Clear sbt Docker artifacts`
->
-> `docker system prune -a --volumes # Clear Docker cache`
-
+**Build Docker Images:**
 ```shell
 sbt app/docker:publishLocal
 ```
 
-###### (f) Generating new test image data
+###### (g) Generating Test Image Data
 
-To guarantee correctness, we always safely generate the payload with a JSON-aware tool like `jq`.
+To generate test image data safely, follow these steps:
 
-Run:
-
+1. Create a base64 string:
 ```shell
-# Step 1 Safely create base64 string without newlines:
-base64 <fully-qualified-or-relative-path-to-test-image> | tr -d '\r\n' > image.txt
+base64 <path-to-image> | tr -d '\r\n' > image.txt
 ```
 
+2. Create a JSON payload:
 ```shell
-# Step 2 (Safe JSON payload creation):
 jq -n --arg img "$(cat image.txt)" '{image:$img}' > payload.json
 ```
 
-Why use `jq`?
-
-`jq` automatically escapes special characters (e.g., quotes, $) safely.
-
-Ensures 100% valid JSON.
-
-🟢 Confirm JSON validity:
+3. Validate the JSON:
 ```shell
 cat payload.json
 ```
 
-Then POST your request, either with `curl`:
-
+4. Send the request:
 ```shell
 curl -X POST localhost:8080/game/sudoku/solve \
 -H "Content-Type: application/json" \
 -d @payload.json
-````
+```
 
-or copy the verified content into Postman exactly as-is.
+###### (h) Cloud Vision API by Google Cloud
 
-##### (g) Cloud Vision API by Google Cloud
+The Cloud Vision API enables features like image labeling, OCR, and more. This project uses the API to extract insights from game board images.
 
-"Cloud Vision API allows developers to easily integrate vision detection features within applications, including image labeling, face and landmark detection, optical character recognition (OCR), and tagging of explicit content." We internally call out to the API to extract insights from game board images.
+###### (i) Scala Compiler Configuration (sbt-tpolecat)
 
-###### (h) Scala Compiler Configuration (sbt-tpolecat)
-
-This project leverages the [`sbt-tpolecat`](https://github.com/typelevel/sbt-tpolecat/) plugin to apply recommended Scala compiler options. For customization options or to explore other available plugin modes, refer to the [official documentation](https://github.com/typelevel/sbt-tpolecat/).
+This project uses the [`sbt-tpolecat`](https://github.com/typelevel/sbt-tpolecat/) plugin to enforce recommended Scala compiler options. For more details, refer to the [official documentation](https://github.com/typelevel/sbt-tpolecat/).
 

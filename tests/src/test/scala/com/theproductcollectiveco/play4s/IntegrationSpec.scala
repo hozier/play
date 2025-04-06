@@ -7,7 +7,7 @@ import cats.implicits.*
 import weaver.SimpleIOSuite
 import weaver.scalacheck.Checkers
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Orchestrator, Search}
-import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudVisionClient}
+import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudClient}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 
@@ -33,7 +33,7 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
     given Logger[IO]  = Slf4jLogger.getLogger[IO]
     given Metrics[IO] = Metrics[IO]
     val traceParser   = TraceClient[F]
-    val imageParser   = GoogleCloudVisionClient[F]
+    val imageParser   = GoogleCloudClient[F]
     val orchestrator  = Orchestrator[IO](traceParser, imageParser)
 
     orchestrator
@@ -52,7 +52,7 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
     given Logger[IO]  = Slf4jLogger.getLogger[IO]
     given Metrics[IO] = Metrics[IO]
     val traceParser   = TraceClient[F]
-    val imageParser   = GoogleCloudVisionClient[F]
+    val imageParser   = GoogleCloudClient[F]
     val orchestrator  = Orchestrator[IO](traceParser, imageParser)
 
     orchestrator

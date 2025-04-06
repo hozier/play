@@ -4,6 +4,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
 import { Construct } from 'constructs';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+import { APP_NAME, AWS_ENV } from '../../config/environments';
 
 interface TaskDefinitionConstructProps {
   repository: ecr.IRepository;
@@ -52,8 +53,10 @@ export class TaskDefinitionConstruct extends Construct {
         streamPrefix: 'AppContainerLogs',
       }),
       environment: {
-        NODE_ENV: 'production',
         GOOGLE_APPLICATION_CREDENTIALS: '/tmp/secrets/credentials.json',
+        AWS_ENV: AWS_ENV,
+        APP_NAME: APP_NAME,
+        APP_VERSION: imageTag,
       },
       secrets: {
         GOOGLE_CLOUD_API_SAKEY: ecs.Secret.fromSecretsManager(
