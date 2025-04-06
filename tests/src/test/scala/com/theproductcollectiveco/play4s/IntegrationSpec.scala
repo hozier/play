@@ -38,12 +38,12 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
 
     orchestrator
       .processTrace("trace.txt")
-      .flatMap(sharedProcess(_, orchestrator))
-      .flatMap { solutions =>
+      .flatMap:
+        sharedProcess(_, orchestrator)
+      .flatMap: solutions =>
         Logger[IO].debug(
           s"All puzzles processed with solutions: $solutions"
         ) as expect(solutions.nonEmpty)
-      }
   }
 
   test(
@@ -57,14 +57,16 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
 
     orchestrator
       .fetchBytes("sudoku_test_image_v0.0.1.png")
-      .flatMap(orchestrator.processImage)
-      .map(_ :: Nil) // because sharedProcess expects a List type
-      .flatMap(sharedProcess(_, orchestrator))
-      .flatMap { solutions =>
+      .flatMap:
+        orchestrator.processImage
+      .map:
+        _ :: Nil // because sharedProcess expects a List type
+      .flatMap:
+        sharedProcess(_, orchestrator)
+      .flatMap: solutions =>
         Logger[IO].debug(
           s"All puzzles processed with solutions: $solutions"
         ) as expect(solutions.nonEmpty)
-      }
   }
 
 }

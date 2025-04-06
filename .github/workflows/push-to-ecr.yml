@@ -24,26 +24,17 @@ jobs:
   build-and-publish:
     name: Build
     runs-on: ubuntu-latest
-    outputs:
-      git_sha: ${{ steps.set-git-sha.outputs.git_sha }}
       
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set Git SHA
-        id: set-git-sha
-        run: |
-          GIT_SHA=$(git rev-parse --short HEAD)
-          echo "git_sha=$GIT_SHA" >> $GITHUB_ENV
-          echo "git_sha=$GIT_SHA" >> $GITHUB_OUTPUT
 
       - name: Build Docker Image
         uses: ./.github/actions/build
         with:
           registry: ${{ env.REGISTRY }}
           repository: ${{ env.REPOSITORY }}
-          git_sha: ${{ steps.set-git-sha.outputs.git_sha }}
+          git_sha: ${{ github.sha }}
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
 
   push-to-ecr:
@@ -64,4 +55,4 @@ jobs:
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ inputs.region }}
-          git_sha: ${{ needs.build-and-publish.outputs.git_sha }}
+          git_sha: ${{ github.sha }}

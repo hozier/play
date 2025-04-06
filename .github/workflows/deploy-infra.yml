@@ -15,8 +15,8 @@ on:
         options:
           - prod
         default: "prod"
-      gitsha:
-        description: "Git SHA to deploy (optional)"
+      git_sha:
+        description: "Specify a pre-existing image tag already published to ECR (optional)"
         required: false
 
 env:
@@ -35,10 +35,10 @@ jobs:
       - name: Set Git SHA
         id: set-git-sha
         run: |
-          if [ "${{ inputs.gitsha }}" != "" ]; then
-            GIT_SHA=${{ inputs.gitsha }}
+          if [ "${{ inputs.git_sha }}" != "" ]; then
+            GIT_SHA=${{ inputs.git_sha }}
           else
-            GIT_SHA=$(git rev-parse --short HEAD)
+            GIT_SHA=${{ github.sha }}
           fi
           echo "git_sha=$GIT_SHA" >> $GITHUB_ENV
           echo "git_sha=$GIT_SHA" >> $GITHUB_OUTPUT
@@ -52,3 +52,5 @@ jobs:
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ inputs.region }}
+          app_name: "play4s"
+          stage: ${{ inputs.stage }}

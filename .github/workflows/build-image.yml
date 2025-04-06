@@ -1,0 +1,32 @@
+name: "Reusable Workflow: Build Docker Image"
+
+on:
+  workflow_call:
+    inputs:
+      region:
+        required: true
+        type: string
+      stage:
+        required: true
+        type: string
+
+env:
+  REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region }}.amazonaws.com"
+  REPOSITORY: "theproductcollectiveco/play4s-service-${{ inputs.stage }}"
+
+jobs:
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        uses: ./.github/actions/build
+        with:
+          registry: ${{ env.REGISTRY }}
+          repository:  ${{ env.REGISTRY }}
+          git_sha: ${{ github.sha }}
+          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
