@@ -28,7 +28,7 @@ object Routes {
       metaRoutes   <- SimpleRestJsonBuilder.routes(metaService).resource
       swaggerRoutes = docs[IO](Play4sApi, ServiceMetaApi)
       customRoutes  =
-        HttpRoutes.of[IO] { case req @ POST -> Root / "game" / "sudoku" / "solve" =>
+        HttpRoutes.of[IO] { case req @ POST -> Root / "public" / "game" / "sudoku" / "solve" =>
           Middleware
             .decodeContent(req, "image")
             .flatMap { blob =>

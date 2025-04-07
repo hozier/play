@@ -54,12 +54,13 @@ object Search {
           verifyColumnState(boardState, col, target) &&
           verifyRowState(boardState, row, target)
 
-      override def fetchEmptyCells(board: BoardState): LazyList[(Int, Int)] =
-        for {
-          row <- LazyList.range(0, board.value.size)
-          col <- LazyList.range(0, board.value.size)
-          if board.value(row)(col) == 0
-        } yield (row, col)
+      override def fetchEmptyCells(board: BoardState): LazyList[(Int, Int)] = {
+        val size = board.value.size
+        LazyList
+          .from(0 until size * size)
+          .filter(idx => board.value(idx / size)(idx % size) == 0)
+          .map(idx => (idx / size, idx % size))
+      }
 
     }
 
