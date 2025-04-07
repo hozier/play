@@ -28,8 +28,6 @@ runs:
     - name: Install sbt
       shell: bash
       run: |
-        sudo apt-get update
-        sudo apt-get install -y curl
         curl -sL https://raw.githubusercontent.com/sbt/sbt/master/sbt -o /usr/local/bin/sbt
         chmod +x /usr/local/bin/sbt
         sbt sbtVersion

@@ -14,15 +14,13 @@ object GoogleCloudClientSpec extends SimpleIOSuite {
 
   test("GoogleCloudClient should correctly parse a Sudoku image") {
     for {
-      onCI            <- IO(sys.env.get("AWS_ACCESS_KEY_ID").isDefined)
+      onCI            <- IO(sys.env.get("HOMEBREW_CELLAR").isEmpty)
       _               <- ignore("Skip call outs to Google Cloud API on CI").whenA(onCI)
       expectedState    = Mocks.initialState
       parser           = GoogleCloudClient[IO]
       imageBytes      <- parser.fetchBytes("sudoku_test_image_v0.0.1.png")
       serializedBoard <- parser.parseImage(imageBytes)
-      _               <-
-        Logger[IO].info:
-          s"result: $serializedBoard"
+      _               <- Logger[IO].info(s"result: $serializedBoard")
     } yield expect(serializedBoard == expectedState.map(_.mkString("")).mkString(""))
   }
 
