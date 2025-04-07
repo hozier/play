@@ -5,10 +5,12 @@ import cats.effect.kernel.Ref
 import org.typelevel.log4cats.Logger
 import cats.effect.std.Console
 import cats.implicits.*
+import cats.effect.syntax.spawn.*
 import com.theproductcollectiveco.play4s.Metrics
 import com.theproductcollectiveco.play4s.store.Board
 import com.theproductcollectiveco.play4s.game.sudoku.parser.*
 import cats.Parallel
+import cats.data.NonEmptyList
 import com.theproductcollectiveco.play4s.game.sudoku.BoardState
 
 trait Orchestrator[F[_]] {
@@ -54,11 +56,18 @@ object Orchestrator {
         search: Search,
         algorithms: Algorithm[F]*
       ): F[Option[BoardState]] =
-        for {
-          _         <- Logger[F].debug("Solving board")
-          solutions <- algorithms.parTraverse(_.solve(board, search))
-          _         <- Logger[F].debug("Board solved")
-        } yield solutions.head
+        NonEmptyList.fromList(algorithms.toList) match {
+          case None                     => Async[F].raiseError(new RuntimeException("No algorithms provided"))
+          case Some(nonEmptyAlgorithms) =>
+            for {
+              _        <- Logger[F].debug("Solving board")
+              solution <-
+                nonEmptyAlgorithms
+                  .map(_.solve(board, search))
+                  .reduceLeft(_.race(_).map(_.merge)) // Race all algorithms concurrently and merge Either to Option
+              _ <- Logger[F].debug("Board solved")
+            } yield solution
+        }
     }
 
 }

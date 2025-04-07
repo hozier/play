@@ -24,8 +24,8 @@ env:
   REPOSITORY: "theproductcollectiveco/play4s-service-${{ inputs.stage }}"
 
 jobs:
-  deploy-infra:
-    name: Deploy Infrastructure
+  deploy-cdk-resources:
+    name: Deploy CDK Resources for application to AWS
     runs-on: ubuntu-latest
 
     steps:
@@ -35,12 +35,7 @@ jobs:
       - name: Set Git SHA
         id: set-git-sha
         run: |
-          if [ "${{ inputs.git_sha }}" != "" ]; then
-            GIT_SHA=${{ inputs.git_sha }}
-          else
-            GIT_SHA=${{ github.sha }}
-          fi
-          echo "git_sha=$GIT_SHA" >> $GITHUB_ENV
+          GIT_SHA=${{ inputs.git_sha || github.sha }}
           echo "git_sha=$GIT_SHA" >> $GITHUB_OUTPUT
 
       - name: Deploy with CDK

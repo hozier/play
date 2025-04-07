@@ -1,6 +1,6 @@
 package com.theproductcollectiveco.play4s.game.sudoku.parser
 
-import com.theproductcollectiveco.play4s.game.sudoku.shared.Parser
+import com.theproductcollectiveco.play4s.game.sudoku.common.Parser
 import cats.effect.{Async, MonadCancelThrow, Resource}
 import org.typelevel.log4cats.Logger
 import cats.implicits.*

@@ -1,4 +1,4 @@
-package com.theproductcollectiveco.play4s.game.sudoku.shared
+package com.theproductcollectiveco.play4s.game.sudoku.common
 
 import cats.implicits.*
 import cats.effect.Async

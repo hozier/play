@@ -10,7 +10,7 @@ import cats.effect.Sync
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.api.{Play4sService, HealthService}
-import com.theproductcollectiveco.play4s.game.sudoku.shared.Parser
+import com.theproductcollectiveco.play4s.game.sudoku.common.Parser
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Orchestrator}
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{GoogleCloudClient, TraceClient}
 
@@ -34,7 +34,7 @@ object MainApp extends ResourceApp.Forever {
               clock = Clock[IO],
               uuidGen = UUIDGen.fromSync[IO](Sync[IO]),
               orchestrator = Orchestrator[IO](traceParser, imageParser),
-              algorithm = BacktrackingAlgorithm[IO](),
+              algorithms = BacktrackingAlgorithm[IO](),
             )
           _                <-
             Routes

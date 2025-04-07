@@ -22,7 +22,7 @@ env:
 
 jobs:
   build-and-publish:
-    name: Build
+    name: Build & Publish Artifact Locally
     uses: ./.github/workflows/build-image.yml 
     with:
       region: ${{ inputs.region }}
@@ -30,7 +30,7 @@ jobs:
     secrets: inherit
 
   push-to-ecr:
-    name: Push
+    name: Push Image Artifact
     runs-on: ubuntu-latest
     needs:
       - build-and-publish
@@ -50,7 +50,7 @@ jobs:
           git_sha: ${{ github.sha }}
 
   deploy:
-    name: Deploy
+    name: Deploy CDK Resources for application to AWS
     runs-on: ubuntu-latest
     needs:
       - push-to-ecr

@@ -23,6 +23,11 @@ list NestedVectorList {
     member: VectorList
 }
 
+// A list of algorithms
+list AlgorithmList {
+    member: Algorithm
+}
+
 // A structure that contains a nested vector of integers.
 structure BoardState {
     @required
@@ -36,11 +41,15 @@ structure ComputeRequest {
 }
 
 @mixin
+structure ComputeRequestDeveloperMode {
+    @required
+    trace: String
+}
+
+@mixin
 structure GameMetadata {
     @required
     id: GameId 
-    @required   
-    strategy: Algorithm
     @required
     duration: Long
     @required
@@ -48,6 +57,8 @@ structure GameMetadata {
     @documentation("UTC timestamp at the time the image was uploaded")
     @required
     requestedAt: Timestamp
+    @required   
+    strategies: AlgorithmList
 }
 
 structure SudokuComputationSummary with [GameMetadata] {

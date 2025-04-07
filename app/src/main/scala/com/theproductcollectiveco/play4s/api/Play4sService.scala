@@ -22,10 +22,16 @@ object Play4sService {
     clock: Clock[F],
     uuidGen: UUIDGen[F],
     orchestrator: Orchestrator[F],
-    algorithm: Algorithm[F],
+    algorithms: Algorithm[F]*
   ): Play4sService[F] =
     new Play4sService[F] with Play4sApi[F]:
-      override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] =
+
+      private def computeSudokuCommon(
+        parsedLines: List[String],
+        clock: Clock[F],
+        uuidGen: UUIDGen[F],
+        algorithms: Seq[Algorithm[F]],
+      ): F[SudokuComputationSummary] =
         for {
           start       <- clock.monotonic
           requestedAt <-
@@ -34,7 +40,6 @@ object Play4sService {
               val nanos   = (t - seconds.seconds).toNanos
               Timestamp(seconds, nanos.toInt)
           gameId      <- uuidGen.randomUUID.map(uuid => GameId(uuid.toString))
-          parsedLines <- orchestrator.processImage(image.toArray).map(_ :: Nil)
           headOption  <-
             parsedLines
               .parTraverse: trace =>
@@ -44,7 +49,7 @@ object Play4sService {
                     orchestrator.solve(
                       gameBoard,
                       Search(),
-                      algorithm,
+                      algorithms*
                     )
                   _         <- gameBoard.delete()
                 } yield solutions
@@ -54,10 +59,26 @@ object Play4sService {
           duration     = (end - start).toMillis
         } yield SudokuComputationSummary(
           id = gameId,
-          strategy = Strategy(algorithm.getClass().getName()),
+          strategies = algorithms.map(_.getClass.getName).map(Strategy(_)).toList,
           duration = duration,
           requestedAt = requestedAt,
           solution = headOption,
         )
+
+      override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] =
+        for {
+          parsedLines <- orchestrator.processImage(image.toArray).map(_ :: Nil)
+          summary     <- computeSudokuCommon(parsedLines, clock, uuidGen, algorithms)
+        } yield summary
+
+        /**
+         * Bypasses the requirement of calling out to Google Cloud APIs to read image.
+         *
+         * @param trace
+         * @return
+         */
+      override def computeSudokuDeveloperMode(
+        trace: String
+      ): F[SudokuComputationSummary] = computeSudokuCommon(List(trace), clock, uuidGen, algorithms)
 
 }
