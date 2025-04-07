@@ -1,4 +1,4 @@
-name: "Build Docker Image"
+name: "Build & Publish Artifact Locally"
 description: "Builds a Docker image and saves it as a tarball"
 inputs:
   registry:

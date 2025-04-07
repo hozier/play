@@ -26,59 +26,39 @@ object Play4sService {
   ): Play4sService[F] =
     new Play4sService[F] with Play4sApi[F]:
 
-      private def computeSudokuCommon(
-        parsedLines: List[String],
+      override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] =
+        orchestrator
+          .processImage(image.toArray)
+          .flatMap:
+            computeSudokuCore(_, clock, uuidGen, algorithms)
+
+      override def computeSudokuDeveloperMode(trace: String): F[SudokuComputationSummary] = computeSudokuCore(trace, clock, uuidGen, algorithms)
+
+      private def computeSudokuCore(
+        trace: String,
         clock: Clock[F],
         uuidGen: UUIDGen[F],
         algorithms: Seq[Algorithm[F]],
       ): F[SudokuComputationSummary] =
         for {
-          start       <- clock.monotonic
-          requestedAt <-
+          start         <- clock.monotonic
+          requestedAt   <-
             clock.realTime.map: t =>
               val seconds = t.toSeconds
               val nanos   = (t - seconds.seconds).toNanos
               Timestamp(seconds, nanos.toInt)
-          gameId      <- uuidGen.randomUUID.map(uuid => GameId(uuid.toString))
-          headOption  <-
-            parsedLines
-              .parTraverse: trace =>
-                for {
-                  gameBoard <- orchestrator.createBoard(orchestrator.processLine(trace))
-                  solutions <-
-                    orchestrator.solve(
-                      gameBoard,
-                      Search(),
-                      algorithms*
-                    )
-                  _         <- gameBoard.delete()
-                } yield solutions
-              .map:
-                _.head
-          end         <- clock.monotonic
-          duration     = (end - start).toMillis
+          gameId        <- uuidGen.randomUUID.map(uuid => GameId(uuid.toString))
+          gameBoard     <- orchestrator.createBoard(orchestrator.processLine(trace))
+          maybeSolution <- orchestrator.solve(gameBoard, Search(), algorithms*)
+          _             <- gameBoard.delete()
+          end           <- clock.monotonic
+          duration       = (end - start).toMillis
         } yield SudokuComputationSummary(
           id = gameId,
           strategies = algorithms.map(_.getClass.getName).map(Strategy(_)).toList,
           duration = duration,
           requestedAt = requestedAt,
-          solution = headOption,
+          solution = maybeSolution,
         )
-
-      override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] =
-        for {
-          parsedLines <- orchestrator.processImage(image.toArray).map(_ :: Nil)
-          summary     <- computeSudokuCommon(parsedLines, clock, uuidGen, algorithms)
-        } yield summary
-
-        /**
-         * Bypasses the requirement of calling out to Google Cloud APIs to read image.
-         *
-         * @param trace
-         * @return
-         */
-      override def computeSudokuDeveloperMode(
-        trace: String
-      ): F[SudokuComputationSummary] = computeSudokuCommon(List(trace), clock, uuidGen, algorithms)
 
 }

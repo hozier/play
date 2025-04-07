@@ -65,3 +65,18 @@ object BacktrackingAlgorithm {
   }
 
 }
+
+object ConstaintPropogationAlgorithm {
+
+  def apply[F[_]: MonadCancelThrow: Async: Logger: Parallel: Metrics](): Algorithm[F] =
+    new Algorithm[F] {
+      override def solve(
+        board: Board[F],
+        search: Search,
+      ): F[Option[BoardState]] =
+        Metrics[F].time("ConstaintPropogationAlgorithm.solve") {
+          ???
+        }
+    }
+
+}

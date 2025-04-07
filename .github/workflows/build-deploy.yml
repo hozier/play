@@ -15,6 +15,11 @@ on:
         options:
           - prod
         default: "prod"
+      desired_fargate_task_count:
+        description:
+          "Desired count of Fargate tasks" # e.g., 0 to scale down, 1 to scale up
+        required: false
+        default: "1"
 
 env:
   REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region }}.amazonaws.com"
@@ -50,7 +55,7 @@ jobs:
           git_sha: ${{ github.sha }}
 
   deploy:
-    name: Deploy CDK Resources for application to AWS
+    name: Deploy CDK Resources
     runs-on: ubuntu-latest
     needs:
       - push-to-ecr
@@ -71,3 +76,4 @@ jobs:
           region: ${{ inputs.region }}
           app_name: "play4s"
           stage: ${{ inputs.stage }}
+          desired_fargate_task_count: ${{ inputs.desired_fargate_task_count }}
