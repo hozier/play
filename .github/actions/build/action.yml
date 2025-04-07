@@ -30,9 +30,9 @@ runs:
       run: |
         sudo apt-get update
         sudo apt-get install -y curl
-        curl -L -o sbt.deb https://github.com/sbt/sbt/releases/download/v1.9.7/sbt-1.9.7.deb
-        sudo dpkg -i sbt.deb
-        sudo apt-get install -f -y
+        curl -sL https://raw.githubusercontent.com/sbt/sbt/master/sbt -o /usr/local/bin/sbt
+        chmod +x /usr/local/bin/sbt
+        sbt sbtVersion
 
     - name: Cache sbt dependencies
       uses: actions/cache@v4
