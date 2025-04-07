@@ -8,7 +8,7 @@ import { APP_NAME, AWS_ENV } from '../../config/environments';
 
 interface TaskDefinitionConstructProps {
   repository: ecr.IRepository;
-  imageTag: string; // Change property name to reflect digest usage
+  imageTag: string;
 }
 
 export class TaskDefinitionConstruct extends Construct {

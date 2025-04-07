@@ -10,10 +10,6 @@ on:
         required: true
         type: string
 
-env:
-  REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region }}.amazonaws.com"
-  REPOSITORY: "theproductcollectiveco/play4s-service-${{ inputs.stage }}"
-
 jobs:
   build:
     name: Build Docker Image
@@ -23,14 +19,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Debug REGISTRY Variable
-        run: |
-          echo "REGISTRY: ${{ env.REGISTRY }}"
-
       - name: Build Docker Image
         uses: ./.github/actions/build
         with:
-          registry: ${{ env.REGISTRY }}
-          repository:  ${{ env.REPOSITORY }}
+          registry: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region }}.amazonaws.com"
+          repository:  "theproductcollectiveco/play4s-service-${{ inputs.stage }}"
           git_sha: ${{ github.sha }}
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
