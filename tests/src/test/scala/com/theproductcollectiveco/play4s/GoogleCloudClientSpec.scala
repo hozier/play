@@ -20,7 +20,9 @@ object GoogleCloudClientSpec extends SimpleIOSuite {
       parser           = GoogleCloudClient[IO]
       imageBytes      <- parser.fetchBytes("sudoku_test_image_v0.0.1.png")
       serializedBoard <- parser.parseImage(imageBytes)
-      _               <- Logger[IO].info(s"result: $serializedBoard")
+      _               <-
+        Logger[IO].info:
+          s"result: $serializedBoard"
     } yield expect(serializedBoard == expectedState.map(_.mkString("")).mkString(""))
   }
 

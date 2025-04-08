@@ -43,7 +43,7 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
       .flatMap: solutions =>
         Logger[IO].debug(
           s"All puzzles processed with solutions: $solutions"
-        ) as expect(solutions.nonEmpty)
+        ) as expect(solutions.forall(_.isDefined))
   }
 
   test(
@@ -63,7 +63,7 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
       parsed     <- orchestrator.processImage(imageBytes)
       solutions  <- sharedProcess(parsed :: Nil, orchestrator) // because sharedProcess expects a List type
       _          <- Logger[IO].debug(s"All puzzles processed with solutions: $solutions")
-    } yield expect(solutions.map(_.isDefined).reduce(_ & _))
+    } yield expect(solutions.forall(_.isDefined))
   }
 
 }
