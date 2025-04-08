@@ -1,4 +1,4 @@
-name: "Deploy with CDK"
+name: "Deploy CDK Resources for application to AWS"
 description: "Deploy infrastructure and services using AWS CDK"
 inputs:
   region:
@@ -25,6 +25,10 @@ inputs:
   stage:
     description: "AWS environment"
     required: true
+  desired_fargate_task_count:
+    description:
+      "Desired count of Fargate tasks (e.g., 0 to scale down, 1 to scale up)"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -40,6 +44,7 @@ runs:
       working-directory: ./infrastructure
       shell: bash
       env:
+        DESIRED_COUNT: ${{ inputs.desired_fargate_task_count }}
         REGISTRY: ${{ inputs.registry }}
         REPOSITORY: ${{ inputs.repository }}
         IMAGE_TAG: ${{ inputs.git_sha }}

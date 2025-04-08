@@ -2,7 +2,7 @@ package com.theproductcollectiveco.play4s.game.sudoku.common
 
 import cats.implicits.*
 import cats.effect.Async
-import java.nio.file.{Paths, Files as Files4j}
+import java.nio.file.Paths
 import com.theproductcollectiveco.play4s.game.sudoku.BoardState
 import cats.effect.Sync
 import fs2.io.file.{Files, Path}
@@ -17,11 +17,11 @@ trait Parser[F[_]] {
     }
   }
 
-  def fetchBytes[F[_]: Async](fileName: String): F[Array[Byte]] =
+  def fetchBytes[F[_]: Async: Files](fileName: String): F[Array[Byte]] =
     for {
       uri   <- Async[F].delay(getClass.getClassLoader.getResource(fileName).toURI)
-      path  <- Async[F].delay(Paths.get(uri))
-      bytes <- Async[F].delay(Files4j.readAllBytes(path))
+      path  <- Async[F].delay(Path.fromNioPath(Paths.get(uri)))
+      bytes <- Files[F].readAll(path).compile.to(Array)
     } yield bytes
 
   def envVarToFileResource[F[_]: Sync: Files](envVar: String, filePath: String): F[Unit] =

@@ -9,7 +9,7 @@ structure InvalidInputError {
 }
 
 @error("client")
-@httpError(404)
+@httpError(422)
 structure NoSolutionFoundError {
     @required
     description: String

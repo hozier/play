@@ -27,6 +27,7 @@ lazy val root =
     .aggregate(app, tests, smithy)
     .settings(name := "play4s")
     .settings(commonSettings)
+    .enablePlugins(TpolecatPlugin)
 
 lazy val app =
   (project in file("app"))
@@ -44,14 +45,14 @@ lazy val app =
         Cmd("RUN", "apt-get update && apt-get install -y curl"),
         Cmd("USER", "demiourgos728"), // Switch back to the non-root user
       ),
-      dockerAlias := DockerAlias(
+      dockerAlias         := DockerAlias(
         sys.env.get("AWS_ACCOUNT_ID").map(accountId => s"$accountId.dkr.ecr.us-east-2.amazonaws.com"),
         Some("theproductcollectiveco"),
         "play4s-service-prod",
-        Some(sys.env.getOrElse("GIT_SHA", "latest"))
+        Some(sys.env.getOrElse("GIT_SHA", "latest")),
       ),
       Compile / mainClass := Some("com.theproductcollectiveco.play4s.MainApp"),
-      dockerEntrypoint    := Seq("/opt/docker/bin/play4s-app")
+      dockerEntrypoint    := Seq("/opt/docker/bin/play4s-app"),
     )
     .settings(commonSettings)
 

@@ -15,11 +15,14 @@ export class FargateServiceConstruct extends Construct {
 
     const { cluster, taskDefinition, targetGroup } = props;
 
+    const acceptedCounts = ["0", "1", "2", "3"]
+    const requestedCount = process.env.DESIRED_COUNT!
+
     const fargateService = new ecs.FargateService(this, 'FargateService', {
       cluster,
       taskDefinition,
       assignPublicIp: true,
-      desiredCount: 1,
+      desiredCount: parseInt(acceptedCounts.includes(requestedCount) ? requestedCount : "1"),
       vpcSubnets: { subnetType: cdk.aws_ec2.SubnetType.PUBLIC },
       circuitBreaker: { rollback: true },
     });

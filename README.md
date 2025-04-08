@@ -102,10 +102,11 @@ To retrieve the latest Load Balancer endpoint, re-trigger the GitHub Actions wor
 
 **API Endpoints:**
 
-| Endpoint Path                  | Description                     |
-| ------------------------------ | ------------------------------- |
-| `/internal/meta/health`        | Health check endpoint           |
-| `/game/sudoku/solve`           | Sudoku puzzle-solving endpoint  |
+| Endpoint Path                         | Description                     |
+| ------------------------------------- | ------------------------------- |
+| `/internal/meta/health`               | Health check endpoint           | 
+| `/internal/game/sudoku/solve`         | Developer endpoint              |
+| `/public/game/sudoku/solve`           | Sudoku puzzle-solving endpoint  |
 
 ###### (d) Documentation
 
@@ -163,7 +164,7 @@ cat payload.json
 
 4. Send the request:
 ```shell
-curl -X POST localhost:8080/game/sudoku/solve \
+curl -X POST localhost:8080/public/game/sudoku/solve \
 -H "Content-Type: application/json" \
 -d @payload.json
 ```

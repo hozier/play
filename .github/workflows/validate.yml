@@ -3,10 +3,11 @@ name: Validate Build
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
-    name: Build
+    name: Build & Publish Artifact Locally
     uses: ./.github/workflows/build-image.yml
     with:
       region: 'us-east-2'

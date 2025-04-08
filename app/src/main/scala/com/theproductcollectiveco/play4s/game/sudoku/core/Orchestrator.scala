@@ -11,6 +11,7 @@ import com.theproductcollectiveco.play4s.store.Board
 import com.theproductcollectiveco.play4s.game.sudoku.parser.*
 import cats.Parallel
 import cats.data.NonEmptyList
+import fs2.io.file.Files
 import com.theproductcollectiveco.play4s.game.sudoku.BoardState
 
 trait Orchestrator[F[_]] {
@@ -24,7 +25,7 @@ trait Orchestrator[F[_]] {
 
 object Orchestrator {
 
-  def apply[F[_]: MonadCancelThrow: Async: Logger: Console: Parallel: Metrics](
+  def apply[F[_]: MonadCancelThrow: Async: Logger: Console: Parallel: Files: Metrics](
     traceParser: TraceParser[F],
     imageParser: ImageParser[F],
   ): Orchestrator[F] =

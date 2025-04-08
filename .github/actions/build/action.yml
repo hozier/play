@@ -1,4 +1,4 @@
-name: "Build Docker Image"
+name: "Build & Publish Artifact Locally"
 description: "Builds a Docker image and saves it as a tarball"
 inputs:
   registry:
@@ -28,8 +28,6 @@ runs:
     - name: Install sbt
       shell: bash
       run: |
-        sudo apt-get update
-        sudo apt-get install -y curl
         curl -sL https://raw.githubusercontent.com/sbt/sbt/master/sbt -o /usr/local/bin/sbt
         chmod +x /usr/local/bin/sbt
         sbt sbtVersion
@@ -45,20 +43,28 @@ runs:
         restore-keys: |
           ${{ runner.os }}-sbt-
 
-    - name: Clean, compile, and build Docker image
+    - name: Clean, compile, and run tests
       shell: bash
       run: |
-        sbt clean compile app/docker:publishLocal
+        sbt clean compile tests/test
+
+    - name: Build Docker image
+      if: success() # Only proceed if tests pass
+      shell: bash
+      run: |
+        sbt app/docker:publishLocal
       env:
         GIT_SHA: ${{ inputs.git_sha }}
         AWS_ACCOUNT_ID: ${{ inputs.aws_account_id }}
 
     - name: Save Docker image as tarball
+      if: success() # Only proceed if tests pass
       shell: bash
       run: |
         docker save -o image.tar ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.git_sha }}
 
     - name: Upload Docker image
+      if: success() # Only proceed if tests pass
       uses: actions/upload-artifact@v4
       with:
         name: docker-image

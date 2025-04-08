@@ -43,7 +43,7 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
       .flatMap: solutions =>
         Logger[IO].debug(
           s"All puzzles processed with solutions: $solutions"
-        ) as expect(solutions.nonEmpty)
+        ) as expect(solutions.forall(_.isDefined))
   }
 
   test(
@@ -55,18 +55,15 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
     val imageParser   = GoogleCloudClient[F]
     val orchestrator  = Orchestrator[IO](traceParser, imageParser)
 
-    orchestrator
-      .fetchBytes("sudoku_test_image_v0.0.1.png")
-      .flatMap:
-        orchestrator.processImage
-      .map:
-        _ :: Nil // because sharedProcess expects a List type
-      .flatMap:
-        sharedProcess(_, orchestrator)
-      .flatMap: solutions =>
-        Logger[IO].debug(
-          s"All puzzles processed with solutions: $solutions"
-        ) as expect(solutions.nonEmpty)
+    for {
+      onCI       <- IO(sys.env.get("HOMEBREW_CELLAR").isEmpty)
+      _          <- ignore("Skip call outs to Google Cloud API on CI").whenA(onCI)
+      parser      = GoogleCloudClient[IO]
+      imageBytes <- orchestrator.fetchBytes("sudoku_test_image_v0.0.1.png")
+      parsed     <- orchestrator.processImage(imageBytes)
+      solutions  <- sharedProcess(parsed :: Nil, orchestrator) // because sharedProcess expects a List type
+      _          <- Logger[IO].debug(s"All puzzles processed with solutions: $solutions")
+    } yield expect(solutions.forall(_.isDefined))
   }
 
 }
