@@ -15,7 +15,7 @@ export class FargateServiceConstruct extends Construct {
 
     const { cluster, taskDefinition, targetGroup } = props;
 
-    const acceptedCounts = Array("0", "1", "2", "3")
+    const acceptedCounts = ["0", "1", "2", "3"]
     const requestedCount = process.env.DESIRED_COUNT!
 
     const fargateService = new ecs.FargateService(this, 'FargateService', {
