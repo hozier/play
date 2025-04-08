@@ -47,22 +47,24 @@ runs:
       shell: bash
       run: |
         sbt clean compile tests/test
-      env:
-        GIT_SHA: ${{ inputs.git_sha }}
 
     - name: Build Docker image
+      if: success() # Only proceed if tests pass
       shell: bash
       run: |
         sbt app/docker:publishLocal
       env:
         GIT_SHA: ${{ inputs.git_sha }}
+        AWS_ACCOUNT_ID: ${{ inputs.aws_account_id }}
 
     - name: Save Docker image as tarball
+      if: success() # Only proceed if tests pass
       shell: bash
       run: |
         docker save -o image.tar ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.git_sha }}
 
     - name: Upload Docker image
+      if: success() # Only proceed if tests pass
       uses: actions/upload-artifact@v4
       with:
         name: docker-image
