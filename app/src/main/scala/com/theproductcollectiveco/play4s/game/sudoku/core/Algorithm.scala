@@ -24,15 +24,7 @@ object BacktrackingAlgorithm {
         Metrics[F].time("BacktrackingAlgorithm.solve") {
           board.read().flatMap { boardState =>
             search.fetchEmptyCells(boardState).pure.flatMap { emptyCells =>
-              Operations
-                .loop(boardState, search, emptyCells)
-                /**
-                 * we can opt to return the option type to the caller as this does save on additional type transformations. the liftTo might be
-                 * considered an aggressive evaluation--reconsider passing through unfiltered state to caller (todo)
-                 */
-                .liftTo[F](NoSolutionFoundError(s"Failed to fill all ${emptyCells.size} empty cells"))
-                .flatMap: solutionState =>
-                  board.update(solutionState) `as` solutionState.some
+              Operations.searchDomain(board, boardState, search, emptyCells, 1 to boardState.value.size)
             }
           }
         }
@@ -40,28 +32,72 @@ object BacktrackingAlgorithm {
 
   object Operations {
 
+    def searchDomain[F[_]: MonadCancelThrow: Async](
+      board: Board[F],
+      boardState: BoardState,
+      search: Search,
+      emptyCells: LazyList[(Int, Int)],
+      possibleDigits: Seq[Int],
+    ): F[Option[BoardState]] =
+      loop(boardState, search, emptyCells, possibleDigits)
+        .liftTo[F](NoSolutionFoundError("Failed to fill all empty cells"))
+        .flatMap: solutionState =>
+          board.update(solutionState) `as` solutionState.some
+
     def loop(
       state: BoardState,
       search: Search,
       emptyCells: LazyList[(Int, Int)],
+      possibleDigits: Seq[Int],
     ): Option[BoardState] =
-
       emptyCells.headOption match {
         case None             => state.some
         case Some((row, col)) =>
-          (1 to state.value.size) // BoardState values range
+          possibleDigits
             .to(LazyList)
-            .flatMap { next =>
+            .collectFirstSome { next =>
               Option.when(search.verify(state, row, col, next)) {
-                val updated =
-                  state.copy:
-                    state.value.updated(row, state.value(row).updated(col, next))
-                loop(updated, search, emptyCells.tail)
+                val updated = state.copy(value = state.value.updated(row, state.value(row).updated(col, next)))
+                loop(updated, search, emptyCells.tail, possibleDigits)
               }
             }
             .collectFirst { case Some(solution) => solution }
       }
 
   }
+
+}
+
+object ConstraintPropagationAlgorithm {
+
+  def apply[F[_]: MonadCancelThrow: Async: Logger: Parallel: Metrics](): Algorithm[F] =
+    new Algorithm[F] {
+
+      override def solve(
+        board: Board[F],
+        search: Search,
+      ): F[Option[BoardState]] =
+        Metrics[F].time("ConstraintPropagationAlgorithm.solve") {
+          board.read().flatMap { boardState =>
+            search.fetchEmptyCells(boardState).pure.flatMap { emptyCells =>
+              val domain =
+                emptyCells
+                  .map: cell =>
+                    cell -> (1 to boardState.value.size).filter(search.verify(boardState, cell._1, cell._2, _))
+                  .toMap
+
+              domain
+                .foldLeft(Option.empty[BoardState].pure[F]) { (acc, preprocessed) =>
+                  acc.flatMap {
+                    case Some(solution) => solution.some.pure[F]
+                    case None           =>
+                      val (emptyCell, possibleDigits) = preprocessed
+                      BacktrackingAlgorithm.Operations.searchDomain(board, boardState, search, LazyList(emptyCell), possibleDigits)
+                  }
+                }
+            }
+          }
+        }
+    }
 
 }
