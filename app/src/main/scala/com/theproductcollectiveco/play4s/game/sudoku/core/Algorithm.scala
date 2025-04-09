@@ -40,7 +40,7 @@ object BacktrackingAlgorithm {
       possibleDigits: Seq[Int],
     ): F[Option[BoardState]] =
       loop(boardState, search, emptyCells, possibleDigits)
-        .liftTo[F](NoSolutionFoundError("Failed to fill all empty cells"))
+        .liftTo[F](NoSolutionFoundError(s"Failed to fill all ${emptyCells.size} empty cells"))
         .flatMap: solutionState =>
           board.update(solutionState) `as` solutionState.some
 
@@ -50,14 +50,17 @@ object BacktrackingAlgorithm {
       emptyCells: LazyList[(Int, Int)],
       possibleDigits: Seq[Int],
     ): Option[BoardState] =
+
       emptyCells.headOption match {
         case None             => state.some
         case Some((row, col)) =>
-          possibleDigits
+          possibleDigits // board state values range
             .to(LazyList)
-            .collectFirstSome { next =>
+            .flatMap { next =>
               Option.when(search.verify(state, row, col, next)) {
-                val updated = state.copy(value = state.value.updated(row, state.value(row).updated(col, next)))
+                val updated =
+                  state.copy:
+                    state.value.updated(row, state.value(row).updated(col, next))
                 loop(updated, search, emptyCells.tail, possibleDigits)
               }
             }

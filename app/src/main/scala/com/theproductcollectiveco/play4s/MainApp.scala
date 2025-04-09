@@ -11,9 +11,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.api.{Play4sService, HealthService}
 import com.theproductcollectiveco.play4s.game.sudoku.common.Parser
-// import com.theproductcollectiveco.play4s.game.sudoku.core.ConstraintPropagationAlgorithm
-import com.theproductcollectiveco.play4s.game.sudoku.core.BacktrackingAlgorithm
-import com.theproductcollectiveco.play4s.game.sudoku.core.Orchestrator
+import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Orchestrator}
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{GoogleCloudClient, TraceClient}
 
 object MainApp extends ResourceApp.Forever {
@@ -37,7 +35,7 @@ object MainApp extends ResourceApp.Forever {
               uuidGen = UUIDGen.fromSync[IO](Sync[IO]),
               orchestrator = Orchestrator[IO](traceParser, imageParser),
               algorithms = BacktrackingAlgorithm[IO](),
-              // ConstraintPropagationAlgorithm[IO](),
+              ConstraintPropagationAlgorithm[IO](),
             )
           _                <-
             Routes
