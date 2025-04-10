@@ -9,8 +9,6 @@ use com.theproductcollectiveco.play4s.game.sudoku.public#ComputeSudoku
 @documentation("Game ID; should be a UUID")
 string GameId
 
-string Algorithm
-
 // A vector of integers.
 @vector
 list VectorList {
@@ -24,8 +22,8 @@ list NestedVectorList {
 }
 
 // A list of algorithms
-list AlgorithmList {
-    member: Algorithm
+list StrategyList {
+    member: Strategy
 }
 
 // A structure that contains a nested vector of integers.
@@ -46,6 +44,17 @@ structure ComputeRequestDeveloperMode {
     trace: String
 }
 
+// Enum to represent the Strategy types with custom string values.
+enum Strategy {
+    @documentation("Backtracking strategy for solving Sudoku.")
+    @enumValue("backtracking")
+    BACKTRACKING
+
+    @documentation("Constraint propagation strategy for solving Sudoku.")
+    @enumValue("constraintPropagation")
+    CONSTRAINT_PROPAGATION
+}
+
 @mixin
 structure GameMetadata {
     @required
@@ -57,8 +66,9 @@ structure GameMetadata {
     @documentation("UTC timestamp at the time the image was uploaded")
     @required
     requestedAt: Timestamp
-    @required   
-    strategies: AlgorithmList
+    @required
+    strategies: StrategyList
+    fastestOutcome: Strategy
 }
 
 structure SudokuComputationSummary with [GameMetadata] {

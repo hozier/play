@@ -8,7 +8,7 @@ import cats.Parallel
 import cats.effect.Async
 import cats.effect.std.Console
 import com.theproductcollectiveco.play4s.{Play4sApi, Metrics}
-import com.theproductcollectiveco.play4s.game.sudoku.{SudokuComputationSummary, Algorithm as Strategy, GameId}
+import com.theproductcollectiveco.play4s.game.sudoku.{SudokuComputationSummary, GameId, Strategy}
 import com.theproductcollectiveco.play4s.game.sudoku.core.{Algorithm, Orchestrator, Search}
 import org.typelevel.log4cats.Logger
 import smithy4s.Timestamp
@@ -55,10 +55,11 @@ object Play4sService {
           duration       = (end - start).toMillis
         } yield SudokuComputationSummary(
           id = gameId,
-          strategies = algorithms.map(_.getClass.getName).map(Strategy(_)).toList,
           duration = duration,
           requestedAt = requestedAt,
-          solution = maybeSolution,
+          strategies = Strategy.BACKTRACKING :: Strategy.CONSTRAINT_PROPAGATION :: Nil,
+          fastestOutcome = maybeSolution.map(_.strategy),
+          solution = maybeSolution.map(_.boardState),
         )
 
 }

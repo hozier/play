@@ -6,10 +6,12 @@ import cats.implicits.*
 import com.theproductcollectiveco.play4s.Metrics
 import com.theproductcollectiveco.play4s.store.Board
 import cats.Parallel
-import com.theproductcollectiveco.play4s.game.sudoku.{NoSolutionFoundError, BoardState}
+import com.theproductcollectiveco.play4s.game.sudoku.{NoSolutionFoundError, BoardState, Strategy}
+
+case class SolvedState(boardState: BoardState, strategy: Strategy)
 
 trait Algorithm[F[_]] {
-  def solve(board: Board[F], search: Search): F[Option[BoardState]]
+  def solve(board: Board[F], search: Search): F[Option[SolvedState]]
 }
 
 object BacktrackingAlgorithm {
@@ -20,11 +22,13 @@ object BacktrackingAlgorithm {
       override def solve(
         board: Board[F],
         search: Search,
-      ): F[Option[BoardState]] =
+      ): F[Option[SolvedState]] =
         Metrics[F].time("BacktrackingAlgorithm.solve") {
           board.read().flatMap { boardState =>
             search.fetchEmptyCells(boardState).pure.flatMap { emptyCells =>
-              Operations.searchDomain(board, boardState, search, emptyCells, 1 to boardState.value.size)
+              Operations
+                .searchDomain(board, boardState, search, emptyCells, 1 to boardState.value.size)
+                .map(_.map(SolvedState(_, Strategy.BACKTRACKING)))
             }
           }
         }
@@ -79,7 +83,7 @@ object ConstraintPropagationAlgorithm {
       override def solve(
         board: Board[F],
         search: Search,
-      ): F[Option[BoardState]] =
+      ): F[Option[SolvedState]] =
         Metrics[F].time("ConstraintPropagationAlgorithm.solve") {
           board.read().flatMap { boardState =>
             search.fetchEmptyCells(boardState).pure.flatMap { emptyCells =>
@@ -90,12 +94,16 @@ object ConstraintPropagationAlgorithm {
                   .toMap
 
               domain
-                .foldLeft(Option.empty[BoardState].pure[F]) { (acc, preprocessed) =>
+                .foldLeft(Option.empty[SolvedState].pure[F]) { (acc, preprocessed) =>
                   acc.flatMap {
                     case Some(solution) => solution.some.pure[F]
                     case None           =>
                       val (emptyCell, possibleDigits) = preprocessed
-                      BacktrackingAlgorithm.Operations.searchDomain(board, boardState, search, LazyList(emptyCell), possibleDigits)
+                      BacktrackingAlgorithm.Operations
+                        .searchDomain(board, boardState, search, LazyList(emptyCell), possibleDigits)
+                        .map:
+                          _.map:
+                            (SolvedState(_, Strategy.CONSTRAINT_PROPAGATION))
                   }
                 }
             }

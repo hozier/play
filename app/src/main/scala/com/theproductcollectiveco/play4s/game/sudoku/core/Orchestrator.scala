@@ -20,7 +20,7 @@ trait Orchestrator[F[_]] {
   def processTrace(fileName: String): F[List[String]]
   def processLine(line: String): BoardState
   def createBoard(state: BoardState): F[Board[F]]
-  def solve(board: Board[F], search: Search, algorithms: Algorithm[F]*): F[Option[BoardState]]
+  def solve(board: Board[F], search: Search, algorithms: Algorithm[F]*): F[Option[SolvedState]]
 }
 
 object Orchestrator {
@@ -56,7 +56,7 @@ object Orchestrator {
         board: Board[F],
         search: Search,
         algorithms: Algorithm[F]*
-      ): F[Option[BoardState]] =
+      ): F[Option[SolvedState]] =
         NonEmptyList.fromList(algorithms.toList) match {
           case None                     => Async[F].raiseError(new RuntimeException("No algorithms provided"))
           case Some(nonEmptyAlgorithms) =>
@@ -65,8 +65,11 @@ object Orchestrator {
               solution <-
                 nonEmptyAlgorithms
                   .map(_.solve(board, search))
-                  .reduceLeft(_.race(_).map(_.merge)) // Race all algorithms concurrently and merge Either to Option
-              _ <- Logger[F].debug("Board solved")
+                  .reduceLeft(
+                    _.race(_) // Race all algorithms concurrently and merge Either to Option
+                      .map(_.merge)
+                  )
+              _        <- Logger[F].debug("Board solved")
             } yield solution
         }
     }

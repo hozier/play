@@ -7,14 +7,13 @@ import org.http4s.multipart.*
 import org.http4s.circe.*
 import io.circe.{Encoder, Json}
 import org.typelevel.log4cats.Logger
-import com.theproductcollectiveco.play4s.game.sudoku.{GameId, Algorithm}
+import com.theproductcollectiveco.play4s.game.sudoku.GameId
 import smithy4s.Blob
 import cats.ApplicativeError
 
 object Middleware {
 
-  given gameIdEncoder: Encoder[GameId.T]       = Encoder.encodeString.contramap(_.toString)
-  given algorithmEncoder: Encoder[Algorithm.T] = Encoder.instance(algorithm => Json.fromString(algorithm.toString))
+  given gameIdEncoder: Encoder[GameId.T] = Encoder.encodeString.contramap(_.toString)
 
   def decodeContent[F[_]: Concurrent: Logger](req: Request[F], field: String): F[Blob] =
     req.headers.get[org.http4s.headers.`Content-Type`].map(_.mediaType) match {

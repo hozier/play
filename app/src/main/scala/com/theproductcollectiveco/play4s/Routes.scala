@@ -17,7 +17,7 @@ import org.http4s.server.middleware.Logger as Http4sLogger
 
 object Routes {
 
-  import com.theproductcollectiveco.play4s.Middleware.{algorithmEncoder, gameIdEncoder}
+  import com.theproductcollectiveco.play4s.Middleware.gameIdEncoder
 
   def router(
     play4sService: Play4sService[IO],
