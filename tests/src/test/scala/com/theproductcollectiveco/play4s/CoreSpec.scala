@@ -57,6 +57,7 @@ object CoreSpec extends SimpleIOSuite with Checkers {
         initialState,
         search,
         search.fetchEmptyCells(initialState),
+        1 to initialState.value.size,
       )
 
     IO(expect(result.contains(BoardState(Mocks.updatedState))))

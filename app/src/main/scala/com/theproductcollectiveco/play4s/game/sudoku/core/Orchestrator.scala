@@ -44,14 +44,6 @@ object Orchestrator {
 
       override def fetchBytes(fileName: String): F[Array[Byte]] = imageParser.fetchBytes(fileName)
 
-      /**
-       * Overview: Explicitly disallow supporting variadic algorithm arguments by consistently selecting the primary (head) option.
-       *
-       * Review Required: The current handling of variadic arguments needs further assessment.
-       *
-       * Motivation: Originally, variadic argument support was driven by the 1:N relationship between a board's state and its potential algorithms, as
-       * algorithms can often vary significantly in performance and efficiency.
-       */
       override def solve(
         board: Board[F],
         search: Search,

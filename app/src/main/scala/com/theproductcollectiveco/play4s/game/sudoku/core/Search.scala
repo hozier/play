@@ -8,6 +8,7 @@ trait Search {
   def verifyRowState(board: BoardState, row: Int, target: Int): Boolean
   def verify(boardState: BoardState, row: Int, col: Int, target: Int): Boolean
   def fetchEmptyCells(board: BoardState): LazyList[(Int, Int)]
+  def isRelated(cell1: (Int, Int), cell2: (Int, Int)): Boolean
 }
 
 object Search {
@@ -60,6 +61,11 @@ object Search {
           .from(0 until size * size)
           .filter(idx => board.value(idx / size)(idx % size) == 0)
           .map(idx => (idx / size, idx % size))
+      }
+
+      override def isRelated(cell1: (Int, Int), cell2: (Int, Int)): Boolean = {
+        val ((row1, col1), (row2, col2)) = (cell1, cell2)
+        row1 == row2 || col1 == col2 || (row1 / 3 == row2 / 3 && col1 / 3 == col2 / 3)
       }
 
     }

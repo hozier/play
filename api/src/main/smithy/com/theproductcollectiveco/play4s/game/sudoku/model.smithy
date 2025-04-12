@@ -55,6 +55,14 @@ enum Strategy {
     CONSTRAINT_PROPAGATION
 }
 
+// A structure to represent details of concurrent execution.
+structure ConcurrentExecutionDetails {
+    @required
+    strategies: StrategyList
+    @documentation("The strategy that completed earliest in the concurrent execution.")
+    earliestCompleted: Strategy
+}
+
 @mixin
 structure GameMetadata {
     @required
@@ -66,9 +74,9 @@ structure GameMetadata {
     @documentation("UTC timestamp at the time the image was uploaded")
     @required
     requestedAt: Timestamp
+    @documentation("Details about the concurrent execution of strategies.")
     @required
-    strategies: StrategyList
-    fastestOutcome: Strategy
+    concurrentExecutionDetails: ConcurrentExecutionDetails
 }
 
 structure SudokuComputationSummary with [GameMetadata] {

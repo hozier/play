@@ -34,7 +34,7 @@ object WebSudokuExtractorSpec extends SimpleIOSuite with Checkers {
           (solution, validatedStartingTrace) <- gameGenerator.fetchTxtRepresentation(puzzleNumber)
           solutions                          <- IntegrationSpec.sharedProcess(validatedStartingTrace :: Nil, orchestrator)
           _                                  <- Logger[IO].debug(s"Fetched puzzle processed with solution: $solutions")
-          actual                              = solutions.head.map(_.value.flatten.mkString)
+          actual                              = solutions.head.map(_.boardState.value.flatten.mkString)
         } yield expect(actual.exists(_.equals(solution)))
   }
 
