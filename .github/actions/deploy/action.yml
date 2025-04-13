@@ -63,4 +63,4 @@ runs:
       shell: bash
       run: |
         echo "Load Balancer DNS Name:"
-        cat cdk-outputs.json | jq -r '.["app-'${{ inputs.app_name }}'-service-'${{ inputs.stage }}'-load-balanced-fargate-service-stack"] | to_entries[] | select(.key | startswith("LoadBalancerConstructLoadBalancerDNSName")) | .value'
+        cat cdk-outputs.json | jq -r '.["app-'${{ inputs.app_name }}'-service-load-balanced-fargate-service-stack"] | to_entries[] | select(.key | startswith("LoadBalancerConstructLoadBalancerDNSName")) | .value'

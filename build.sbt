@@ -48,7 +48,7 @@ lazy val app =
       dockerAlias         := DockerAlias(
         sys.env.get("AWS_ACCOUNT_ID").map(accountId => s"$accountId.dkr.ecr.us-east-1.amazonaws.com"),
         Some("theproductcollectiveco"),
-        "play4s-service-prod",
+        "play4s-service",
         Some(sys.env.getOrElse("GIT_SHA", "latest")),
       ),
       Compile / mainClass := Some("com.theproductcollectiveco.play4s.MainApp"),
