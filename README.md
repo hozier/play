@@ -51,41 +51,44 @@ Elapsed Time: **0.316678 seconds**
 
 The functional approach further improved the performance of the backtracking algorithm. Below is an example of a compute request and its corresponding summary.
 
-**Compute Request (_Content-Type: multipart/form-data_):**
+**Compute Request:**
 ```
-5 3 . . 7 . . . .
-6 . . 1 9 5 . . .
-. 9 8 . . . . 6 .
-8 . . . 6 . . . 3
-4 . . 8 . 3 . . 1
-7 . . . 2 . . . 6
-. 6 . . . . 2 8 .
-. . . 4 1 9 . . 5
-. . . . 8 . . 7 9
+5 . 6 . . 3 1 9 .
+8 4 1 . 5 6 . 2 7
+. . . 1 7 . . 6 .
+. 6 . 5 1 9 . 4 8
+1 . 4 2 3 7 9 . 6
+9 2 . 6 4 8 . 3 .
+. 1 . . 6 2 . . .
+7 5 . 4 9 . 6 8 3
+. 3 9 7 . . 4 . 2
 ```
 
 **Sudoku Computation Summary:**
 ```
 {
-    "id": "c2244951-e297-41d1-abff-fbc59b803e41",
-    "strategy": "com.theproductcollectiveco.play4s.game.sudoku.core.BacktrackingAlgorithm$$anon$1",
-    "duration": 2298,
-    "requestedAt": {
-        "epochSecond": 1742916339,
-        "nano": 587805000
+    "id": "a2c9acc3-0cb7-4209-97f7-02e286bc7c48",
+    "duration": 7,
+    "requestedAt": "2025-04-12T23:22:31.358457Z",
+    "concurrentExecutionDetails": {
+        "strategies": [
+            "backtracking",
+            "constraintPropagation"
+        ],
+        "earliestCompleted": "constraintPropagation"
     },
     "solution": {
         "value": [
-          [5,3,4,6,7,8,9,1,2],
-          [6,7,2,1,9,5,3,4,8],
-          [1,9,8,3,4,2,5,6,7],
-          [8,5,9,7,6,1,4,2,3],
-          [4,2,6,8,5,3,7,9,1],
-          [7,1,3,9,2,4,8,5,6],
-          [9,6,1,5,3,7,2,8,4],
-          [2,8,7,4,1,9,6,3,5],
-          [3,4,5,2,8,6,1,7,9]
-      ]
+            [5,7,6,8,2,3,1,9,4],
+            [8,4,1,9,5,6,3,2,7],
+            [2,9,3,1,7,4,8,6,5],
+            [3,6,7,5,1,9,2,4,8],
+            [1,8,4,2,3,7,9,5,6],
+            [9,2,5,6,4,8,7,3,1],
+            [4,1,8,3,6,2,5,7,9],
+            [7,5,2,4,9,1,6,8,3],
+            [6,3,9,7,8,5,4,1,2]
+        ]
     }
 }
 ```
@@ -96,7 +99,7 @@ The functional approach further improved the performance of the backtracking alg
 
 | Environment | Load Balancer URL                                         |
 | ----------- | --------------------------------------------------------- |
-| PROD        | `app-pl-LoadB-g8oJhj03r5OI-1073683086.us-east-2.elb.amazonaws.com` |
+| PROD        | `app-pl-LoadB-g8oJhj03r5OI-1073683086.us-east-1.elb.amazonaws.com` |
 
 To retrieve the latest Load Balancer endpoint, re-trigger the GitHub Actions workflow `Deploy to AWS`. The updated endpoint will appear under the `Deploy` job in the `Query Load Balancer DNS Name` step.
 

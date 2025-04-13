@@ -10,6 +10,6 @@ jobs:
     name: Build & Publish Artifact Locally
     uses: ./.github/workflows/build-image.yml
     with:
-      region: 'us-east-2'
+      region: 'us-east-1'
       stage: 'prod'
     secrets: inherit

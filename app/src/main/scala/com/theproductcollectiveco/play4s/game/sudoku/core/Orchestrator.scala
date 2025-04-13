@@ -20,7 +20,7 @@ trait Orchestrator[F[_]] {
   def processTrace(fileName: String): F[List[String]]
   def processLine(line: String): BoardState
   def createBoard(state: BoardState): F[Board[F]]
-  def solve(board: Board[F], search: Search, algorithms: Algorithm[F]*): F[Option[BoardState]]
+  def solve(board: Board[F], search: Search, algorithms: Algorithm[F]*): F[Option[SolvedState]]
 }
 
 object Orchestrator {
@@ -44,19 +44,11 @@ object Orchestrator {
 
       override def fetchBytes(fileName: String): F[Array[Byte]] = imageParser.fetchBytes(fileName)
 
-      /**
-       * Overview: Explicitly disallow supporting variadic algorithm arguments by consistently selecting the primary (head) option.
-       *
-       * Review Required: The current handling of variadic arguments needs further assessment.
-       *
-       * Motivation: Originally, variadic argument support was driven by the 1:N relationship between a board's state and its potential algorithms, as
-       * algorithms can often vary significantly in performance and efficiency.
-       */
       override def solve(
         board: Board[F],
         search: Search,
         algorithms: Algorithm[F]*
-      ): F[Option[BoardState]] =
+      ): F[Option[SolvedState]] =
         NonEmptyList.fromList(algorithms.toList) match {
           case None                     => Async[F].raiseError(new RuntimeException("No algorithms provided"))
           case Some(nonEmptyAlgorithms) =>
@@ -65,8 +57,11 @@ object Orchestrator {
               solution <-
                 nonEmptyAlgorithms
                   .map(_.solve(board, search))
-                  .reduceLeft(_.race(_).map(_.merge)) // Race all algorithms concurrently and merge Either to Option
-              _ <- Logger[F].debug("Board solved")
+                  .reduceLeft(
+                    _.race(_) // Race all algorithms concurrently and merge Either to Option
+                      .map(_.merge)
+                  )
+              _        <- Logger[F].debug("Board solved")
             } yield solution
         }
     }

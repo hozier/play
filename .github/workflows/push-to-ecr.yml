@@ -9,8 +9,8 @@ on:
         description: "AWS region to deploy to"
         type: choice
         options:
-          - us-east-2
-        default: "us-east-2"
+          - us-east-1
+        default: "us-east-1"
       stage:
         description: "AWS environment to deploy to"
         type: choice
@@ -19,14 +19,14 @@ on:
         default: "prod"
 
 env:
-  REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region }}.amazonaws.com"
-  REPOSITORY: "theproductcollectiveco/play4s-service-${{ inputs.stage }}"
+  REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ github.event.inputs.region }}.amazonaws.com"
+  REPOSITORY: "theproductcollectiveco/play4s-service"
 
 jobs:
   build-and-publish:
     name: Build
     runs-on: ubuntu-latest
-      
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -42,8 +42,7 @@ jobs:
   push-to-ecr:
     name: Push
     runs-on: ubuntu-latest
-    needs:
-      - build-and-publish
+    needs: build-and-publish
 
     steps:
       - name: Checkout code
@@ -56,5 +55,5 @@ jobs:
           repository: ${{ env.REPOSITORY }}
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: ${{ inputs.region }}
+          region: ${{ github.event.inputs.region }}
           git_sha: ${{ github.sha }}
