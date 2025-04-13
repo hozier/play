@@ -96,7 +96,7 @@ The functional approach further improved the performance of the backtracking alg
 
 | Environment | Load Balancer URL                                         |
 | ----------- | --------------------------------------------------------- |
-| PROD        | `app-pl-LoadB-g8oJhj03r5OI-1073683086.us-east-2.elb.amazonaws.com` |
+| PROD        | `app-pl-LoadB-g8oJhj03r5OI-1073683086.us-east-1.elb.amazonaws.com` |
 
 To retrieve the latest Load Balancer endpoint, re-trigger the GitHub Actions workflow `Deploy to AWS`. The updated endpoint will appear under the `Deploy` job in the `Query Load Balancer DNS Name` step.
 

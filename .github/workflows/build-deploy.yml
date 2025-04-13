@@ -7,8 +7,8 @@ on:
         description: "AWS region to deploy to"
         type: choice
         options:
-          - us-east-2
-        default: "us-east-2"
+          - us-east-1
+        default: "us-east-1"
       stage:
         description: "AWS environment to deploy to"
         type: choice
