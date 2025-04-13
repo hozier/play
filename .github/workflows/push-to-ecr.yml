@@ -19,7 +19,7 @@ on:
         default: "prod"
 
 env:
-  REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ github.event.inputs.region }}.amazonaws.com"
+  REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region || 'us-east-1' }}.amazonaws.com"
   REPOSITORY: "theproductcollectiveco/play4s-service"
 
 jobs:
@@ -55,5 +55,5 @@ jobs:
           repository: ${{ env.REPOSITORY }}
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: ${{ github.event.inputs.region }}
+          region: ${{ inputs.region || 'us-east-1' }}
           git_sha: ${{ github.sha }}
