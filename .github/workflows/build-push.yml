@@ -60,3 +60,5 @@ jobs:
           build-args: |
             REGION=${{ inputs.region }}
             STAGE=${{ inputs.stage }}
+        env:
+          DEBUG: true
