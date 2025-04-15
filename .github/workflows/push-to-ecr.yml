@@ -23,26 +23,9 @@ env:
   REPOSITORY: "theproductcollectiveco/play4s-service"
 
 jobs:
-  build-and-publish:
-    name: Build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Docker Image
-        uses: ./.github/actions/build
-        with:
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ env.REPOSITORY }}
-          git_sha: ${{ github.sha }}
-          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
-
   push-to-ecr:
     name: Push
     runs-on: ubuntu-latest
-    needs: build-and-publish
 
     steps:
       - name: Checkout code

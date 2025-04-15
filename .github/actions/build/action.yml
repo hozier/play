@@ -57,15 +57,15 @@ runs:
         GIT_SHA: ${{ inputs.git_sha }}
         AWS_ACCOUNT_ID: ${{ inputs.aws_account_id }}
 
+    - name: Cache Docker image tarball
+      if: success() # Only proceed if tests pass
+      uses: actions/cache@v4
+      with:
+        path: image.tar
+        key: docker-image-${{ inputs.git_sha }}
+
     - name: Save Docker image as tarball
       if: success() # Only proceed if tests pass
       shell: bash
       run: |
         docker save -o image.tar ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.git_sha }}
-
-    - name: Upload Docker image
-      if: success() # Only proceed if tests pass
-      uses: actions/upload-artifact@v4
-      with:
-        name: docker-image
-        path: image.tar

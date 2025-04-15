@@ -24,18 +24,20 @@ runs:
   using: "composite"
   steps:
     - name: Configure AWS CLI
-      uses: aws-actions/configure-aws-credentials@v2
+      uses: aws-actions/configure-aws-credentials@v3
       with:
         aws-access-key-id: ${{ inputs.aws_access_key_id }}
         aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
         aws-region: ${{ inputs.region }}
 
-    - name: Download Docker Image
-      uses: actions/download-artifact@v4
+    - name: Restore Docker image tarball from cache
+      uses: actions/cache@v4
       with:
-        name: docker-image
+        path: image.tar
+        key: docker-image-${{ inputs.git_sha }}
 
     - name: Load and Push Docker Image
+      if: success() # Only proceed if the cache is restored successfully
       shell: bash
       run: |
         docker load -i image.tar
