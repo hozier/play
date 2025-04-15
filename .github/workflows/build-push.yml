@@ -39,6 +39,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-docker-
 
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.region }}
+
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
