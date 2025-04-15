@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Build & Publish Artifact Locally
-    uses: ./.github/workflows/build-image.yml
+    uses: ./.github/workflows/build.yml
     with:
       region: 'us-east-1'
       stage: 'prod'

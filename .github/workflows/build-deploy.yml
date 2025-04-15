@@ -28,7 +28,7 @@ env:
 jobs:
   build-and-publish:
     name: Build & Publish Artifact Locally
-    uses: ./.github/workflows/build-image.yml 
+    uses: ./.github/workflows/build.yml 
     with:
       region: ${{ inputs.region }}
       stage: ${{ inputs.stage }}

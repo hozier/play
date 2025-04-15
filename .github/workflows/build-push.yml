@@ -1,0 +1,55 @@
+name: Build & Push to ECR
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      region:
+        description: "AWS region to deploy to"
+        type: choice
+        options:
+          - us-east-1
+        default: "us-east-1"
+      stage:
+        description: "AWS environment to deploy to"
+        type: choice
+        options:
+          - prod
+        default: "prod"
+
+env:
+  REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region || 'us-east-1' }}.amazonaws.com"
+  REPOSITORY: "theproductcollectiveco/play4s-service"
+
+jobs:
+  build-and-push-to-ecr:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-docker-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          build-args: |
+            REGION=${{ inputs.region }}
+            STAGE=${{ inputs.stage }}
