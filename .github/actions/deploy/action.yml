@@ -67,6 +67,7 @@ runs:
         REGISTRY: ${{ inputs.registry }}
         REPOSITORY: ${{ inputs.repository }}
         IMAGE_TAG: ${{ inputs.git_sha }}
+        AWS_REGION: ${{ inputs.region }}
 
       run: |
         if ! command -v cdk &> /dev/null; then
