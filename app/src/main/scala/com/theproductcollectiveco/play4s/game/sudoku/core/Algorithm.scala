@@ -96,10 +96,11 @@ object ConstraintPropagationAlgorithm {
                   .filter(search.verify(boardState, cell._1, cell._2, _))
               .toMap
               .pure
-              .map: domainMap =>
+              .flatMap: domainMap =>
                 propagateConstraints(boardState, domainMap, search)
+                  .liftTo[F](NoSolutionFoundError(s"Failed to fill all ${domainMap.size} empty cells"))
                   .map:
-                    SolvedState(_, Strategy.CONSTRAINT_PROPAGATION)
+                    SolvedState(_, Strategy.CONSTRAINT_PROPAGATION).some
           }
         }
 
