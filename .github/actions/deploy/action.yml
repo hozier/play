@@ -49,6 +49,9 @@ runs:
         AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
 
       run: |
+        if ! command -v cdk &> /dev/null; then
+          npm install -g aws-cdk
+        fi
         if ! aws s3 ls "s3://cdk-${AWS_REGION}-${AWS_ACCOUNT_ID}" &> /dev/null; then
           echo "Bootstrapping CDK environment..."
           cdk bootstrap aws://${AWS_ACCOUNT_ID}/${AWS_REGION}
