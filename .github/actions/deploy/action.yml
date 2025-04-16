@@ -16,6 +16,9 @@ inputs:
   aws_secret_access_key:
     description: "AWS Secret Access Key"
     required: true
+  aws_account_id:
+    description: "AWS Acount ID"
+    required: true
   git_sha:
     description: "Docker image tag"
     required: true
@@ -58,6 +61,7 @@ runs:
       shell: bash
       env:
         AWS_REGION: ${{ inputs.region }}
+        AWS_ACCOUNT_ID: ${{ inputs.aws_account_id }}
         AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
 
@@ -80,9 +84,6 @@ runs:
         REGISTRY: ${{ inputs.registry }}
         REPOSITORY: ${{ inputs.repository }}
         IMAGE_TAG: ${{ inputs.git_sha }}
-        AWS_REGION: ${{ inputs.region }}
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
 
       run: |
         if ! command -v cdk &> /dev/null; then
