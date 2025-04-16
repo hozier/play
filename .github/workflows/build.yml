@@ -22,7 +22,7 @@ jobs:
       - name: Build Docker Image
         uses: ./.github/actions/build
         with:
-          registry: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region || 'us-east-1' }}.amazonaws.com"
+          registry: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region }}.amazonaws.com"
           repository:  "theproductcollectiveco/play4s-service"
           git_sha: ${{ github.sha }}
           aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
