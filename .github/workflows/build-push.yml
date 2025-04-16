@@ -2,7 +2,7 @@ name: Build & Push to ECR
 
 on:
   push:
-    branches: [main]
+    branches: [main, p-william-hozier/refactor-workflow-more] # debgging: remove before merge
   workflow_dispatch:
     inputs:
       region:
@@ -39,6 +39,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Debug all inputs and environment variables
+        run: |
+          echo "Inputs:"
+          echo "region=${{ inputs.region }}"
+          echo "stage=${{ inputs.stage }}"
+          echo "Environment Variables:"
+          echo "REGISTRY=${{ env.REGISTRY }}"
+          echo "REPOSITORY=${{ env.REPOSITORY }}"
 
       - name: Push Docker Image
         uses: ./.github/actions/push
