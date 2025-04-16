@@ -52,17 +52,17 @@ object Orchestrator {
         NonEmptyList.fromList(algorithms.toList) match {
           case None                     => Async[F].raiseError(new RuntimeException("No algorithms provided"))
           case Some(nonEmptyAlgorithms) =>
-            for {
-              _        <- Logger[F].debug("Solving board")
-              solution <-
-                nonEmptyAlgorithms
-                  .map(_.solve(board, search))
-                  .reduceLeft(
-                    _.race(_) // Race all algorithms concurrently and merge Either to Option
-                      .map(_.merge)
-                  )
-              _        <- Logger[F].debug("Board solved")
-            } yield solution
+            nonEmptyAlgorithms
+              .map(_.solve(board, search))
+              .foldLeft(Async[F].pure(Option.empty[SolvedState])) { (acc, next) =>
+                acc
+                  .race(next)
+                  .flatMap:
+                    case Left(Some(result))  => result.some.pure
+                    case Right(Some(result)) => result.some.pure
+                    case Left(None)          => next
+                    case Right(None)         => acc
+              }
         }
     }
 
