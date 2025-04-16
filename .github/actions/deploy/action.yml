@@ -40,6 +40,22 @@ runs:
       shell: bash
       run: npm ci
 
+    - name: Bootstrap CDK Environment
+      working-directory: ./infrastructure
+      shell: bash
+      env:
+        AWS_REGION: ${{ inputs.region }}
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
+
+      run: |
+        if ! aws s3 ls "s3://cdk-${AWS_REGION}-${AWS_ACCOUNT_ID}" &> /dev/null; then
+          echo "Bootstrapping CDK environment..."
+          cdk bootstrap aws://${AWS_ACCOUNT_ID}/${AWS_REGION}
+        else
+          echo "CDK environment already bootstrapped."
+        fi
+
     - name: Deploy with CDK
       working-directory: ./infrastructure
       shell: bash
