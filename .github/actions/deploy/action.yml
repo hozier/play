@@ -38,19 +38,6 @@ runs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Debug Inputs
-      shell: bash
-      run: |
-        echo "Registry: ${{ inputs.registry }}"
-        echo "Repository: ${{ inputs.repository }}"
-        echo "Git SHA: ${{ inputs.git_sha }}"
-        echo "AWS Access Key ID: ${{ inputs.aws_access_key_id }}"
-        echo "AWS Secret Access Key: [REDACTED]"
-        echo "Region: ${{ inputs.region }}"
-        echo "App Name: ${{ inputs.app_name }}"
-        echo "Stage: ${{ inputs.stage }}"
-        echo "Desired Fargate Task Count: ${{ inputs.desired_fargate_task_count }}"
-
     - name: CDK prepare
       working-directory: ./infrastructure
       shell: bash
