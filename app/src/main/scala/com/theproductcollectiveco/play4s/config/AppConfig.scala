@@ -5,12 +5,17 @@ import cats.syntax.all.*
 import ciris.*
 
 final case class GoogleCloudConfig(
-  apiKey: String,
+  apiKey: Secret[String],
   credentialsFilePath: String,
 )
 
 final case class RuntimeConfig(
-  onCI: Boolean
+  appName: String,
+  onCI: Boolean,
+  version: String,
+  gitSha: String,
+  buildTimestamp: String,
+  organization: String,
 )
 
 final case class AppConfig(
@@ -22,12 +27,20 @@ object AppConfig:
 
   def load[F[_]: Async]: F[AppConfig] =
     (
-      env("CREDENTIALS_JSON").as[String],
+      env("CREDENTIALS_JSON").as[String].map(Secret.apply),
       env("GOOGLE_APPLICATION_CREDENTIALS").as[String],
       env("HOMEBREW_CELLAR").option.map(_.isEmpty),
     ).parMapN: (apiKey, credentialsFilePath, onCI) =>
       AppConfig(
         googleCloud = GoogleCloudConfig(apiKey, credentialsFilePath),
-        runtime = RuntimeConfig(onCI),
+        runtime =
+          RuntimeConfig(
+            appName = BuildInfo.name,
+            onCI = onCI,
+            version = BuildInfo.version,
+            gitSha = BuildInfo.gitSha,
+            buildTimestamp = BuildInfo.buildTimestamp,
+            organization = BuildInfo.organization,
+          ),
       )
     .load[F]

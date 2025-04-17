@@ -25,7 +25,7 @@ object MainApp extends ResourceApp.Forever {
       _                <-
         Parser
           .storeEnvVarContent[IO](
-            envValue = appConfig.googleCloud.apiKey,
+            envValue = appConfig.googleCloud.apiKey.value,
             filePath = appConfig.googleCloud.credentialsFilePath,
           )
           .toResource
