@@ -108,6 +108,7 @@ To retrieve the latest Load Balancer endpoint, re-trigger the GitHub Actions wor
 | Endpoint Path                         | Description                     |
 | ------------------------------------- | ------------------------------- |
 | `/internal/meta/health`               | Health check endpoint           | 
+| `/internal/meta/version`              | Runtime build details endpoint  | 
 | `/internal/game/sudoku/solve`         | Developer endpoint              |
 | `/public/game/sudoku/solve`           | Sudoku puzzle-solving endpoint  |
 

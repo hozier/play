@@ -10,7 +10,7 @@ import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudClient}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
-import com.theproductcollectiveco.play4s.config.AppConfig
+import com.theproductcollectiveco.play4s.shared.SpecKit.Operations.*
 
 object IntegrationSpec extends SimpleIOSuite with Checkers {
 
@@ -57,8 +57,7 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
     val orchestrator  = Orchestrator[IO](traceParser, imageParser)
 
     for {
-      onCI       <- AppConfig.load[IO].map(_.runtime.onCI)
-      _          <- ignore("Skip call outs to Google Cloud API on CI").whenA(onCI)
+      _          <- skipOnCI
       parser      = GoogleCloudClient[IO]
       imageBytes <- orchestrator.fetchBytes("sudoku_test_image_v0.0.1.png")
       parsed     <- orchestrator.processImage(imageBytes)

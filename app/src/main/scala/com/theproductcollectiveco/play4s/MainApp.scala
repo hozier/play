@@ -1,6 +1,7 @@
 package com.theproductcollectiveco.play4s
 
-import cats.effect.{IO, ResourceApp, Sync}
+import cats.effect.{IO, ResourceApp, Sync, Async}
+import cats.effect.IO.asyncForIO
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.implicits.*
 import cats.effect.implicits.*
@@ -10,25 +11,20 @@ import cats.effect.std.UUIDGen
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.api.{Play4sService, HealthService}
-import com.theproductcollectiveco.play4s.game.sudoku.common.Parser
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Orchestrator}
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{GoogleCloudClient, TraceClient}
-import com.theproductcollectiveco.play4s.config.AppConfig
+import com.theproductcollectiveco.play4s.config.{AppConfig, storeCredentials}
+import fs2.io.file.Files
 
 object MainApp extends ResourceApp.Forever {
 
   override def run(args: List[String]): Resource[IO, Unit] =
     for {
-      appConfig        <- AppConfig.load[IO].toResource
+      appConfig        <- AppConfig.load[IO]
       given Logger[IO] <- Slf4jLogger.create[IO].toResource
+      given Async[IO]   = asyncForIO
       given Metrics[IO] = Metrics[IO]
-      _                <-
-        Parser
-          .storeEnvVarContent[IO](
-            envValue = appConfig.googleCloud.apiKey.value,
-            filePath = appConfig.googleCloud.credentialsFilePath,
-          )
-          .toResource
+      _                <- appConfig.googleCloud.apiKey.storeCredentials(appConfig.googleCloud.credentialsFilePath)
       imageParser       = GoogleCloudClient[IO]
       traceParser       = TraceClient[IO]
       play4sService     =
@@ -41,7 +37,7 @@ object MainApp extends ResourceApp.Forever {
         )
       _                <-
         Routes
-          .router(play4sService, HealthService[IO])
+          .router(play4sService, HealthService[IO](appConfig))
           .map(_.orNotFound)
           .flatMap: httpApp =>
             Resource.eval:
@@ -52,7 +48,5 @@ object MainApp extends ResourceApp.Forever {
                 .compile
                 .drain
     } yield ()
-
-  end run
 
 }

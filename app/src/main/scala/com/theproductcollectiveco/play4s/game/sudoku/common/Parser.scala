@@ -28,17 +28,6 @@ trait Parser[F[_]]:
 
 object Parser:
 
-  def storeEnvVarContent[F[_]: Async: Files](envValue: String, filePath: String): F[Unit] =
-    Files[F]
-      .createDirectories(Path(filePath).parent.getOrElse(Path(".")))
-      .flatMap { _ =>
-        fs2.Stream
-          .emits(envValue.getBytes)
-          .through(Files[F].writeAll(Path(filePath)))
-          .compile
-          .drain
-      }
-
   def readFileContents[F[_]: Async: Files](filePath: String): F[String] =
     Files[F]
       .readAll(Path(filePath))

@@ -2,8 +2,9 @@ import * as cdk from 'aws-cdk-lib';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
-import { Construct } from 'constructs';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+import * as cr from 'aws-cdk-lib/custom-resources';
+import { Construct } from 'constructs';
 import { APP_NAME, AWS_ENV } from '../../config/environments';
 
 interface TaskDefinitionConstructProps {
@@ -39,6 +40,19 @@ export class TaskDefinitionConstruct extends Construct {
       'google-credentials-key'
     );
 
+    const imageDigestResource = new cr.AwsCustomResource(this, 'ImageDigestResource', {
+      onCreate: {
+        service: 'ECR',
+        action: 'describeImages',
+        parameters: {
+          repositoryName: repository.repositoryName,
+          imageIds: [{ imageTag }],
+        },
+        physicalResourceId: cr.PhysicalResourceId.of(`${repository.repositoryName}:${imageTag}`),
+      },
+      policy: cr.AwsCustomResourcePolicy.fromSdkCalls({ resources: [repository.repositoryArn] }),
+    });
+
     const container = this.taskDefinition.addContainer('AppContainer', {
       image: ecs.ContainerImage.fromEcrRepository(repository, imageTag),
       memoryReservationMiB: 2048,
@@ -56,7 +70,7 @@ export class TaskDefinitionConstruct extends Construct {
         GOOGLE_APPLICATION_CREDENTIALS: '/tmp/secrets/credentials.json',
         AWS_ENV: AWS_ENV,
         APP_NAME: APP_NAME,
-        APP_VERSION: imageTag,
+        IMAGE_DIGEST: imageDigestResource.getResponseField('imageDetails.0.imageDigest'),
       },
       secrets: {
         CREDENTIALS_JSON: ecs.Secret.fromSecretsManager(

@@ -7,7 +7,7 @@ import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudClient}
-import com.theproductcollectiveco.play4s.shared.Mocks
+import com.theproductcollectiveco.play4s.shared.SpecKit.Fixtures.*
 import com.theproductcollectiveco.play4s.game.sudoku.BoardState
 
 object CoreSpec extends SimpleIOSuite with Checkers {
@@ -26,21 +26,20 @@ object CoreSpec extends SimpleIOSuite with Checkers {
   }
 
   test("Orchestrator should parse line correctly") {
-    val line          = "530070000600195000098000060800060003400803001700020006060000280000419005000080079"
-    val parseState    = orchestrator.processLine(line)
-    val expectedState = Mocks.initialState
-    IO(expect(parseState.value == expectedState))
+    val line       = "530070000600195000098000060800060003400803001700020006060000280000419005000080079"
+    val parseState = orchestrator.processLine(line)
+    IO(expect(parseState.value == initialBoardState))
   }
 
   test("Algorithm should solve Sudoku correctly") {
     for {
-      gameBoard <- orchestrator.createBoard(BoardState(Mocks.initialState))
+      gameBoard <- orchestrator.createBoard(BoardState(initialBoardState))
       solved    <- BacktrackingAlgorithm[IO]().solve(gameBoard, Search())
     } yield expect(solved.isDefined)
   }
 
   test("Search should verify Sudoku constraints correctly") {
-    val initialState = BoardState(Mocks.initialState)
+    val initialState = BoardState(initialBoardState)
     val search       = Search()
 
     for {
@@ -50,7 +49,7 @@ object CoreSpec extends SimpleIOSuite with Checkers {
   }
 
   test("BacktrackingAlgorithm.Operations.loop should solve Sudoku correctly") {
-    val initialState = BoardState(Mocks.initialState)
+    val initialState = BoardState(initialBoardState)
     val search       = Search()
     val result       =
       BacktrackingAlgorithm.Operations.loop(
@@ -60,7 +59,7 @@ object CoreSpec extends SimpleIOSuite with Checkers {
         1 to initialState.value.size,
       )
 
-    IO(expect(result.contains(BoardState(Mocks.updatedState))))
+    IO(expect(result.contains(BoardState(updatedBoardState))))
   }
 
 }
