@@ -54,7 +54,7 @@ object Orchestrator {
           case Some(nonEmptyAlgorithms) =>
             nonEmptyAlgorithms
               .map(_.solve(board, search))
-              .foldLeft(Async[F].pure(Option.empty[SolvedState])) { (acc, next) =>
+              .foldLeft(Option.empty[SolvedState].pure) { (acc, next) =>
                 acc
                   .race(next)
                   .flatMap:
