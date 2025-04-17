@@ -98,6 +98,7 @@ object ConstraintPropagationAlgorithm {
               .pure
               .flatMap: domainMap =>
                 propagateConstraints(boardState, domainMap, search)
+                  .filter(search.verifyBoard)
                   .liftTo[F](NoSolutionFoundError(s"Failed to fill all ${domainMap.size} empty cells"))
                   .map:
                     SolvedState(_, Strategy.CONSTRAINT_PROPAGATION).some
@@ -110,41 +111,54 @@ object ConstraintPropagationAlgorithm {
         search: Search,
       ): Option[BoardState] = {
 
-        def reduceDomain(currentDomain: Map[(Int, Int), Seq[Int]]): Option[Map[(Int, Int), Seq[Int]]] =
-          currentDomain.foldLeft(currentDomain.some) { (acc, entry) =>
-            val (emptyCell, possibleDigits) = entry
-            acc.flatMap { domain =>
-              possibleDigits match {
+        @annotation.tailrec
+        def reduceDomain(
+          currentDomain: Map[(Int, Int), Seq[Int]],
+          acc: Option[Map[(Int, Int), Seq[Int]]] = Some(Map.empty),
+        ): Option[Map[(Int, Int), Seq[Int]]] =
+          acc match {
+            case None         => None
+            case Some(domain) =>
+              val updatedDomain =
+                currentDomain.foldLeft(domain.some) { (acc, entry) =>
+                  val (emptyCell, possibleDigits) = entry
+                  acc.flatMap: domain =>
+                    possibleDigits match
 
-                /**
-                 * Event: CellValueDetermined
-                 *
-                 * When there is exactly one possible digit, the domain for this cell is resolved. This means:
-                 *   - The cell is assigned the resolved digit.
-                 *   - The domain is updated to reflect this assignment, ensuring that the resolved digit is removed from the domains of all related
-                 *     cells (e.g., cells in the same row, column, or block).
-                 *   - The process continues recursively to propagate this resolution to other cells.
-                 */
-                case Seq(next) =>
-                  val updatedDomain =
-                    domain.map:
-                      case (neighbor, neighborDigits) => neighbor -> updateNeighborDomain(neighbor, emptyCell, neighborDigits, next)
-                  Option.when(updatedDomain.values.forall(_.nonEmpty)):
-                    updatedDomain
+                      /**
+                       * State: CellValueDetermined
+                       *
+                       * When there is exactly one possible digit, the domain for this cell is resolved. This means:
+                       *   - The cell is assigned the resolved digit.
+                       *   - The domain is updated to reflect this assignment, ensuring that the resolved digit is removed from the domains of all
+                       *     related cells (e.g., cells in the same row, column, or block).
+                       *   - The domain reduction process continues iteratively until no further changes occur.
+                       */
+                      case Seq(next) =>
+                        val newDomain =
+                          domain.map:
+                            case (neighbor, neighborDigits) => neighbor -> updateNeighborDomain(neighbor, emptyCell, neighborDigits, next)
+                        Option.when(newDomain.values.forall(_.nonEmpty)):
+                          newDomain
 
-                /**
-                 * Event: DomainReductionFailure
-                 *
-                 * The domain cannot be reduced further at this point. This could mean:
-                 *   - The domain is unsolvable (no digits are possible for this cell), or
-                 *   - The domain is ambiguous (more than one possible digit remains).
-                 *
-                 * A domain is considered stable when no changes occur during the reduction process. This indicates that no further propagation or
-                 * resolution is possible for the current state of the domain.
-                 */
-                case _ => acc
-              }
-            }
+                      /**
+                       * State: DomainReductionStable
+                       *
+                       * The domain cannot be reduced further at this point. This could mean:
+                       *   - The domain is unsolvable (no digits are possible for this cell), or
+                       *   - The domain is ambiguous (more than one possible digit remains for some cells).
+                       *
+                       * A domain is considered stable when no changes occur during the reduction process. Stability indicates that no further
+                       * propagation or resolution is possible for the current state of the domain, but it does not necessarily mean the domain is
+                       * invalid.
+                       *
+                       * If the domain remains ambiguous, the algorithm may fall back to backtracking to attempt to resolve the ambiguity.
+                       */
+                      case _ => acc
+                }
+
+              if updatedDomain.equals(acc) then acc
+              else reduceDomain(currentDomain, updatedDomain)
           }
 
         def updateNeighborDomain(
@@ -154,7 +168,6 @@ object ConstraintPropagationAlgorithm {
           next: Int,
         ): Seq[Int] =
           neighbor match {
-            // If the neighbor is the same as the empty cell, assign the resolved digit directly.
             case `emptyCell`                                => Seq(next)
             case _ if search.isRelated(emptyCell, neighbor) => neighborDigits.filterNot(_ == next)
             case _                                          => neighborDigits
@@ -177,23 +190,28 @@ object ConstraintPropagationAlgorithm {
                 .collectFirst { case solution => solution }
           }.flatten
 
+        @annotation.tailrec
         def propagate(
           currentDomain: Map[(Int, Int), Seq[Int]],
           currentState: BoardState,
+          acc: Option[BoardState] = None,
         ): Option[BoardState] =
-          reduceDomain(currentDomain).flatMap { reducedDomain =>
-            val isDomainStable   = reducedDomain.equals(currentDomain)
-            val isDomainResolved = reducedDomain.values.forall(_.size.equals(1))
+          reduceDomain(currentDomain) match {
+            case None                => acc
+            case Some(reducedDomain) =>
+              val isDomainStable   = reducedDomain.equals(currentDomain)
+              val isDomainResolved = reducedDomain.values.forall(_.size == 1)
 
-            (isDomainStable, isDomainResolved) match {
-              case (true, true)  => Some(Operations.updateBoardState(reducedDomain, currentState))
-              case (true, false) => fallbackToBacktracking(reducedDomain, currentState)
-              case _             => propagate(reducedDomain, currentState)
-            }
+              (isDomainStable, isDomainResolved) match {
+                case (true, true)  => Some(Operations.updateBoardState(reducedDomain, currentState))
+                case (true, false) => fallbackToBacktracking(reducedDomain, currentState)
+                case _             => propagate(reducedDomain, currentState, acc)
+              }
           }
 
         propagate(domainMap, boardState)
       }
+
     }
 
 }
