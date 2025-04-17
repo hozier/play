@@ -8,13 +8,14 @@ import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.shared.Mocks
 import weaver.*
 import cats.syntax.all.*
+import com.theproductcollectiveco.play4s.config.AppConfig
 
 object GoogleCloudClientSpec extends SimpleIOSuite {
   given Logger[IO] = Slf4jLogger.getLogger[IO]
 
   test("GoogleCloudClient should correctly parse a Sudoku image") {
     for {
-      onCI            <- IO(sys.env.get("HOMEBREW_CELLAR").isEmpty)
+      onCI            <- AppConfig.load[IO].map(_.runtime.onCI)
       _               <- ignore("Skip call outs to Google Cloud API on CI").whenA(onCI)
       expectedState    = Mocks.initialState
       parser           = GoogleCloudClient[IO]

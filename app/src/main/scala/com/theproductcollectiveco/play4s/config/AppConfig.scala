@@ -9,8 +9,13 @@ final case class GoogleCloudConfig(
   credentialsFilePath: String,
 )
 
+final case class RuntimeConfig(
+  onCI: Boolean
+)
+
 final case class AppConfig(
-  googleCloud: GoogleCloudConfig
+  googleCloud: GoogleCloudConfig,
+  runtime: RuntimeConfig,
 )
 
 object AppConfig:
@@ -19,6 +24,10 @@ object AppConfig:
     (
       env("CREDENTIALS_JSON").as[String],
       env("GOOGLE_APPLICATION_CREDENTIALS").as[String],
-    ).parMapN(GoogleCloudConfig.apply)
-      .map(AppConfig.apply)
-      .load[F]
+      env("HOMEBREW_CELLAR").option.map(_.isEmpty),
+    ).parMapN: (apiKey, credentialsFilePath, onCI) =>
+      AppConfig(
+        googleCloud = GoogleCloudConfig(apiKey, credentialsFilePath),
+        runtime = RuntimeConfig(onCI),
+      )
+    .load[F]

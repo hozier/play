@@ -10,10 +10,11 @@ import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudClient}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
+import com.theproductcollectiveco.play4s.config.AppConfig
 
 object IntegrationSpec extends SimpleIOSuite with Checkers {
 
-  def sharedProcess[F[_]: Logger: Parallel: Async: Console](parsedLines: List[String], orchestrator: Orchestrator[F])(using Metrics[F]) =
+  def parProcessSerialized[F[_]: Logger: Parallel: Async: Console](parsedLines: List[String], orchestrator: Orchestrator[F])(using Metrics[F]) =
     parsedLines.parTraverse { line =>
       for {
         gameBoard <- orchestrator.createBoard(orchestrator.processLine(line))
@@ -39,7 +40,7 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
     orchestrator
       .processTrace("trace.txt")
       .flatMap:
-        sharedProcess(_, orchestrator)
+        parProcessSerialized(_, orchestrator)
       .flatMap: solutions =>
         Logger[IO].debug(
           s"All puzzles processed with solutions: $solutions"
@@ -56,12 +57,12 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
     val orchestrator  = Orchestrator[IO](traceParser, imageParser)
 
     for {
-      onCI       <- IO(sys.env.get("HOMEBREW_CELLAR").isEmpty)
+      onCI       <- AppConfig.load[IO].map(_.runtime.onCI)
       _          <- ignore("Skip call outs to Google Cloud API on CI").whenA(onCI)
       parser      = GoogleCloudClient[IO]
       imageBytes <- orchestrator.fetchBytes("sudoku_test_image_v0.0.1.png")
       parsed     <- orchestrator.processImage(imageBytes)
-      solutions  <- sharedProcess(parsed :: Nil, orchestrator) // because sharedProcess expects a List type
+      solutions  <- parProcessSerialized(parsed :: Nil, orchestrator) // because parProcessSerialized expects a List type
       _          <- Logger[IO].debug(s"All puzzles processed with solutions: $solutions")
     } yield expect(solutions.forall(_.isDefined))
   }
