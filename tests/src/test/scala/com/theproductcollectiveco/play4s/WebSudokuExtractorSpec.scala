@@ -8,9 +8,8 @@ import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, Google
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.game.sudoku.parser.WebSudokuExtractor
-import org.http4s.blaze.client.BlazeClientBuilder
+import org.http4s.ember.client.EmberClientBuilder
 import scala.util.Random
-import javax.net.ssl.SSLContext
 
 object WebSudokuExtractorSpec extends SimpleIOSuite with Checkers {
 
@@ -23,10 +22,9 @@ object WebSudokuExtractorSpec extends SimpleIOSuite with Checkers {
     val imageParser   = GoogleCloudClient[IO]
     val orchestrator  = Orchestrator[IO](traceParser, imageParser)
 
-    BlazeClientBuilder[IO]
-      .withSslContext(SSLContext.getDefault)
-      .withCheckEndpointAuthentication(false)
-      .resource
+    EmberClientBuilder
+      .default[IO]
+      .build
       .use: client =>
         for {
           gameGenerator                      <- IO(WebSudokuExtractor[IO](client))

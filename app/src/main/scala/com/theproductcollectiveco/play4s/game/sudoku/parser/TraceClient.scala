@@ -18,7 +18,7 @@ object TraceClient {
         Logger[F].debug(s"Reading file $fileName") *>
           Resource
             .fromAutoCloseable:
-              Async[F].delay(Source.fromResource(fileName))
+              Async[F].blocking(Source.fromResource(fileName))
             .use { source =>
               Async[F].delay:
                 source

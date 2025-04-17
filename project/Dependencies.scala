@@ -14,6 +14,7 @@ object Versions {
   val smithy4s                = "0.17.0"
   val circe                   = "0.14.1"
   val ciris                   = "3.7.0"
+  val retry                   = "3.1.3"
 }
 
 object Dependencies {
@@ -28,7 +29,7 @@ object Dependencies {
   val weaverScalacheck        = "com.disneystreaming" %% "weaver-scalacheck"          % Versions.weaverScalacheck        % Test
   val googleCloudVision       = "com.google.cloud"     % "google-cloud-vision"        % Versions.googleCloudVision
   val http4sBlazeServer       = "org.http4s"          %% "http4s-blaze-server"        % Versions.http4s
-  val http4sBlazeClient       = "org.http4s"          %% "http4s-blaze-client"        % Versions.http4s
+  val http4sBlazeClient       = "org.http4s"          %% "http4s-ember-client"        % Versions.http4s
   val http4sDsl               = "org.http4s"          %% "http4s-dsl"                 % Versions.http4s
   val http4sCirce             = "org.http4s"          %% "http4s-circe"               % Versions.http4s
   val circeGeneric            = "io.circe"            %% "circe-generic"              % Versions.circe
@@ -53,13 +54,12 @@ object Dependencies {
       circeParser,
     )
 
-  lazy val ciris =
-    Seq(
-      "is.cir" %% "ciris" % Versions.ciris
-    )
+  lazy val ciris = "is.cir" %% "ciris" % Versions.ciris
+
+  lazy val retry = "com.github.cb372" %% "cats-retry" % Versions.retry
 
   val imageProcessingDependencies = Seq(googleCloudVision)
-  val coreDependencies            = Seq(catsEffect, catsEffectKernel, catsEffectStd) ++ imageProcessingDependencies ++ http4sDependencies ++ ciris
+  val coreDependencies            = Seq(catsEffect, catsEffectKernel, catsEffectStd, ciris, retry) ++ imageProcessingDependencies ++ http4sDependencies
   val loggingDependencies         = Seq(log4catsSlf4j, logbackClassic)
-  val testDependencies            = Seq(catsEffectTestingSpecs2, munitCatsEffect, weaverCats, weaverScalacheck) ++ ciris
+  val testDependencies            = Seq(catsEffectTestingSpecs2, munitCatsEffect, weaverCats, weaverScalacheck, ciris, retry)
 }

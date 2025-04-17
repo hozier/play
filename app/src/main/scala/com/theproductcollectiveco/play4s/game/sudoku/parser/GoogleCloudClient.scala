@@ -19,7 +19,7 @@ object GoogleCloudClient {
         val clientResource: Resource[F, ImageAnnotatorClient] = Resource.fromAutoCloseable(Async[F].delay(ImageAnnotatorClient.create()))
 
         clientResource.use { visionClient =>
-          Async[F].delay {
+          Async[F].blocking {
             val imgBytes   = ByteString.copyFrom(image)
             val img        = Image.newBuilder().setContent(imgBytes).build()
             val feature    = Feature.newBuilder().setType(Feature.Type.TEXT_DETECTION).build()
