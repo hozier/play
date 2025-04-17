@@ -59,7 +59,7 @@ export class TaskDefinitionConstruct extends Construct {
         APP_VERSION: imageTag,
       },
       secrets: {
-        GOOGLE_CLOUD_API_SAKEY: ecs.Secret.fromSecretsManager(
+        CREDENTIALS_JSON: ecs.Secret.fromSecretsManager(
           googleCredentialsSecret,
           'CREDENTIALS_JSON' // Extract only the value of the CREDENTIALS_JSON key
         ),

@@ -126,7 +126,7 @@ To retrieve the latest Load Balancer endpoint, re-trigger the GitHub Actions wor
 |                               | `IMAGE_TAG`                      | The tag assigned to the container image (e.g., latest, GIT_SHA). |
 |                               | `AWS_ACCESS_KEY_ID`              | AWS access key for authentication.                          |
 |                               | `AWS_SECRET_ACCESS_KEY`          | AWS secret access key for authentication.                   |
-| **Infrastructure/Application**| `GOOGLE_CLOUD_API_SAKEY`         | The service account key for Google Cloud API access.         |
+| **Infrastructure/Application**| `CREDENTIALS_JSON`               | The service account key for Google Cloud API access.         |
 |                               | `GOOGLE_APPLICATION_CREDENTIALS` | The file path to the Google Cloud service account credentials. |
 
 ###### (f) Commands Reference

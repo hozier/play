@@ -13,6 +13,7 @@ object Versions {
   val http4s                  = "0.23.12"
   val smithy4s                = "0.17.0"
   val circe                   = "0.14.1"
+  val ciris                   = "3.7.0"
 }
 
 object Dependencies {
@@ -52,8 +53,13 @@ object Dependencies {
       circeParser,
     )
 
+  lazy val ciris =
+    Seq(
+      "is.cir" %% "ciris" % Versions.ciris
+    )
+
   val imageProcessingDependencies = Seq(googleCloudVision)
-  val coreDependencies            = Seq(catsEffect, catsEffectKernel, catsEffectStd) ++ imageProcessingDependencies ++ http4sDependencies
+  val coreDependencies            = Seq(catsEffect, catsEffectKernel, catsEffectStd) ++ imageProcessingDependencies ++ http4sDependencies ++ ciris
   val loggingDependencies         = Seq(log4catsSlf4j, logbackClassic)
-  val testDependencies            = Seq(catsEffectTestingSpecs2, munitCatsEffect, weaverCats, weaverScalacheck)
+  val testDependencies            = Seq(catsEffectTestingSpecs2, munitCatsEffect, weaverCats, weaverScalacheck) ++ ciris
 }
