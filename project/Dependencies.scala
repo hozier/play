@@ -58,8 +58,10 @@ object Dependencies {
 
   lazy val retry = "com.github.cb372" %% "cats-retry" % Versions.retry
 
+  lazy val logstash = "net.logstash.logback" % "logstash-logback-encoder" % "7.4"
+
   val imageProcessingDependencies = Seq(googleCloudVision)
-  val coreDependencies            = Seq(catsEffect, catsEffectKernel, catsEffectStd, ciris, retry) ++ imageProcessingDependencies ++ http4sDependencies
+  val coreDependencies            = Seq(catsEffect, catsEffectKernel, catsEffectStd, ciris, retry, logstash) ++ imageProcessingDependencies ++ http4sDependencies
   val loggingDependencies         = Seq(log4catsSlf4j, logbackClassic)
-  val testDependencies            = Seq(catsEffectTestingSpecs2, munitCatsEffect, weaverCats, weaverScalacheck, ciris, retry)
+  val testDependencies            = Seq(catsEffectTestingSpecs2, munitCatsEffect, weaverCats, weaverScalacheck, ciris, retry, logstash)
 }

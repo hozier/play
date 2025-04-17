@@ -23,12 +23,18 @@ object WebSudokuExtractor {
       private val BaseUri = "https://west.websudoku.com/?level=1&set_id="
 
       override def fetchTxtRepresentation(puzzleNumber: Long): F[(String, String)] =
-        for {
-          _                                  <- validatePuzzleNumber(puzzleNumber)
-          uri                                <- buildUri(puzzleNumber)
-          html                               <- fetchHtml(uri)
-          (solution, validatedStartingTrace) <- extractTxtFromHtml(html)
-        } yield (solution, validatedStartingTrace)
+        retryingOnAllErrors(
+          policy = limitRetries[F](3) join exponentialBackoff[F](100.milliseconds),
+          onError =
+            (e: Throwable, details: RetryDetails) =>
+              Logger[F].warn(s"Retrying fetchTxtRepresentation due to error: ${e.getMessage}, details: $details"),
+        ):
+          for {
+            _                                  <- validatePuzzleNumber(puzzleNumber)
+            uri                                <- buildUri(puzzleNumber)
+            html                               <- fetchHtml(uri)
+            (solution, validatedStartingTrace) <- extractTxtFromHtml(html)
+          } yield (solution, validatedStartingTrace)
 
       private def validatePuzzleNumber(n: Long): F[Unit] =
         Sync[F]
@@ -38,17 +44,12 @@ object WebSudokuExtractor {
       private def buildUri(puzzleNumber: Long): F[Uri] = Uri.fromString(s"$BaseUri$puzzleNumber").liftTo[F]
 
       private def fetchHtml(uri: Uri): F[String] =
-        retryingOnAllErrors(
-          policy = limitRetries[F](3) join exponentialBackoff[F](100.milliseconds),
-          onError = (e: Throwable, details: RetryDetails) => Logger[F].warn(s"Retrying fetchHtml due to error: ${e.getMessage}, details: $details"),
-        ) {
-          client.expect[String](
-            Request[F](Method.GET, uri).withHeaders(
-              Header.Raw(ci"User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"),
-              Header.Raw(ci"Accept", "text/html"),
-            )
+        client.expect[String](
+          Request[F](Method.GET, uri).withHeaders(
+            Header.Raw(ci"User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"),
+            Header.Raw(ci"Accept", "text/html"),
           )
-        }
+        )
 
       private def extractTxtFromHtml(html: String): F[(String, String)] =
         for {
