@@ -5,9 +5,9 @@ import org.scalacheck.Gen
 import weaver.SimpleIOSuite
 import weaver.scalacheck.Checkers
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Search, Orchestrator}
-import com.theproductcollectiveco.play4s.shared.SpecKit.Generators.*
+import com.theproductcollectiveco.play4s.SpecKit.Generators.*
 import com.theproductcollectiveco.play4s.game.sudoku.BoardState
-import com.theproductcollectiveco.play4s.shared.SpecKit.SharedInstances.given
+import com.theproductcollectiveco.play4s.SpecKit.SharedInstances.given
 
 object CoreSpec extends SimpleIOSuite with Checkers {
 
@@ -57,7 +57,7 @@ object CoreSpec extends SimpleIOSuite with Checkers {
         )
       )(new RuntimeException("Expected a solved board, but got None"))
         .map: state =>
-          expect(state == BoardState(shared.SpecKit.Fixtures.updatedBoardState))
+          expect(state == BoardState(SpecKit.Fixtures.updatedBoardState))
     }
   }
 

@@ -1,4 +1,4 @@
-package com.theproductcollectiveco.play4s.shared
+package com.theproductcollectiveco.play4s
 
 import weaver.SimpleIOSuite
 import cats.effect.IO
@@ -7,7 +7,6 @@ import cats.Show
 import org.scalacheck.Gen
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import com.theproductcollectiveco.play4s.Metrics
 import com.theproductcollectiveco.play4s.config.AppConfig
 import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, core}
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Search, Orchestrator}

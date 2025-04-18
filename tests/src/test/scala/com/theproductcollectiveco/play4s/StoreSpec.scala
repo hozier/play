@@ -6,7 +6,7 @@ import weaver.scalacheck.Checkers
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.store.Board
-import com.theproductcollectiveco.play4s.shared.SpecKit.Fixtures.*
+import com.theproductcollectiveco.play4s.SpecKit.Fixtures.*
 import com.theproductcollectiveco.play4s.game.sudoku.{InitialStateSettingError, BoardNotCreatedError, BoardState}
 
 object StoreSpec extends SimpleIOSuite with Checkers {

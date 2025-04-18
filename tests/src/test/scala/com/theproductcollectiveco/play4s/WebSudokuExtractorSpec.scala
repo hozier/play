@@ -8,8 +8,8 @@ import org.typelevel.log4cats.Logger
 import org.http4s.ember.client.EmberClientBuilder
 import scala.util.Random
 import weaver.*
-import com.theproductcollectiveco.play4s.shared.SpecKit.Generators.*
-import com.theproductcollectiveco.play4s.shared.SpecKit.SharedInstances.given
+import com.theproductcollectiveco.play4s.SpecKit.Generators.*
+import com.theproductcollectiveco.play4s.SpecKit.SharedInstances.given
 
 object WebSudokuExtractorSpec extends SimpleIOSuite with Checkers:
 

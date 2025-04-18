@@ -9,9 +9,9 @@ import weaver.SimpleIOSuite
 import weaver.scalacheck.Checkers
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Orchestrator, Search}
 import org.typelevel.log4cats.Logger
-import com.theproductcollectiveco.play4s.shared.SpecKit.Operations.*
-import com.theproductcollectiveco.play4s.shared.SpecKit.Generators.*
-import com.theproductcollectiveco.play4s.shared.SpecKit.SharedInstances.given
+import com.theproductcollectiveco.play4s.SpecKit.Operations.*
+import com.theproductcollectiveco.play4s.SpecKit.Generators.*
+import com.theproductcollectiveco.play4s.SpecKit.SharedInstances.given
 
 object IntegrationSpec extends SimpleIOSuite with Checkers {
 
