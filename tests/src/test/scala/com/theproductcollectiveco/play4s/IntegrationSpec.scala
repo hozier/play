@@ -6,7 +6,7 @@ import cats.effect.std.Console
 import cats.implicits.*
 import weaver.SimpleIOSuite
 import weaver.scalacheck.Checkers
-import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Orchestrator, Search}
+import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Orchestrator, Search}
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudClient}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
@@ -23,6 +23,7 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
             gameBoard,
             Search(),
             BacktrackingAlgorithm[F](),
+            ConstraintPropagationAlgorithm[F](),
           )
         _         <- gameBoard.delete()
       } yield solutions
