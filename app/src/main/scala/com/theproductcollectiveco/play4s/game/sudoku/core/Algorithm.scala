@@ -27,7 +27,7 @@ object BacktrackingAlgorithm {
           board.read().flatMap { boardState =>
             search.fetchEmptyCells(boardState).pure.flatMap { emptyCells =>
               Operations
-                .searchDomain(board, boardState, search, emptyCells, 1 to boardState.value.size)
+                .searchDomain(board, boardState, search, emptyCells, (1 to boardState.value.size).toList)
                 .map:
                   _.map:
                     SolvedState(_, Strategy.BACKTRACKING)
@@ -43,7 +43,7 @@ object BacktrackingAlgorithm {
       boardState: BoardState,
       search: Search,
       emptyCells: LazyList[(Int, Int)],
-      possibleDigits: Seq[Int],
+      possibleDigits: List[Int],
     ): F[Option[BoardState]] =
       loop(boardState, search, emptyCells, possibleDigits)
         .liftTo[F](NoSolutionFoundError(s"Failed to fill all ${emptyCells.size} empty cells"))
@@ -51,20 +51,20 @@ object BacktrackingAlgorithm {
           board.update(solutionState) `as` solutionState.some
 
     def updateBoardState(
-      domain: Map[(Int, Int), Seq[Int]],
+      domain: Map[(Int, Int), List[Int]],
       boardState: BoardState,
     ): Option[BoardState] =
       domain.foldLeft(Option(boardState)) {
-        case (Some(state), ((row, col), Seq(value))) => Some(state.copy(value = state.value.updated(row, state.value(row).updated(col, value))))
-        case (Some(_), ((_, _), Seq()))              => None // Domain wipeout: cell has no possible values
-        case (acc, _)                                => acc  // Ignore cells with multiple possible values
+        case (Some(state), ((row, col), value :: Nil)) => Some(state.copy(value = state.value.updated(row, state.value(row).updated(col, value))))
+        case (Some(_), ((_, _), Nil))                  => None // Domain wipeout: cell has no possible values
+        case (acc, _)                                  => acc  // Ignore cells with multiple possible values
       }
 
     def loop(
       state: BoardState,
       search: Search,
       emptyCells: LazyList[(Int, Int)],
-      possibleDigits: Seq[Int],
+      possibleDigits: List[Int],
     ): Option[BoardState] =
 
       emptyCells.headOption match {
@@ -74,7 +74,7 @@ object BacktrackingAlgorithm {
             .to(LazyList)
             .flatMap { next =>
               Option.when(search.verify(state, row, col, next)) {
-                updateBoardState(Map((row, col) -> Seq(next)), state).flatMap:
+                updateBoardState(Map((row, col) -> (next :: Nil)), state).flatMap:
                   loop(_, search, emptyCells.tail, possibleDigits)
               }
             }
@@ -100,7 +100,7 @@ object ConstraintPropagationAlgorithm {
               .fetchEmptyCells(boardState)
               .map:
                 case (row, col) =>
-                  (row, col) -> (1 to boardState.value.size)
+                  (row, col) -> (1 to boardState.value.size).toList
                     .filter:
                       search.verify(boardState, row, col, _)
               .toMap
@@ -115,26 +115,26 @@ object ConstraintPropagationAlgorithm {
       private def updateNeighborDomain(
         emotyCell: (Int, Int),
         neighbor: (Int, Int),
-        neighborDigits: Seq[Int],
+        neighborDigits: List[Int],
         value: Int,
         search: Search,
-      ): Seq[Int] =
+      ): List[Int] =
         (neighbor, emotyCell) match {
-          case (n, c) if n == c                 => Seq(value)
+          case (n, c) if n == c                 => value :: Nil
           case (n, c) if search.isRelated(c, n) => neighborDigits.filterNot(_ == value)
           case _                                => neighborDigits
         }
 
       private def propagateAndSearch(
         boardState: BoardState,
-        domain: Map[(Int, Int), Seq[Int]],
+        domain: Map[(Int, Int), List[Int]],
         search: Search,
       ): Option[BoardState] = {
 
         @annotation.tailrec
         def propagate(
-          domainState: Map[(Int, Int), Seq[Int]]
-        ): Option[Map[(Int, Int), Seq[Int]]] = {
+          domainState: Map[(Int, Int), List[Int]]
+        ): Option[Map[(Int, Int), List[Int]]] = {
           val propagatedDomain =
             domainState.foldLeft(Option(domainState)) {
 
@@ -145,7 +145,7 @@ object ConstraintPropagationAlgorithm {
                * column, or block) by removing this digit. Continue propagation until no further assignments can be made. If any cell's domain becomes
                * empty, the puzzle is unsolvable from this state.
                */
-              case (Some(currentDomain), (cell, Seq(determinedValue))) =>
+              case (Some(currentDomain), (cell, determinedValue :: Nil)) =>
                 currentDomain
                   .map { case (otherCell, possibleValues) =>
                     otherCell -> updateNeighborDomain(cell, otherCell, possibleValues, determinedValue, search)
@@ -174,7 +174,7 @@ object ConstraintPropagationAlgorithm {
               reducedBoard,
               search,
               emptyCells,
-              1 to boardState.value.size,
+              (1 to boardState.value.size).toList,
             )
         } yield solved
       }

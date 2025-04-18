@@ -53,7 +53,7 @@ object CoreSpec extends SimpleIOSuite with Checkers {
           initialState,
           search,
           search.fetchEmptyCells(initialState),
-          1.to(initialState.value.size),
+          (1 to initialState.value.size).toList,
         )
       )(new RuntimeException("Expected a solved board, but got None"))
         .map: actual =>
@@ -69,7 +69,7 @@ object CoreSpec extends SimpleIOSuite with Checkers {
             initialState,
             search,
             search.fetchEmptyCells(initialState),
-            1.to(initialState.value.size),
+            (1 to initialState.value.size).toList,
           )
           .isDefined
       )

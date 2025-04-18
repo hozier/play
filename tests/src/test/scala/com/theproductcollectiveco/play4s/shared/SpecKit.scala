@@ -61,7 +61,7 @@ object SpecKit {
      - Use: Fast tests like parsing/formatting; may yield unsolvable or ambiguous boards.
 
      - solvableBoardGen: Guaranteed solvable puzzles
-     - Same logic, but checks if the puzzle is solvable using BacktrackingAlgorithm.
+     - Same logic, but checks if the state is solvable using BacktrackingAlgorithm.
      - Use: Slow but safe for testing solving logic; always returns a solvable board.
      */
 
@@ -77,9 +77,9 @@ object SpecKit {
             } yield (row, col),
           )
       } yield {
-        val puzzle = Fixtures.updatedBoardState.map(_.toArray).toArray
-        cellsToRemove.foreach { case (row, col) => puzzle(row)(col) = 0 }
-        BoardState(puzzle.map(_.toVector).toVector)
+        val state = Fixtures.updatedBoardState.map(_.toArray).toArray
+        cellsToRemove.foreach { case (row, col) => state(row)(col) = 0 }
+        BoardState(state.map(_.toVector).toVector)
       }
 
     val solvableBoardGen: Gen[BoardState] =
@@ -97,18 +97,18 @@ object SpecKit {
               } yield (row, col)).toList)
               .take(removalCount)
 
-          val puzzle = Fixtures.updatedBoardState.map(_.toArray).toArray
-          cells.foreach { case (row, col) => puzzle(row)(col) = 0 }
-          BoardState(puzzle.map(_.toVector).toVector)
+          val state = Fixtures.updatedBoardState.map(_.toArray).toArray
+          cells.foreach { case (row, col) => state(row)(col) = 0 }
+          BoardState(state.map(_.toVector).toVector)
         }
 
         LazyList
           .continually:
             createPuzzle(scala.util.Random.between(20, 50))
-          .map: puzzle =>
+          .map: state =>
             Option.when(
-              algorithm.loop(puzzle, search, search.fetchEmptyCells(puzzle), 1 to 9).isDefined
-            )(puzzle)
+              algorithm.loop(state, search, search.fetchEmptyCells(state), (1 to state.value.size).toList).isDefined
+            )(state)
           .collectFirst { case Some(valid) => valid }
           .take(maxRetries)
           .toSeq
