@@ -22,17 +22,17 @@ object CoreSpec extends SimpleIOSuite with Checkers {
 
   test("Orchestrator should parse line correctly") {
     forall(Gen.zip(boardGen, orchestratorGen)) { case (initialState, orchestrator) =>
-      val line       = "530070000600195000098000060800060003400803001700020006060000280000419005000080079"
+      val line       = initialState.value.flatMap(_.mkString).mkString
       val parseState = orchestrator.processLine(line)
       IO(expect(parseState.value == initialState.value))
     }
   }
 
   test("Search should verify Sudoku constraints correctly") {
-    forall(Gen.zip(boardGen, searchGen)) { case (initialState, search) =>
+    forall(searchGen) { search =>
       for {
-        valid   <- IO(search.verify(initialState, 0, 2, 4))
-        invalid <- IO(search.verify(initialState, 0, 2, 5))
+        valid   <- IO(search.verify(BoardState(SpecKit.Fixtures.initialBoardState), 0, 2, 4))
+        invalid <- IO(search.verify(BoardState(SpecKit.Fixtures.initialBoardState), 0, 2, 5))
       } yield expect(valid) and expect(!invalid)
     }
   }
@@ -56,8 +56,8 @@ object CoreSpec extends SimpleIOSuite with Checkers {
           1.to(initialState.value.size),
         )
       )(new RuntimeException("Expected a solved board, but got None"))
-        .map: state =>
-          expect(state == BoardState(SpecKit.Fixtures.updatedBoardState))
+        .map: actual =>
+          expect(search.verifyBoard(actual))
     }
   }
 

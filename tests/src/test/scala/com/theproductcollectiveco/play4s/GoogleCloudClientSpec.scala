@@ -21,7 +21,7 @@ object GoogleCloudClientSpec extends SimpleIOSuite {
       _               <-
         Logger[IO].info:
           s"result: $serializedBoard"
-    } yield expect(serializedBoard == initialBoardState.map(_.mkString("")).mkString(""))
+    } yield expect(serializedBoard == initialBoardState.map(_.mkString).mkString)
   }
 
 }
