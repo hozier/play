@@ -3,14 +3,20 @@ package com.theproductcollectiveco.play4s.shared
 import weaver.SimpleIOSuite
 import cats.effect.IO
 import weaver.*
-import com.theproductcollectiveco.play4s.config.AppConfig
+import cats.Show
 import org.scalacheck.Gen
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+import com.theproductcollectiveco.play4s.Metrics
+import com.theproductcollectiveco.play4s.config.AppConfig
 import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, core}
-import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Search}
+import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Search, Orchestrator}
+import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudClient}
+import scala.annotation.unused
 
 object SpecKit {
 
-  object Fixtures {
+  object Fixtures:
 
     val initialBoardState =
       Vector(
@@ -38,9 +44,17 @@ object SpecKit {
         Vector(3, 4, 5, 2, 8, 6, 1, 7, 9),
       )
 
-  }
-
   object Generators {
+
+    val searchGen: Gen[Search] = Gen.const(Search())
+
+    val orchestratorGen: Gen[Orchestrator[IO]] =
+      Gen.delay {
+        import SharedInstances.given
+        val traceParser = TraceClient[IO]
+        val imageParser = GoogleCloudClient[IO]
+        Orchestrator[IO](traceParser, imageParser)
+      }
 
     /*
      - boardGen: "Maybe solvable" puzzles
@@ -105,7 +119,7 @@ object SpecKit {
 
   }
 
-  object Operations extends SimpleIOSuite {
+  object Operations extends SimpleIOSuite:
 
     def skipOnCI: IO[Unit] =
       AppConfig.load[IO].use { config =>
@@ -114,6 +128,22 @@ object SpecKit {
         }
       }
 
-  }
+  object SharedInstances:
+    // Define Show instances for Logger, Metrics, and Orchestrator to resolve forall issues
+    given Logger[IO]             = Slf4jLogger.getLogger[IO]
+    given Metrics[IO]            = Metrics[IO]
+    given Show[Logger[IO]]       = Show.show(_ => "Logger[IO]")
+    given Show[Metrics[IO]]      = Show.show(_ => "Metrics[IO]")
+    given Show[Orchestrator[IO]] = Show.show(_ => "Orchestrator[IO]")
+    given Show[BoardState]       = Show.show(_.toString)
+    given Show[Search]           = Show.show(_.toString)
+
+    def withLoggerAndMetrics[A](logger: Logger[IO], metrics: Metrics[IO])(f: => IO[A]): IO[A] = {
+      @unused
+      given Logger[IO]  = logger
+      @unused
+      given Metrics[IO] = metrics
+      f
+    }
 
 }
