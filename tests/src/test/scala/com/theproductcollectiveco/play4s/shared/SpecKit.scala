@@ -4,6 +4,9 @@ import weaver.SimpleIOSuite
 import cats.effect.IO
 import weaver.*
 import com.theproductcollectiveco.play4s.config.AppConfig
+import org.scalacheck.Gen
+import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, core}
+import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Search}
 
 object SpecKit {
 
@@ -34,6 +37,71 @@ object SpecKit {
         Vector(2, 8, 7, 4, 1, 9, 6, 3, 5),
         Vector(3, 4, 5, 2, 8, 6, 1, 7, 9),
       )
+
+  }
+
+  object Generators {
+
+    /*
+     - boardGen: "Maybe solvable" puzzles
+     - Randomly removes 20–50 values from a known solution, without verifying that the resulting board is solvable.
+     - Use: Fast tests like parsing/formatting; may yield unsolvable or ambiguous boards.
+
+     - solvableBoardGen: Guaranteed solvable puzzles
+     - Same logic, but checks if the puzzle is solvable using BacktrackingAlgorithm.
+     - Use: Slow but safe for testing solving logic; always returns a solvable board.
+     */
+
+    val boardGen: Gen[BoardState] =
+      for {
+        removalCount  <- Gen.chooseNum(20, 50)
+        cellsToRemove <-
+          Gen.pick(
+            removalCount,
+            for {
+              row <- 0 until 9
+              col <- 0 until 9
+            } yield (row, col),
+          )
+      } yield {
+        val puzzle = Fixtures.updatedBoardState.map(_.toArray).toArray
+        cellsToRemove.foreach { case (row, col) => puzzle(row)(col) = 0 }
+        BoardState(puzzle.map(_.toVector).toVector)
+      }
+
+    val solvableBoardGen: Gen[BoardState] =
+      Gen.delay {
+        val search     = Search()
+        val algorithm  = BacktrackingAlgorithm.Operations
+        val maxRetries = 5
+
+        def createPuzzle(removalCount: Int): BoardState = {
+          val cells =
+            scala.util.Random
+              .shuffle((for {
+                row <- 0 until 9
+                col <- 0 until 9
+              } yield (row, col)).toList)
+              .take(removalCount)
+
+          val puzzle = Fixtures.updatedBoardState.map(_.toArray).toArray
+          cells.foreach { case (row, col) => puzzle(row)(col) = 0 }
+          BoardState(puzzle.map(_.toVector).toVector)
+        }
+
+        LazyList
+          .continually:
+            createPuzzle(scala.util.Random.between(20, 50))
+          .map: puzzle =>
+            Option.when(
+              algorithm.loop(puzzle, search, search.fetchEmptyCells(puzzle), 1 to 9).isDefined
+            )(puzzle)
+          .collectFirst { case Some(valid) => valid }
+          .take(maxRetries)
+          .toSeq
+          .headOption
+          .getOrElse(throw new RuntimeException("Failed to generate a solvable board after 10 attempts"))
+      }
 
   }
 
