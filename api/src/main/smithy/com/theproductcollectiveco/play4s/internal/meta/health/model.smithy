@@ -13,19 +13,36 @@ enum HealthStatus {
     UNHEALTHY = "unhealthy"
 }
 
-structure GetVersionOutput {
+structure RuntimeConfig {
     @required
-    name: String
+    appName: String
 
     @required
-    @timestampFormat("date-time")
-    builtAt: Timestamp
-
-    @required
-    version: String
+    appVersion: String
 
     @required
     scalaVersion: String
 
+    @required
     sbtVersion: String
+
+    @required
+    organization: String
+
+    @required
+    artifactIdentifiers: ArtifactIdentifiers
+
+    onCI: Boolean
+}
+
+structure ArtifactIdentifiers {
+    @required
+    gitSha: String
+
+    @required
+    imageDigest: String
+
+    @required
+    @timestampFormat("date-time")
+    builtAt: Timestamp
 }

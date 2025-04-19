@@ -27,12 +27,12 @@ lazy val root =
     .aggregate(app, tests, smithy)
     .settings(name := "play4s")
     .settings(commonSettings)
-    .enablePlugins(TpolecatPlugin)
+    .enablePlugins(TpolecatPlugin, BuildInfoPlugin)
 
 lazy val app =
   (project in file("app"))
     .dependsOn(smithy)
-    .enablePlugins(JavaAppPackaging, DockerPlugin)
+    .enablePlugins(JavaAppPackaging, DockerPlugin, BuildInfoPlugin)
     .settings(
       name                := "play4s-app",
       version             := "0.1.0-SNAPSHOT",
@@ -53,6 +53,16 @@ lazy val app =
       ),
       Compile / mainClass := Some("com.theproductcollectiveco.play4s.MainApp"),
       dockerEntrypoint    := Seq("/opt/docker/bin/play4s-app"),
+      buildInfoPackage    := "com.theproductcollectiveco.play4s.config",
+      buildInfoKeys       := Seq[BuildInfoKey](
+        name,
+        organization,
+        version,
+        scalaVersion,
+        sbtVersion,
+        BuildInfoKey.action("gitSha")(sys.env.getOrElse("GIT_SHA", "latest")),
+        BuildInfoKey.action("buildTimestamp")(java.time.Instant.now.toString),
+      ),
     )
     .settings(commonSettings)
 
