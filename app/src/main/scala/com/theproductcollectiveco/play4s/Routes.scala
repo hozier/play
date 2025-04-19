@@ -10,9 +10,8 @@ import io.circe.syntax.*
 import org.typelevel.log4cats.Logger
 import smithy4s.http4s.SimpleRestJsonBuilder
 import smithy4s.http4s.swagger.docs
-import com.theproductcollectiveco.play4s.api.Play4sService
-import com.theproductcollectiveco.play4s.internal.meta.health.ServiceMetaApi
 import com.theproductcollectiveco.play4s.Play4sApi
+import com.theproductcollectiveco.play4s.internal.meta.health.ServiceMetaApi
 import org.http4s.server.middleware.Logger as Http4sLogger
 
 object Routes {
@@ -20,7 +19,7 @@ object Routes {
   import com.theproductcollectiveco.play4s.Middleware.gameIdEncoder
 
   def router(
-    play4sService: Play4sService[IO],
+    play4sService: Play4sApi[IO],
     metaService: ServiceMetaApi[IO],
   )(using Logger[IO]): Resource[IO, HttpRoutes[IO]] =
     for {
