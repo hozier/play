@@ -29,7 +29,7 @@ object Dependencies {
   val weaverScalacheck        = "com.disneystreaming" %% "weaver-scalacheck"          % Versions.weaverScalacheck        % Test
   val googleCloudVision       = "com.google.cloud"     % "google-cloud-vision"        % Versions.googleCloudVision
   val http4sBlazeServer       = "org.http4s"          %% "http4s-blaze-server"        % Versions.http4s
-  val http4sBlazeClient       = "org.http4s"          %% "http4s-blaze-client"        % Versions.http4s
+  val http4sEmberClient       = "org.http4s"          %% "http4s-ember-client"        % Versions.http4s
   val http4sDsl               = "org.http4s"          %% "http4s-dsl"                 % Versions.http4s
   val http4sCirce             = "org.http4s"          %% "http4s-circe"               % Versions.http4s
   val circeGeneric            = "io.circe"            %% "circe-generic"              % Versions.circe
@@ -48,7 +48,7 @@ object Dependencies {
   val http4sDependencies =
     Seq(
       http4sBlazeServer,
-      http4sBlazeClient,
+      http4sEmberClient,
       http4sDsl,
       http4sCirce,
       circeGeneric,
