@@ -5,7 +5,7 @@ import weaver.SimpleIOSuite
 import com.theproductcollectiveco.play4s.game.sudoku.parser.GoogleCloudClient
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
-import com.theproductcollectiveco.play4s.shared.Mocks
+import com.theproductcollectiveco.play4s.shared.SpecKit.Fixtures
 import weaver.*
 import cats.syntax.all.*
 
@@ -16,7 +16,7 @@ object GoogleCloudClientSpec extends SimpleIOSuite {
     for {
       onCI            <- IO(sys.env.get("HOMEBREW_CELLAR").isEmpty)
       _               <- ignore("Skip call outs to Google Cloud API on CI").whenA(onCI)
-      expectedState    = Mocks.initialState
+      expectedState    = Fixtures.initialBoardState
       parser           = GoogleCloudClient[IO]
       imageBytes      <- parser.fetchBytes("sudoku_test_image_v0.0.1.png")
       serializedBoard <- parser.parseImage(imageBytes)

@@ -6,7 +6,7 @@ import weaver.scalacheck.Checkers
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.store.Board
-import com.theproductcollectiveco.play4s.shared.Mocks
+import com.theproductcollectiveco.play4s.shared.SpecKit.Fixtures
 import com.theproductcollectiveco.play4s.game.sudoku.{InitialStateSettingError, BoardNotCreatedError, BoardState}
 
 object StoreSpec extends SimpleIOSuite with Checkers {
@@ -15,7 +15,7 @@ object StoreSpec extends SimpleIOSuite with Checkers {
   given Metrics[IO] = Metrics[IO]
 
   test("Board should read initial state correctly") {
-    val initialState = BoardState(Mocks.initialState)
+    val initialState = BoardState(Fixtures.initialBoardState)
 
     for {
       ref       <- Ref.of[IO, Option[BoardState]](None)
@@ -25,11 +25,11 @@ object StoreSpec extends SimpleIOSuite with Checkers {
   }
 
   test("Board should update state correctly") {
-    val updatedBoardState = BoardState(Mocks.updatedState)
+    val updatedBoardState = BoardState(Fixtures.updatedBoardState)
 
     for {
       ref       <- Ref.of[IO, Option[BoardState]](None)
-      gameBoard <- Board[IO](BoardState(Mocks.initialState), ref)
+      gameBoard <- Board[IO](BoardState(Fixtures.initialBoardState), ref)
       _         <- gameBoard.update(updatedBoardState)
       state     <- gameBoard.read()
     } yield expect(state == updatedBoardState)
@@ -38,7 +38,7 @@ object StoreSpec extends SimpleIOSuite with Checkers {
   test("Board should delete state correctly") {
     for {
       ref         <- Ref.of[IO, Option[BoardState]](None)
-      gameBoard   <- Board[IO](BoardState(Mocks.initialState), ref)
+      gameBoard   <- Board[IO](BoardState(Fixtures.initialBoardState), ref)
       _           <- gameBoard.delete()
       isStateless <-
         gameBoard

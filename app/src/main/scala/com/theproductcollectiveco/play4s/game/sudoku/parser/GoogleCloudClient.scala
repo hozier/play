@@ -1,7 +1,7 @@
 package com.theproductcollectiveco.play4s.game.sudoku.parser
 
 import com.theproductcollectiveco.play4s.game.sudoku.common.Parser
-import cats.effect.Async
+import cats.effect.{Async, Resource}
 import com.google.cloud.vision.v1.{ImageAnnotatorClient, Image, Feature, AnnotateImageRequest, TextAnnotation}
 import com.google.protobuf.ByteString
 import scala.jdk.CollectionConverters.*
@@ -15,21 +15,23 @@ object GoogleCloudClient {
   def apply[F[_]: Async]: ImageParser[F] =
     new ImageParser[F] with Parser[F] {
 
-      override def parseImage(image: Array[Byte]): F[String] =
-        Async[F].delay {
-          val visionClient = ImageAnnotatorClient.create()
-          val imgBytes     = ByteString.copyFrom(image)
-          val img          = Image.newBuilder().setContent(imgBytes).build()
-          val feature      = Feature.newBuilder().setType(Feature.Type.TEXT_DETECTION).build()
-          val request      = AnnotateImageRequest.newBuilder().addFeatures(feature).setImage(img).build()
-          val response     = visionClient.batchAnnotateImages(java.util.Arrays.asList(request))
-          val annotation   = response.getResponsesList.get(0).getFullTextAnnotation
+      override def parseImage(image: Array[Byte]): F[String] = {
+        val clientResource: Resource[F, ImageAnnotatorClient] = Resource.fromAutoCloseable(Async[F].delay(ImageAnnotatorClient.create()))
 
-          // Use the positional data to robustly parse the board.
-          val board = parseOCRAnnotation(annotation)
-          visionClient.close()
-          board
+        clientResource.use { visionClient =>
+          Async[F].blocking {
+            val imgBytes   = ByteString.copyFrom(image)
+            val img        = Image.newBuilder().setContent(imgBytes).build()
+            val feature    = Feature.newBuilder().setType(Feature.Type.TEXT_DETECTION).build()
+            val request    = AnnotateImageRequest.newBuilder().addFeatures(feature).setImage(img).build()
+            val response   = visionClient.batchAnnotateImages(java.util.Arrays.asList(request))
+            val annotation = response.getResponsesList.get(0).getFullTextAnnotation
+
+            // Use the positional data to robustly parse the board.
+            parseOCRAnnotation(annotation)
+          }
         }
+      }
 
       /**
        * This method uses the hierarchical structure and bounding box information of the OCR result to assign detected digits to a cell within a 9×9
