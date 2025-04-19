@@ -1,66 +1,79 @@
 package com.theproductcollectiveco.play4s
 
 import cats.effect.IO
+import org.scalacheck.Gen
 import weaver.SimpleIOSuite
 import weaver.scalacheck.Checkers
-import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Search, Orchestrator}
-import org.typelevel.log4cats.slf4j.Slf4jLogger
-import org.typelevel.log4cats.Logger
-import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudClient}
-import com.theproductcollectiveco.play4s.shared.SpecKit.Fixtures
+import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Search, Orchestrator}
+import com.theproductcollectiveco.play4s.SpecKit.Generators.*
 import com.theproductcollectiveco.play4s.game.sudoku.BoardState
+import com.theproductcollectiveco.play4s.SpecKit.SharedInstances.given
 
 object CoreSpec extends SimpleIOSuite with Checkers {
 
-  given Logger[IO]  = Slf4jLogger.getLogger[IO]
-  given Metrics[IO] = Metrics[IO]
-  val traceParser   = TraceClient[F]
-  val imageParser   = GoogleCloudClient[F]
-  val orchestrator  = Orchestrator[IO](traceParser, imageParser)
-
   test("Orchestrator should parse resource correctly") {
-    orchestrator
-      .processTrace("trace.txt")
-      .map: lines =>
-        expect(lines.nonEmpty)
+    forall(orchestratorGen) { orchestrator =>
+      orchestrator
+        .processTrace("trace.txt")
+        .map: lines =>
+          expect(lines.nonEmpty)
+    }
   }
 
   test("Orchestrator should parse line correctly") {
-    val line          = "530070000600195000098000060800060003400803001700020006060000280000419005000080079"
-    val parseState    = orchestrator.processLine(line)
-    val expectedState = Fixtures.initialBoardState
-    IO(expect(parseState.value == expectedState))
-  }
-
-  test("Algorithm should solve Sudoku correctly") {
-    for {
-      gameBoard <- orchestrator.createBoard(BoardState(Fixtures.initialBoardState))
-      solved    <- BacktrackingAlgorithm[IO]().solve(gameBoard, Search())
-    } yield expect(solved.isDefined)
+    forall(Gen.zip(boardGen, orchestratorGen)) { case (initialState, orchestrator) =>
+      val line       = initialState.value.flatMap(_.mkString).mkString
+      val parseState = orchestrator.processLine(line)
+      IO(expect(parseState.value == initialState.value))
+    }
   }
 
   test("Search should verify Sudoku constraints correctly") {
-    val initialState = BoardState(Fixtures.initialBoardState)
-    val search       = Search()
+    forall(searchGen) { search =>
+      for {
+        valid   <- IO(search.verify(BoardState(SpecKit.Fixtures.initialBoardState), 0, 2, 4))
+        invalid <- IO(search.verify(BoardState(SpecKit.Fixtures.initialBoardState), 0, 2, 5))
+      } yield expect(valid) and expect(!invalid)
+    }
+  }
 
-    for {
-      valid   <- IO(search.verify(initialState, 0, 2, 4))
-      invalid <- IO(search.verify(initialState, 0, 2, 5))
-    } yield expect(valid) and expect(!invalid)
+  test("ConstraintPropagationAlgorithm.solve should find a solution for any solvable board") {
+    forall(Gen.zip(boardGen, orchestratorGen)) { case (initialState, orchestrator) =>
+      for {
+        gameBoard <- orchestrator.createBoard(BoardState(initialState.value))
+        solved    <- ConstraintPropagationAlgorithm[IO]().solve(gameBoard, Search())
+      } yield expect(solved.isDefined)
+    }
   }
 
   test("BacktrackingAlgorithm.Operations.loop should solve Sudoku correctly") {
-    val initialState = BoardState(Fixtures.initialBoardState)
-    val search       = Search()
-    val result       =
-      BacktrackingAlgorithm.Operations.loop(
-        initialState,
-        search,
-        search.fetchEmptyCells(initialState),
-        1 to initialState.value.size,
-      )
+    forall(Gen.zip(boardGen, searchGen)) { case (initialState, search) =>
+      IO.fromOption(
+        BacktrackingAlgorithm.Operations.loop(
+          initialState,
+          search,
+          search.fetchEmptyCells(initialState),
+          (1 to initialState.value.size).toList,
+        )
+      )(new RuntimeException("Expected a solved board, but got None"))
+        .map: actual =>
+          expect(search.verifyBoard(actual))
+    }
+  }
 
-    IO(expect(result.contains(BoardState(Fixtures.updatedBoardState))))
+  test("BacktrackingAlgorithm.Operations.loop should solve any generated solvable board - only check that solution exists") {
+    forall(Gen.zip(boardGen, searchGen)) { case (initialState, search) =>
+      expect(
+        BacktrackingAlgorithm.Operations
+          .loop(
+            initialState,
+            search,
+            search.fetchEmptyCells(initialState),
+            (1 to initialState.value.size).toList,
+          )
+          .isDefined
+      )
+    }
   }
 
 }

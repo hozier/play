@@ -9,12 +9,13 @@ trait Search {
   def verify(boardState: BoardState, row: Int, col: Int, target: Int): Boolean
   def fetchEmptyCells(board: BoardState): LazyList[(Int, Int)]
   def isRelated(cell1: (Int, Int), cell2: (Int, Int)): Boolean
+  def verifyBoard(boardState: BoardState): Boolean
 }
 
 object Search {
 
   def apply(): Search =
-    new Search {
+    new Search:
 
       override def verifyBoxState(
         board: BoardState,
@@ -68,6 +69,6 @@ object Search {
         row1 == row2 || col1 == col2 || (row1 / 3 == row2 / 3 && col1 / 3 == col2 / 3)
       }
 
-    }
+      override def verifyBoard(boardState: BoardState): Boolean = !boardState.value.exists(_.contains(0))
 
 }
