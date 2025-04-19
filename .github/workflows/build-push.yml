@@ -27,7 +27,7 @@ jobs:
     name: Build & Publish Artifact Locally
     uses: ./.github/workflows/build.yml 
     with:
-      region: ${{ inputs.region }}
+      region: ${{ inputs.region || 'us-east-1' }}
       stage: ${{ inputs.stage }}
     secrets: inherit
 

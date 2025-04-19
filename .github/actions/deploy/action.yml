@@ -16,6 +16,9 @@ inputs:
   aws_secret_access_key:
     description: "AWS Secret Access Key"
     required: true
+  aws_account_id:
+    description: "AWS Account ID"
+    required: true
   git_sha:
     description: "Docker image tag"
     required: true
@@ -40,19 +43,33 @@ runs:
       shell: bash
       run: npm ci
 
-    - name: Deploy with CDK
+    - name: Bootstrap and Deploy CDK
       working-directory: ./infrastructure
       shell: bash
       env:
+        AWS_REGION: ${{ inputs.region }}
+        AWS_ACCOUNT_ID: ${{ inputs.aws_account_id }}
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
         DESIRED_COUNT: ${{ inputs.desired_fargate_task_count }}
         REGISTRY: ${{ inputs.registry }}
         REPOSITORY: ${{ inputs.repository }}
         IMAGE_TAG: ${{ inputs.git_sha }}
-
       run: |
+        # Ensure CDK is installed
         if ! command -v cdk &> /dev/null; then
           npm install -g aws-cdk
         fi
+
+        # Bootstrap CDK environment
+        if ! aws s3 ls "s3://cdk-${AWS_REGION}-${AWS_ACCOUNT_ID}" &> /dev/null; then
+          echo "Bootstrapping CDK environment..."
+          cdk bootstrap aws://${AWS_ACCOUNT_ID}/${AWS_REGION}
+        else
+          echo "CDK environment already bootstrapped."
+        fi
+
+        # Deploy CDK resources
         cdk synth
         cdk deploy --all --require-approval never --outputs-file cdk-outputs.json
 
