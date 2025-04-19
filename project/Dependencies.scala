@@ -14,6 +14,7 @@ object Versions {
   val smithy4s                = "0.17.0"
   val circe                   = "0.14.1"
   val ciris                   = "3.7.0"
+  val logstash                = "7.4"
 }
 
 object Dependencies {
@@ -35,6 +36,7 @@ object Dependencies {
   val circeParser             = "io.circe"            %% "circe-parser"               % Versions.circe
   val circeCore               = "io.circe"            %% "circe-core"                 % Versions.circe
   val ciris                   = "is.cir"              %% "ciris"                      % Versions.ciris
+  val logstash                = "net.logstash.logback" % "logstash-logback-encoder"   % Versions.logstash
 
   def smithy4sDependencies(smithy4sVersion: String) =
     Seq(
@@ -55,7 +57,7 @@ object Dependencies {
     )
 
   val imageProcessingDependencies = Seq(googleCloudVision)
-  val coreDependencies            = Seq(catsEffect, catsEffectKernel, catsEffectStd, ciris) ++ imageProcessingDependencies ++ http4sDependencies
+  val coreDependencies            = Seq(catsEffect, catsEffectKernel, catsEffectStd, ciris, logstash) ++ imageProcessingDependencies ++ http4sDependencies
   val loggingDependencies         = Seq(log4catsSlf4j, logbackClassic)
-  val testDependencies            = Seq(catsEffectTestingSpecs2, munitCatsEffect, weaverCats, weaverScalacheck, ciris)
+  val testDependencies            = Seq(catsEffectTestingSpecs2, munitCatsEffect, weaverCats, weaverScalacheck, ciris, logstash)
 }
