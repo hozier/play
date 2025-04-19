@@ -51,6 +51,7 @@ jobs:
           git_sha: ${{ steps.set-git-sha.outputs.git_sha }}
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
           region: ${{ inputs.region }}
           app_name: "play4s"
           stage: ${{ inputs.stage }}
