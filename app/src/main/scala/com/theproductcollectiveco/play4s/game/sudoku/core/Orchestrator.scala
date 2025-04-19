@@ -57,10 +57,9 @@ object Orchestrator {
               solution <-
                 nonEmptyAlgorithms
                   .map(_.solve(board, search))
-                  .reduceLeft(
+                  .reduceLeft:
                     _.race(_) // Race all algorithms concurrently and merge Either to Option
                       .map(_.merge)
-                  )
               _        <- Logger[F].debug("Board solved")
             } yield solution
         }
