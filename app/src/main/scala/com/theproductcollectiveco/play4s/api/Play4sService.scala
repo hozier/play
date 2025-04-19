@@ -23,18 +23,13 @@ object Play4sService {
   ): Play4sApi[F] =
     new Play4sApi[F]:
 
-      override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] =
-        runWithEntryPoint(orchestrator.processImage(image.toArray), orchestrator, algorithms)
+      override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] = runWithEntryPoint(orchestrator.processImage(image.toArray))
 
-      override def computeSudokuDeveloperMode(trace: String): F[SudokuComputationSummary] = runWithEntryPoint(trace.pure, orchestrator, algorithms)
+      override def computeSudokuDeveloperMode(trace: String): F[SudokuComputationSummary] = runWithEntryPoint(trace.pure)
 
-      private def runWithEntryPoint(
-        entryPoint: F[String],
-        orchestrator: Orchestrator[F],
-        algorithms: Seq[Algorithm[F]],
-      ): F[SudokuComputationSummary] =
+      private def runWithEntryPoint(entryPoint: F[String]): F[SudokuComputationSummary] =
         entryPoint.flatMap { trace =>
-          for {
+          for
             start         <- clock.monotonic
             requestedAt   <- clock.getCurrentTimestamp
             gameId        <- uuidGen.randomUUID.map(uuid => GameId(uuid.toString))
@@ -46,7 +41,7 @@ object Play4sService {
               }
             end           <- clock.monotonic
             duration       = (end - start).toMillis
-          } yield SudokuComputationSummary(
+          yield SudokuComputationSummary(
             id = gameId,
             duration = duration,
             requestedAt = requestedAt,
