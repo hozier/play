@@ -12,7 +12,7 @@ import com.theproductcollectiveco.play4s.game.sudoku.parser.*
 import cats.Parallel
 import cats.data.NonEmptyList
 import fs2.io.file.Files
-import com.theproductcollectiveco.play4s.game.sudoku.BoardState
+import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, NoSolutionFoundError}
 
 trait Orchestrator[F[_]] {
   def fetchBytes(fileName: String): F[Array[Byte]]
@@ -52,17 +52,14 @@ object Orchestrator {
         NonEmptyList.fromList(algorithms.toList) match {
           case None                     => Async[F].raiseError(new RuntimeException("No algorithms provided"))
           case Some(nonEmptyAlgorithms) =>
-            for {
-              _        <- Logger[F].debug("Solving board")
-              solution <-
-                nonEmptyAlgorithms
-                  .map(_.solve(board, search))
-                  .reduceLeft(
-                    _.race(_) // Race all algorithms concurrently and merge Either to Option
-                      .map(_.merge)
-                  )
-              _        <- Logger[F].debug("Board solved")
-            } yield solution
+            nonEmptyAlgorithms
+              .map(_.solve(board, search))
+              .reduceLeft:
+                _.race(_) // Race all algorithms concurrently and merge Either to Option
+                  .map(_.merge)
+              .flatMap:
+                case Some(result) => result.some.pure
+                case None         => NoSolutionFoundError("No solution found").raiseError
         }
     }
 
