@@ -48,7 +48,7 @@ object Play4sService {
               val nanos   = (t - seconds.seconds).toNanos
               Timestamp(seconds, nanos.toInt)
           gameId        <- uuidGen.randomUUID.map(uuid => GameId(uuid.toString))
-          gameBoard     <- orchestrator.createBoard(orchestrator.processLine(trace))
+          gameBoard     <- orchestrator.processLine(trace).flatMap(orchestrator.createBoard(_))
           maybeSolution <- orchestrator.solve(gameBoard, Search(), algorithms*)
           _             <- gameBoard.delete()
           end           <- clock.monotonic
