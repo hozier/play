@@ -6,6 +6,7 @@ import org.http4s.client.Client
 import org.http4s.{Header, Method, Request, Uri}
 import org.typelevel.log4cats.Logger
 import org.typelevel.ci.*
+import com.theproductcollectiveco.play4s.game.sudoku.{DecodeFailureError, InvalidInputError}
 
 trait SudokuExtractor[F[_]] {
   def fetchTxtRepresentation(puzzleNumber: Long): F[(String, String)]
@@ -28,7 +29,7 @@ object WebSudokuExtractor {
 
       private def validatePuzzleNumber(n: Long): F[Unit] =
         Sync[F]
-          .raiseError(new IllegalArgumentException("Puzzle number must be between 0 and 10,000,000,000"))
+          .raiseError(InvalidInputError("Puzzle number must be between 0 and 10,000,000,000"))
           .unlessA(n >= 0L && n <= 10000000000L)
 
       private def buildUri(puzzleNumber: Long): F[Uri] = Uri.fromString(s"$BaseUri$puzzleNumber").liftTo[F]
@@ -56,14 +57,14 @@ object WebSudokuExtractor {
         ).view
           .flatMap(_.findFirstMatchIn(html).map(_.group(1)))
           .headOption
-          .liftTo[F](new RuntimeException(s"Missing $errorMsg"))
+          .liftTo[F](DecodeFailureError(s"Missing $errorMsg"))
 
       private def validateSolutionAndMask(cheat: String, mask: String): F[(String, String)] =
         (cheat, mask)
           .pure[F]
           .flatTap { case (c, m) =>
             Sync[F]
-              .raiseError(new RuntimeException("Cheat and mask must each be 81 characters long"))
+              .raiseError(InvalidInputError("Cheat and mask must each be 81 characters long"))
               .unlessA(c.length == 81 && m.length == 81)
           }
           .map { case (c, m) =>

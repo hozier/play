@@ -12,7 +12,7 @@ import com.theproductcollectiveco.play4s.game.sudoku.parser.*
 import cats.Parallel
 import cats.data.NonEmptyList
 import fs2.io.file.Files
-import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, NoSolutionFoundError}
+import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, InitialStateSettingError}
 
 trait Orchestrator[F[_]] {
   def fetchBytes(fileName: String): F[Array[Byte]]
@@ -40,7 +40,7 @@ object Orchestrator {
 
       override def processTrace(fileName: String): F[List[String]] = traceParser.parseResource(fileName)
 
-      override def processLine(line: String): F[BoardState] = traceParser.parseLine(line).pure
+      override def processLine(line: String): F[BoardState] = traceParser.parseLine(line)
 
       override def fetchBytes(fileName: String): F[Array[Byte]] = imageParser.fetchBytes(fileName)
 
@@ -50,16 +50,19 @@ object Orchestrator {
         algorithms: Algorithm[F]*
       ): F[Option[SolvedState]] =
         NonEmptyList.fromList(algorithms.toList) match {
-          case None                     => Async[F].raiseError(new RuntimeException("No algorithms provided"))
+          case None                     => InitialStateSettingError("No algorithms provided").raiseError
           case Some(nonEmptyAlgorithms) =>
-            nonEmptyAlgorithms
-              .map(_.solve(board, search))
-              .reduceLeft:
-                _.race(_) // Race all algorithms concurrently and merge Either to Option
-                  .map(_.merge)
-              .flatMap:
-                case Some(result) => result.some.pure
-                case None         => NoSolutionFoundError("No solution found").raiseError
+            for {
+              _        <- Logger[F].debug("Solving board")
+              solution <-
+                nonEmptyAlgorithms
+                  .map(_.solve(board, search))
+                  .reduceLeft:
+                    /** Race all algorithms concurrently and merge Either to Option */
+                    _.race(_)
+                      .map(_.merge)
+              _        <- Logger[F].debug("Board solved")
+            } yield solution
         }
     }
 
