@@ -4,9 +4,10 @@ import cats.effect.{Async, MonadCancelThrow}
 import cats.Parallel
 import cats.implicits.*
 import org.typelevel.log4cats.Logger
+import scala.collection.immutable.ListMap
 import com.theproductcollectiveco.play4s.Metrics
 import com.theproductcollectiveco.play4s.store.Board
-import com.theproductcollectiveco.play4s.game.sudoku.{NoSolutionFoundError, BoardState, Strategy}
+import com.theproductcollectiveco.play4s.game.sudoku.{NoSolutionFoundError, BoardState, Strategy, CellHint, EmptyCell}
 
 case class SolvedState(boardState: BoardState, strategy: Strategy)
 
@@ -96,19 +97,13 @@ object ConstraintPropagationAlgorithm {
       ): F[Option[SolvedState]] =
         Metrics[F].time("ConstraintPropagationAlgorithm.solve") {
           board.read().flatMap { boardState =>
-            search
-              .fetchEmptyCells(boardState)
-              .map:
-                case (row, col) =>
-                  (row, col) -> (1 to boardState.value.size).toList
-                    .filter:
-                      search.verify(boardState, row, col, _)
-              .toMap
-              .some
-              .flatMap: initialDomain =>
-                propagateAndSearch(boardState, initialDomain, search)
-              .traverse:
-                SolvedState(_, Strategy.CONSTRAINT_PROPAGATION).pure
+            boardState
+              .getDomain(search)
+              .flatMap {
+                propagateAndSearch(boardState, _, search)
+                  .traverse:
+                    SolvedState(_, Strategy.CONSTRAINT_PROPAGATION).pure
+              }
           }
         }
 
@@ -182,3 +177,22 @@ object ConstraintPropagationAlgorithm {
     }
 
 }
+
+extension [F[_]: MonadCancelThrow: Logger: Async](boardState: BoardState)
+
+  def getDomain(search: Search, hintCount: Option[Int] = None): F[Map[(Int, Int), List[Int]]] =
+    Metrics[F].time("BoardState.getDomain") {
+      for
+        emptyCells      <- search.fetchEmptyCells(boardState).pure
+        limitedCells     = emptyCells.take(hintCount.getOrElse(emptyCells.size))
+        domainCollection =
+          limitedCells.map { case (row, col) => (row, col) -> (1 to boardState.value.size).toList.filter(search.verify(boardState, row, col, _)) }
+
+        /** Minimum Remaining Values (MRV) */
+        sortedDomain = ListMap(domainCollection.toMap.toSeq.sortBy { case (_, candidates) => candidates.size }*)
+      yield sortedDomain
+    }
+
+extension (domain: Map[(Int, Int), List[Int]])
+
+  def asHints: List[CellHint] = domain.toList.map { case ((row, col), possibleDigits) => CellHint(EmptyCell(row, col), possibleDigits) }

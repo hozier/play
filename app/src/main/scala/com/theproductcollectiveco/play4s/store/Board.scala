@@ -53,5 +53,14 @@ object Board {
             }
         }
 
-  def prettyPrintBoard(board: BoardState): String = board.value.map(row => s"${row.mkString(" ").replace("0", ".")}").mkString("\n")
+  def prettyPrintBoard(board: BoardState): String =
+    board.value
+      .map:
+        _.map {
+          case 0 => "."
+          case n => n.toString
+        }
+          .mkString(" ")
+      .mkString("\n")
+
 }

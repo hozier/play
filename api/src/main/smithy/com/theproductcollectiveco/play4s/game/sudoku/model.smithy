@@ -11,19 +11,28 @@ string GameId
 
 // A vector of integers.
 @vector
-list VectorList {
+list VectorIntegerList {
     member: Integer
 }
 
-// A vector whose members are VectorList.
+// A vector whose members are VectorIntegerList.
 @vector
 list NestedVectorList {
-    member: VectorList
+    member: VectorIntegerList
 }
 
 // A list of algorithms
 list StrategyList {
     member: Strategy
+}
+
+// A list whose members are VectorIntegerList.
+list CellHintList {
+    member: CellHint
+}
+
+list IntegerList {
+    member: Integer
 }
 
 // A structure that contains a nested vector of integers.
@@ -81,4 +90,39 @@ structure GameMetadata {
 
 structure SudokuComputationSummary with [GameMetadata] {
     solution: BoardState
+}
+
+structure EmptyCell {
+    @documentation("The row index of the cell.")
+    @required
+    row: Integer
+    @documentation("The column index of the cell.")
+    @required
+    col: Integer
+}
+
+// Define a structure to represent a hint for a specific cell.
+structure CellHint {
+    @documentation("The coordinates of the cell.")
+    @required
+    emptyCell: EmptyCell
+
+    @required
+    @documentation("The possible digits for the cell.")
+    possibleDigits: IntegerList
+}
+
+
+@mixin
+structure GetHintsRequest {
+    @required
+    trace: String
+    @documentation("The number of hints to retrieve.")
+    hintCount: Integer
+}
+
+structure EmptyCellHints {
+    @documentation("A list of hints, each containing cell coordinates and possible digits.")
+    @required
+    hints: CellHintList
 }
