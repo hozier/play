@@ -1,11 +1,12 @@
 package com.theproductcollectiveco.play4s.store
 
 import cats.effect.{Async, MonadCancelThrow}
+import cats.implicits.*
+import cats.data.OptionT
+import cats.effect.kernel.Ref
 import cats.effect.std.Console
 import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.Metrics
-import cats.implicits.*
-import cats.effect.kernel.Ref
 import com.theproductcollectiveco.play4s.game.sudoku.{InitialStateSettingError, BoardNotCreatedError, BoardState}
 
 trait Board[F[_]] {
@@ -27,12 +28,8 @@ object Board {
         new Board[F] {
           override def read(): F[BoardState] =
             Metrics[F].time("Board.read") {
-              Logger[F].debug("Getting board state") *> store.get.flatMap {
-                case Some(board) =>
-                  board
-                    .pure[F]
-                case None        => BoardNotCreatedError("Board not created").raiseError
-              }
+              Logger[F].debug("Getting board state") *> OptionT(store.get)
+                .getOrElseF(BoardNotCreatedError("Board not created").raiseError[F, BoardState])
             }
 
           override def update(externalState: BoardState): F[Unit] =

@@ -7,8 +7,15 @@ import cats.effect.std.UUIDGen
 import cats.Parallel
 import cats.effect.std.Console
 import com.theproductcollectiveco.play4s.{Play4sApi, Metrics}
-import com.theproductcollectiveco.play4s.game.sudoku.{SudokuComputationSummary, GameId, Strategy, ConcurrentExecutionDetails, EmptyCellHints}
-import com.theproductcollectiveco.play4s.game.sudoku.core.{Algorithm, Orchestrator, Search, getDomain, asHints}
+import com.theproductcollectiveco.play4s.game.sudoku.{
+  SudokuComputationSummary,
+  GameId,
+  Strategy,
+  ConcurrentExecutionDetails,
+  EmptyCellHints,
+  EmptyCellHintsMetadata,
+}
+import com.theproductcollectiveco.play4s.game.sudoku.core.{Algorithm, Orchestrator, Search, queryDomain, asHints}
 import org.typelevel.log4cats.Logger
 import smithy4s.Timestamp
 import scala.concurrent.duration.DurationLong
@@ -25,20 +32,15 @@ object Play4sService {
 
       override def getSudokuHints(trace: String, hintCount: Option[Int]): F[EmptyCellHints] =
         orchestrator.processLine(trace).flatMap {
-          orchestrator.createBoard(_).flatMap {
-            _.read()
-              .flatMap:
-                _.getDomain(Search(), hintCount)
-                  .map(_.asHints)
-                  .map(EmptyCellHints(_))
-          }
+          _.queryDomain(Search(), hintCount)
+            .map { case (domain, size) => EmptyCellHints(domain.asHints, EmptyCellHintsMetadata(size)) }
         }
 
-      override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] = runWithEntryPoint(orchestrator.processImage(image.toArray))
+      override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] = computeWithEntryPoint(orchestrator.processImage(image.toArray))
 
-      override def computeSudokuDeveloperMode(trace: String): F[SudokuComputationSummary] = runWithEntryPoint(trace.pure)
+      override def computeSudokuDeveloperMode(trace: String): F[SudokuComputationSummary] = computeWithEntryPoint(trace.pure)
 
-      private def runWithEntryPoint(entryPoint: F[String]): F[SudokuComputationSummary] =
+      private def computeWithEntryPoint(entryPoint: F[String]): F[SudokuComputationSummary] =
         entryPoint.flatMap { trace =>
           for
             start         <- clock.monotonic

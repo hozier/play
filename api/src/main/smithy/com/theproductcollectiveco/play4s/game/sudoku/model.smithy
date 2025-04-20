@@ -121,8 +121,18 @@ structure GetHintsRequest {
     hintCount: Integer
 }
 
+structure EmptyCellHintsMetadata {
+    @documentation("The total number of empty cells.")
+    @required
+    totalEmptyCells: Integer
+}
+
 structure EmptyCellHints {
     @documentation("A list of hints, each containing cell coordinates and possible digits.")
     @required
     hints: CellHintList
+
+    @documentation("Metadata about the empty cells.")
+    @required
+    metadata: EmptyCellHintsMetadata
 }
