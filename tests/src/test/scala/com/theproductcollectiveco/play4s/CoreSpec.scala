@@ -22,8 +22,10 @@ object CoreSpec extends SimpleIOSuite with Checkers {
 
   test("Orchestrator should parse line correctly") {
     forall(Gen.zip(boardGen, orchestratorGen)) { case (initialState, orchestrator) =>
-      val line = initialState.value.flatMap(_.mkString).mkString
-      orchestrator.processLine(line).flatMap(expect(_.value == initialState.value))
+      val line = initialState.value.flatten.mkString
+      orchestrator
+        .processLine(line)
+        .map(parsedState => expect(parsedState.value == initialState.value))
     }
   }
 
