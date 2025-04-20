@@ -1,14 +1,14 @@
 package com.theproductcollectiveco.play4s.game.sudoku.common
 
 import cats.implicits.*
-import cats.effect.Async
+import cats.effect.{Async, MonadCancelThrow}
 import java.nio.file.Paths
-import com.theproductcollectiveco.play4s.game.sudoku.BoardState
+import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, InvalidInputError, InitialStateSettingError}
 import fs2.io.file.{Files, Path}
 
 trait Parser[F[_]]:
 
-  def parseLine[F[_]: Async](str: String): F[BoardState] = {
+  def parseLine[F[_]: Async: MonadCancelThrow](str: String): F[BoardState] = {
     val size = Math.sqrt(str.length).toInt
     Either
       .cond(
@@ -17,14 +17,14 @@ trait Parser[F[_]]:
           val row = str.slice(i * size, (i + 1) * size).map(_.asDigit).toVector
           BoardState(acc.value :+ row)
         },
-        new IllegalArgumentException(s"Input string length (${str.length}) must be a perfect square."),
+        InvalidInputError(s"Input string length (${str.length}) must be a perfect square."),
       )
       .liftTo[F]
   }
 
   def fetchBytes[F[_]: Async: Files](fileName: String): F[Array[Byte]] =
     Option(getClass.getClassLoader.getResource(fileName)) match {
-      case None           => Async[F].raiseError(new RuntimeException(s"Resource not found: $fileName"))
+      case None           => InitialStateSettingError(s"Resource not found: $fileName").raiseError
       case Some(resource) =>
         Files[F]
           .readAll(Path.fromNioPath(Paths.get(resource.toURI)))

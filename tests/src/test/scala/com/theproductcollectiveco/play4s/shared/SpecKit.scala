@@ -8,7 +8,7 @@ import org.scalacheck.Gen
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import com.theproductcollectiveco.play4s.config.AppConfig
-import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, core}
+import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, BoardNotCreatedError}
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Search, Orchestrator}
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudClient}
 import scala.annotation.unused
@@ -113,7 +113,7 @@ object SpecKit {
           .take(maxRetries)
           .toSeq
           .headOption
-          .getOrElse(throw new RuntimeException("Failed to generate a solvable board after 10 attempts"))
+          .getOrElse(BoardNotCreatedError("Failed to generate a solvable board after 10 attempts"))
       }
 
   }
