@@ -18,7 +18,7 @@ trait Orchestrator[F[_]] {
   def fetchBytes(fileName: String): F[Array[Byte]]
   def processImage(image: Array[Byte]): F[String]
   def processTrace(fileName: String): F[List[String]]
-  def processLine(line: String): BoardState
+  def processLine(line: String): F[BoardState]
   def createBoard(state: BoardState): F[Board[F]]
   def solve(board: Board[F], search: Search, algorithms: Algorithm[F]*): F[Option[SolvedState]]
 }
@@ -40,7 +40,7 @@ object Orchestrator {
 
       override def processTrace(fileName: String): F[List[String]] = traceParser.parseResource(fileName)
 
-      override def processLine(line: String): BoardState = traceParser.parseLine(line)
+      override def processLine(line: String): F[BoardState] = traceParser.parseLine(line).pure
 
       override def fetchBytes(fileName: String): F[Array[Byte]] = imageParser.fetchBytes(fileName)
 
