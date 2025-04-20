@@ -56,13 +56,14 @@ object Search {
           verifyColumnState(boardState, col, target) &&
           verifyRowState(boardState, row, target)
 
-      override def fetchEmptyCells(board: BoardState): LazyList[(Int, Int)] = {
-        val size = board.value.size
-        LazyList
-          .from(0 until size * size)
-          .filter(idx => board.value(idx / size)(idx % size) == 0)
-          .map(idx => (idx / size, idx % size))
-      }
+      override def fetchEmptyCells(board: BoardState): LazyList[(Int, Int)] =
+        LazyList.from {
+          for
+            row <- board.value.indices
+            col <- board.value(row).indices
+            if board.value(row)(col) == 0
+          yield (row, col)
+        }
 
       override def isRelated(cell1: (Int, Int), cell2: (Int, Int)): Boolean = {
         val ((row1, col1), (row2, col2)) = (cell1, cell2)

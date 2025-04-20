@@ -7,8 +7,8 @@ import cats.effect.std.UUIDGen
 import cats.Parallel
 import cats.effect.std.Console
 import com.theproductcollectiveco.play4s.{Play4sApi, Metrics}
-import com.theproductcollectiveco.play4s.game.sudoku.{SudokuComputationSummary, GameId, Strategy, ConcurrentExecutionDetails}
-import com.theproductcollectiveco.play4s.game.sudoku.core.{Algorithm, Orchestrator, Search}
+import com.theproductcollectiveco.play4s.game.sudoku.{SudokuComputationSummary, GameId, Strategy, ConcurrentExecutionDetails, EmptyCellHints}
+import com.theproductcollectiveco.play4s.game.sudoku.core.{Algorithm, Orchestrator, Search, getDomain, asHints}
 import org.typelevel.log4cats.Logger
 import smithy4s.Timestamp
 import scala.concurrent.duration.DurationLong
@@ -22,6 +22,15 @@ object Play4sService {
     algorithms: Algorithm[F]*
   ): Play4sApi[F] =
     new Play4sApi[F]:
+
+      override def getSudokuHints(trace: String, hintCount: Option[Int]): F[EmptyCellHints] =
+        orchestrator.createBoard(orchestrator.processLine(trace)).flatMap {
+          _.read()
+            .flatMap:
+              _.getDomain(Search(), hintCount)
+                .map(_.asHints)
+                .map(EmptyCellHints(_))
+        }
 
       override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] = runWithEntryPoint(orchestrator.processImage(image.toArray))
 
