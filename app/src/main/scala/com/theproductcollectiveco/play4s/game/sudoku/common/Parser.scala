@@ -8,12 +8,18 @@ import fs2.io.file.{Files, Path}
 
 trait Parser[F[_]]:
 
-  def parseLine(str: String): BoardState = {
+  def parseLine[F[_]: Async](str: String): F[BoardState] = {
     val size = Math.sqrt(str.length).toInt
-    (0 until size).toVector.foldLeft(BoardState(Vector.empty[Vector[Int]])) { (acc, i) =>
-      val row = str.slice(i * size, (i + 1) * size).map(_.asDigit).toVector
-      BoardState(acc.value :+ row)
-    }
+    Either
+      .cond(
+        size * size == str.length,
+        (0 until size).toVector.foldLeft(BoardState(Vector.empty[Vector[Int]])) { (acc, i) =>
+          val row = str.slice(i * size, (i + 1) * size).map(_.asDigit).toVector
+          BoardState(acc.value :+ row)
+        },
+        new IllegalArgumentException(s"Input string length (${str.length}) must be a perfect square."),
+      )
+      .liftTo[F]
   }
 
   def fetchBytes[F[_]: Async: Files](fileName: String): F[Array[Byte]] =

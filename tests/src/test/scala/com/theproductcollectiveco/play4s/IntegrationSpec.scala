@@ -31,10 +31,12 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
     orchestrator: Orchestrator[F],
   )(using Metrics[F], Logger[F]) =
     inputs.parTraverse { line =>
-      orchestrator.createBoard(orchestrator.processLine(line)).flatMap { gameBoard =>
-        orchestrator
-          .solve(gameBoard, Search(), BacktrackingAlgorithm[F](), ConstraintPropagationAlgorithm[F]())
-          .guarantee(gameBoard.delete())
+      orchestrator.processLine(line).flatMap {
+        orchestrator.createBoard(_).flatMap { gameBoard =>
+          orchestrator
+            .solve(gameBoard, Search(), BacktrackingAlgorithm[F](), ConstraintPropagationAlgorithm[F]())
+            .guarantee(gameBoard.delete())
+        }
       }
     }
 

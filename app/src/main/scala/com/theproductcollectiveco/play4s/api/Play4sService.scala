@@ -24,12 +24,14 @@ object Play4sService {
     new Play4sApi[F]:
 
       override def getSudokuHints(trace: String, hintCount: Option[Int]): F[EmptyCellHints] =
-        orchestrator.createBoard(orchestrator.processLine(trace)).flatMap {
-          _.read()
-            .flatMap:
-              _.getDomain(Search(), hintCount)
-                .map(_.asHints)
-                .map(EmptyCellHints(_))
+        orchestrator.processLine(trace).flatMap {
+          orchestrator.createBoard(_).flatMap {
+            _.read()
+              .flatMap:
+                _.getDomain(Search(), hintCount)
+                  .map(_.asHints)
+                  .map(EmptyCellHints(_))
+          }
         }
 
       override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] = runWithEntryPoint(orchestrator.processImage(image.toArray))
@@ -42,8 +44,9 @@ object Play4sService {
             start         <- clock.monotonic
             requestedAt   <- clock.getCurrentTimestamp
             gameId        <- uuidGen.randomUUID.map(uuid => GameId(uuid.toString))
+            state         <- orchestrator.processLine(trace)
             maybeSolution <-
-              orchestrator.createBoard(orchestrator.processLine(trace)).flatMap { gameBoard =>
+              orchestrator.createBoard(state).flatMap { gameBoard =>
                 orchestrator
                   .solve(gameBoard, Search(), algorithms*)
                   .guarantee(gameBoard.delete())
