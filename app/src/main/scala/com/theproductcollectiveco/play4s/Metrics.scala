@@ -34,16 +34,16 @@ object Metrics {
           result  <- fa
           end     <- Clock[F].monotonic
           duration = (end - start).toMillis
-          _       <- Logger[F].info(s"$name took $duration ms")
+          _       <- Logger[F].debug(s"$name took $duration ms")
         } yield result
 
       override def incrementCounter(name: String): F[Unit] =
-        counters.update(map => map.updated(name, map(name) + 1)) *> Logger[F].info(s"Counter incremented: $name")
+        counters.update(map => map.updated(name, map(name) + 1)) *> Logger[F].debug(s"Counter incremented: $name")
 
       override def getCounter(name: String): F[Long] = counters.get.map(_(name))
 
       override def updateGauge(name: String, value: Double): F[Unit] =
-        gauges.update(map => map.updated(name, value)) *> Logger[F].info(s"Gauge updated: $name -> $value")
+        gauges.update(map => map.updated(name, value)) *> Logger[F].debug(s"Gauge updated: $name -> $value")
 
       override def getGauge(name: String): F[Double] = gauges.get.map(_(name))
 
@@ -51,7 +51,7 @@ object Metrics {
         histograms.update { map =>
           val histogram = map(name)
           map.updated(name, histogram.updated(value, histogram(value) + 1))
-        } *> Logger[F].info(s"Histogram updated: $name")
+        } *> Logger[F].debug(s"Histogram updated: $name")
 
       override def getHistogram(name: String): F[Map[String, Long]] = histograms.get.map(_(name))
 
@@ -66,7 +66,7 @@ object Metrics {
               "gauges"     -> gaugesSnapshot.asJson,
               "histograms" -> histogramsSnapshot.asJson,
             ).asJson.noSpaces
-          _                  <- Logger[F].info(s"Metrics Snapshot: $jsonLog")
+          _                  <- Logger[F].debug(s"Metrics Snapshot: $jsonLog")
         } yield ()
     }
 

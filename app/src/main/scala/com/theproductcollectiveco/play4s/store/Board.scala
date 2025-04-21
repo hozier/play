@@ -2,6 +2,7 @@ package com.theproductcollectiveco.play4s.store
 
 import cats.effect.{Async, MonadCancelThrow}
 import cats.implicits.*
+import io.circe.syntax.*
 import cats.data.OptionT
 import cats.effect.kernel.Ref
 import cats.effect.std.Console
@@ -32,24 +33,19 @@ object Board {
           override def update(externalState: BoardState): F[Unit] =
             for {
               _ <-
-                read().flatMap: board =>
-                  Logger[F].info:
-                    s"\ncurrent:\n${prettyPrintBoard(board)}\nnext:\n${prettyPrintBoard(externalState)}"
+                read().flatMap { board =>
+                  val jsonLog =
+                    Map(
+                      "current" -> board.value.map(_.toList).toList.asJson,
+                      "next"    -> externalState.value.map(_.toList).toList.asJson,
+                    ).asJson.noSpaces
+                  Logger[F].debug(s"Board State Snapshot: $jsonLog")
+                }
               _ <- Logger[F].debug("Updating board state")
               _ <- store.set(externalState.some)
             } yield ()
 
           override def delete(): F[Unit] = Logger[F].debug("Deleting board state") *> store.set(None)
         }
-
-  def prettyPrintBoard(board: BoardState): String =
-    board.value
-      .map:
-        _.map {
-          case 0 => "."
-          case n => n.toString
-        }
-          .mkString(" ")
-      .mkString("\n")
 
 }
