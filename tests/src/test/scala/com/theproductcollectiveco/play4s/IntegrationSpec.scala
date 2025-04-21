@@ -15,28 +15,26 @@ import com.theproductcollectiveco.play4s.SpecKit.SharedInstances.given
 
 object IntegrationSpec extends SimpleIOSuite with Checkers {
 
-  def runTest[F[_]: Async: Parallel: Console](
+  def runTest[F[_]: Async: Parallel: Console: Logger: Metrics](
     entryPoint: F[List[String]],
     orchestrator: Orchestrator[F],
-    metrics: Metrics[F],
-  )(using Logger[F]) =
+  ) =
     entryPoint
-      .flatMap(solve(_, orchestrator, metrics))
+      .flatMap(solve(_, orchestrator))
       .flatMap { solutions =>
         Logger[F].debug(s"All puzzles processed with solutions: $solutions") *>
           expect(solutions.forall(_.isDefined)).pure
       }
 
-  def solve[F[_]: Parallel: Async: Console](
+  def solve[F[_]: Parallel: Async: Console: Logger: Metrics](
     inputs: List[String],
     orchestrator: Orchestrator[F],
-    metrics: Metrics[F],
-  )(using Logger[F]): F[List[Option[SolvedState]]] =
+  ): F[List[Option[SolvedState]]] =
     inputs.parTraverse { line =>
       orchestrator.processLine(line).flatMap {
         orchestrator.createBoard(_).flatMap { gameBoard =>
           orchestrator
-            .solve(gameBoard, Search(), BacktrackingAlgorithm[F](metrics), ConstraintPropagationAlgorithm[F](metrics))
+            .solve(gameBoard, Search.make, BacktrackingAlgorithm.make[F], ConstraintPropagationAlgorithm.make[F])
             .guarantee(gameBoard.delete())
         }
       }
@@ -44,11 +42,11 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
 
   test("Solve boards from trace file.") {
     forall(orchestratorGen) { orchestrator =>
-      Metrics.make[IO].flatMap {
+      Metrics.make[IO].flatMap { metrics =>
+        given Metrics[IO] = metrics
         runTest[IO](
           orchestrator.processTrace("trace.txt"),
           orchestrator,
-          _,
         )
       }
     }
@@ -56,11 +54,11 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
 
   test("Solve boards from image file.") {
     forall(orchestratorGen) { orchestrator =>
-      Metrics.make[IO].flatMap {
+      Metrics.make[IO].flatMap { metrics =>
+        given Metrics[IO] = metrics
         skipOnCI *> runTest(
           orchestrator.fetchBytes("sudoku_test_image_v0.0.1.png").flatMap(orchestrator.processImage).map(List(_)),
           orchestrator,
-          _,
         )
       }
     }

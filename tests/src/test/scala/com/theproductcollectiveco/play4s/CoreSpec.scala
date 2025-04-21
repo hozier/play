@@ -43,10 +43,10 @@ object CoreSpec extends SimpleIOSuite with Checkers {
       for {
         gameBoard <- orchestrator.createBoard(BoardState(initialState.value))
         solved    <-
-          Metrics
-            .make[IO]
-            .flatMap:
-              ConstraintPropagationAlgorithm[IO](_).solve(gameBoard, Search())
+          Metrics.make[IO].flatMap { metrics =>
+            given Metrics[IO] = metrics
+            ConstraintPropagationAlgorithm.make[IO].solve(gameBoard, Search.make)
+          }
       } yield expect(solved.isDefined)
     }
   }

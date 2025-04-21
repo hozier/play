@@ -17,14 +17,14 @@ trait Algorithm[F[_]] {
 
 object BacktrackingAlgorithm {
 
-  def apply[F[_]: MonadCancelThrow: Async: Logger: Parallel](metrics: Metrics[F]): Algorithm[F] =
+  def make[F[_]: MonadCancelThrow: Async: Logger: Parallel: Metrics]: Algorithm[F] =
     new Algorithm[F] {
 
       override def solve(
         board: Board[F],
         search: Search,
       ): F[Option[SolvedState]] =
-        metrics.time("BacktrackingAlgorithm.solve") {
+        Metrics[F].time("BacktrackingAlgorithm.solve") {
           board.read().flatMap { boardState =>
             search.fetchEmptyCells(boardState).pure.flatMap { emptyCells =>
               Operations
@@ -88,17 +88,17 @@ object BacktrackingAlgorithm {
 
 object ConstraintPropagationAlgorithm {
 
-  def apply[F[_]: MonadCancelThrow: Async: Parallel: Logger](metrics: Metrics[F]): Algorithm[F] =
+  def make[F[_]: MonadCancelThrow: Async: Parallel: Logger: Metrics]: Algorithm[F] =
     new Algorithm[F] {
 
       override def solve(
         board: Board[F],
         search: Search,
       ): F[Option[SolvedState]] =
-        metrics.time("ConstraintPropagationAlgorithm.solve") {
+        Metrics[F].time("ConstraintPropagationAlgorithm.solve") {
           board.read().flatMap { boardState =>
             // format: off
-            boardState.queryDomain(search, metrics)  // format: on
+            boardState.queryDomain(search)  // format: on
               .flatMap { (domain, _) =>
                 propagateAndSearch(boardState, domain, search).traverse:
                   SolvedState(_, Strategy.CONSTRAINT_PROPAGATION).pure
@@ -177,10 +177,10 @@ object ConstraintPropagationAlgorithm {
 
 }
 
-extension [F[_]: MonadCancelThrow: Logger: Async](boardState: BoardState)
+extension [F[_]: MonadCancelThrow: Logger: Async: Metrics](boardState: BoardState)
 
-  def queryDomain(search: Search, metrics: Metrics[F], hintCount: Option[Int] = None): F[(Map[(Int, Int), List[Int]], Int)] =
-    metrics.time("BoardState.queryDomain") {
+  def queryDomain(search: Search, hintCount: Option[Int] = None): F[(Map[(Int, Int), List[Int]], Int)] =
+    Metrics[F].time("BoardState.queryDomain") {
       for
         emptyCells      <- search.fetchEmptyCells(boardState).pure
         limitedCells     = hintCount.fold(emptyCells)(emptyCells.take)

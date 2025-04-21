@@ -24,25 +24,24 @@ import scala.concurrent.duration.DurationLong
 
 object Play4sService {
 
-  def apply[F[_]: Async: Logger: Console: Parallel](
+  def make[F[_]: Async: Logger: Console: Parallel: Metrics](
     clock: Clock[F],
     uuidGen: UUIDGen[F],
     orchestrator: Orchestrator[F],
-    metrics: Metrics[F],
     algorithms: Algorithm[F]*
   ): Play4sApi[F] =
     new Play4sApi[F]:
 
       override def getSudokuHints(trace: String, hintCount: Option[Int]): F[EmptyCellHints] =
         orchestrator.processLine(trace).flatMap {
-          _.queryDomain(Search(), metrics, hintCount)
+          _.queryDomain(Search.make, hintCount)
             .map { case (domain, size) => EmptyCellHints(domain.asHints, EmptyCellHintsMetadata(size)) }
         }
 
       override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] = computeWithEntryPoint(orchestrator.processImage(image.toArray))
 
       override def computeSudokuDeveloperMode(trace: String): F[SudokuComputationSummary] =
-        metrics.incrementCounter("totalPuzzlesSolved") *>
+        Metrics[F].incrementCounter("totalPuzzlesSolved") *>
           computeWithEntryPoint(trace.pure)
 
       private def computeWithEntryPoint(entryPoint: F[String]): F[SudokuComputationSummary] =
@@ -55,24 +54,24 @@ object Play4sService {
             maybeSolution <-
               orchestrator.createBoard(state).flatMap { gameBoard =>
                 orchestrator
-                  .solve(gameBoard, Search(), algorithms*)
+                  .solve(gameBoard, Search.make, algorithms*)
                   .guarantee(gameBoard.delete())
                   .flatTap {
                     _.map(_.strategy.value).mkString.pure
                       .flatMap:
-                        metrics.recordHistogram("algorithmsUsage", _)
+                        Metrics[F].recordHistogram("algorithmsUsage", _)
                   }
               }
             end           <- clock.monotonic
             duration       = (end - start).toMillis
-            currentMax    <- metrics.getGauge("maxSolveTime")
-            currentMin    <- metrics.getGauge("minSolveTime")
-            _             <- metrics.updateGauge("averageSolveTime", duration.toDouble)
-            _             <- metrics.updateGauge("maxSolveTime", math.max(duration.toDouble, currentMax))
+            currentMax    <- Metrics[F].getGauge("maxSolveTime")
+            currentMin    <- Metrics[F].getGauge("minSolveTime")
+            _             <- Metrics[F].updateGauge("averageSolveTime", duration.toDouble)
+            _             <- Metrics[F].updateGauge("maxSolveTime", math.max(duration.toDouble, currentMax))
             _             <-
-              Async[F].ifM(metrics.getGauge("minSolveTime").map(_ == -1.0))(
-                metrics.updateGauge("minSolveTime", duration.toDouble),
-                metrics.updateGauge("minSolveTime", math.min(duration.toDouble, currentMin)),
+              Async[F].ifM(Metrics[F].getGauge("minSolveTime").map(_ == -1.0))(
+                Metrics[F].updateGauge("minSolveTime", duration.toDouble),
+                Metrics[F].updateGauge("minSolveTime", math.min(duration.toDouble, currentMin)),
               )
           yield SudokuComputationSummary(
             id = gameId,
@@ -89,11 +88,11 @@ object Play4sService {
 
       override def getSudokuMetrics(): F[GameMetrics] =
         for {
-          totalPuzzlesSolved   <- metrics.getCounter("totalPuzzlesSolved")
-          averageSolveTime     <- metrics.getGauge("averageSolveTime")
-          maxSolveTime         <- metrics.getGauge("maxSolveTime")
-          minSolveTime         <- metrics.getGauge("minSolveTime")
-          algorithmsUsageStats <- metrics.getHistogram("algorithmsUsage")
+          totalPuzzlesSolved   <- Metrics[F].getCounter("totalPuzzlesSolved")
+          averageSolveTime     <- Metrics[F].getGauge("averageSolveTime")
+          maxSolveTime         <- Metrics[F].getGauge("maxSolveTime")
+          minSolveTime         <- Metrics[F].getGauge("minSolveTime")
+          algorithmsUsageStats <- Metrics[F].getHistogram("algorithmsUsage")
         } yield GameMetrics(
           totalPuzzlesSolved,
           averageSolveTime,

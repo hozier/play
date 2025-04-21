@@ -46,13 +46,13 @@ object SpecKit {
   object Generators {
 
     import SharedInstances.given
-    val searchGen: Gen[Search] = Gen.const(Search())
+    val searchGen: Gen[Search] = Gen.const(Search.make)
 
     val orchestratorGen =
       Gen.const {
         val traceParser = TraceClient[IO]
         val imageParser = GoogleCloudClient[IO]
-        Orchestrator[IO](traceParser, imageParser)
+        Orchestrator.make[IO](traceParser, imageParser)
       }
 
     /*
@@ -84,7 +84,7 @@ object SpecKit {
 
     val solvableBoardGen: Gen[BoardState] =
       Gen.delay {
-        val search     = Search()
+        val search     = Search.make
         val algorithm  = BacktrackingAlgorithm.Operations
         val maxRetries = 5
 

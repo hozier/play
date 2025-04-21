@@ -25,10 +25,10 @@ object WebSudokuExtractorSpec extends SimpleIOSuite with Checkers:
               puzzleNumber                       <- IO(Random.between(0L, 10000000001L))
               (solution, validatedStartingTrace) <- gameGenerator.fetchTxtRepresentation(puzzleNumber)
               solutions                          <-
-                Metrics
-                  .make[IO]
-                  .flatMap:
-                    IntegrationSpec.solve(validatedStartingTrace :: Nil, orchestrator, _)
+                Metrics.make[IO].flatMap { metrics =>
+                  given Metrics[IO] = metrics
+                  IntegrationSpec.solve(validatedStartingTrace :: Nil, orchestrator)
+                }
               _                                  <- Logger[IO].debug(s"Fetched puzzle processed with solution: $solutions")
               actual                              = solutions.headOption.flatMap(_.map(_.boardState.value.flatten.mkString))
             yield expect(actual.contains(solution))

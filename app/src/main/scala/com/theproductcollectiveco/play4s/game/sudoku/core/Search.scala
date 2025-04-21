@@ -14,7 +14,7 @@ trait Search {
 
 object Search {
 
-  def apply(): Search =
+  def make: Search =
     new Search:
 
       override def verifyBoxState(

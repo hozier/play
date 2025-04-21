@@ -24,7 +24,7 @@ trait Orchestrator[F[_]] {
 
 object Orchestrator {
 
-  def apply[F[_]: MonadCancelThrow: Async: Logger: Console: Parallel: Files](
+  def make[F[_]: MonadCancelThrow: Async: Logger: Console: Parallel: Files](
     traceParser: TraceParser[F],
     imageParser: ImageParser[F],
   ): Orchestrator[F] =
