@@ -25,7 +25,7 @@ object MainApp extends ResourceApp.Forever {
       _                                                           <- apiKey.storeCredentials(credentialsFilePath)
       given Logger[IO]                                            <- Slf4jLogger.create[IO].toResource
       given Async[IO]                                              = asyncForIO
-      given Metrics[IO]                                            = Metrics[IO]
+      metrics                                                     <- Metrics.make[IO].toResource
       imageParser                                                  = GoogleCloudClient[IO]
       traceParser                                                  = TraceClient[IO]
       play4sService                                                =
@@ -33,8 +33,9 @@ object MainApp extends ResourceApp.Forever {
           clock = Clock[IO],
           uuidGen = UUIDGen.fromSync[IO](Sync[IO]),
           orchestrator = Orchestrator[IO](traceParser, imageParser),
-          algorithms = BacktrackingAlgorithm[IO](),
-          ConstraintPropagationAlgorithm[IO](),
+          metrics = metrics,
+          algorithms = BacktrackingAlgorithm[IO](metrics),
+          ConstraintPropagationAlgorithm[IO](metrics),
         )
       _                                                           <-
         Routes

@@ -6,7 +6,6 @@ import org.typelevel.log4cats.Logger
 import cats.effect.std.Console
 import cats.implicits.*
 import cats.effect.syntax.spawn.*
-import com.theproductcollectiveco.play4s.Metrics
 import com.theproductcollectiveco.play4s.store.Board
 import com.theproductcollectiveco.play4s.game.sudoku.parser.*
 import cats.Parallel
@@ -25,7 +24,7 @@ trait Orchestrator[F[_]] {
 
 object Orchestrator {
 
-  def apply[F[_]: MonadCancelThrow: Async: Logger: Console: Parallel: Files: Metrics](
+  def apply[F[_]: MonadCancelThrow: Async: Logger: Console: Parallel: Files](
     traceParser: TraceParser[F],
     imageParser: ImageParser[F],
   ): Orchestrator[F] =

@@ -11,8 +11,7 @@ import com.theproductcollectiveco.play4s.game.sudoku.{InitialStateSettingError, 
 
 object StoreSpec extends SimpleIOSuite with Checkers {
 
-  given Logger[IO]  = Slf4jLogger.getLogger[IO]
-  given Metrics[IO] = Metrics[IO]
+  given Logger[IO] = Slf4jLogger.getLogger[IO]
 
   test("Board should read initial state correctly") {
     val initialState = BoardState(initialBoardState)

@@ -45,11 +45,11 @@ object SpecKit {
 
   object Generators {
 
+    import SharedInstances.given
     val searchGen: Gen[Search] = Gen.const(Search())
 
-    val orchestratorGen: Gen[Orchestrator[IO]] =
-      Gen.delay {
-        import SharedInstances.given
+    val orchestratorGen =
+      Gen.const {
         val traceParser = TraceClient[IO]
         val imageParser = GoogleCloudClient[IO]
         Orchestrator[IO](traceParser, imageParser)
@@ -132,7 +132,7 @@ object SpecKit {
   object SharedInstances:
     // Define Show instances for Logger, Metrics, and Orchestrator to resolve forall issues
     given Logger[IO]             = Slf4jLogger.getLogger[IO]
-    given Metrics[IO]            = Metrics[IO]
+    given IO[Metrics[IO]]        = Metrics.make[IO]
     given Show[Logger[IO]]       = Show.show(_ => "Logger[IO]")
     given Show[Metrics[IO]]      = Show.show(_ => "Metrics[IO]")
     given Show[Orchestrator[IO]] = Show.show(_ => "Orchestrator[IO]")

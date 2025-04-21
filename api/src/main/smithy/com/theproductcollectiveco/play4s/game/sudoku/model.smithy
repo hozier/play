@@ -3,7 +3,6 @@ $version: "2"
 namespace com.theproductcollectiveco.play4s.game.sudoku
 
 use smithy4s.meta#vector
-use com.theproductcollectiveco.play4s.game.sudoku.public#ComputeSudoku
 
 @pattern("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 @documentation("Game ID; should be a UUID")
@@ -135,4 +134,36 @@ structure EmptyCellHints {
     @documentation("Metadata about the empty cells.")
     @required
     metadata: EmptyCellHintsMetadata
+}
+
+structure AlgorithmUsage {
+    @documentation("The strategy used for solving Sudoku.")
+    @required
+    strategy: Strategy
+
+    @documentation("The number of times this strategy was used.")
+    @required
+    usageCount: Long
+}
+
+list AlgorithmUsageList {
+    member: AlgorithmUsage
+}
+
+structure GameMetrics {
+    @documentation("Total number of Sudoku puzzles solved.")
+    @required
+    totalPuzzlesSolved: Long
+    @documentation("Average time taken to solve a Sudoku puzzle, in milliseconds.")
+    @required
+    averageSolveTime: Double
+    @documentation("Maximum time taken to solve a Sudoku puzzle, in milliseconds.")
+    @required
+    maxSolveTime: Double
+    @documentation("Minimum time taken to solve a Sudoku puzzle, in milliseconds.")
+    @required
+    minSolveTime: Double
+    @documentation("Histogram of algorithm usage, showing how often each algorithm was used.")
+    @required
+    algorithmsUsage: AlgorithmUsageList
 }
