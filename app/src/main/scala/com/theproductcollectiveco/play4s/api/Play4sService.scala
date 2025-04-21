@@ -1,68 +1,116 @@
 package com.theproductcollectiveco.play4s.api
 
 import cats.implicits.*
-import cats.effect.Clock
+import cats.effect.syntax.all.*
+import cats.effect.{Clock, Async}
 import cats.effect.std.UUIDGen
-import cats.effect.kernel.MonadCancelThrow
 import cats.Parallel
-import cats.effect.Async
 import cats.effect.std.Console
 import com.theproductcollectiveco.play4s.{Play4sApi, Metrics}
-import com.theproductcollectiveco.play4s.game.sudoku.{SudokuComputationSummary, GameId, Strategy, ConcurrentExecutionDetails}
-import com.theproductcollectiveco.play4s.game.sudoku.core.{Algorithm, Orchestrator, Search}
+import com.theproductcollectiveco.play4s.game.sudoku.{
+  SudokuComputationSummary,
+  GameId,
+  Strategy,
+  ConcurrentExecutionDetails,
+  EmptyCellHints,
+  EmptyCellHintsMetadata,
+  GameMetrics,
+  AlgorithmUsage,
+}
+import com.theproductcollectiveco.play4s.game.sudoku.core.{Algorithm, Orchestrator, Search, queryDomain, asHints}
 import org.typelevel.log4cats.Logger
 import smithy4s.Timestamp
 import scala.concurrent.duration.DurationLong
 
-trait Play4sService[F[_]] extends Play4sApi[F] {}
-
 object Play4sService {
 
-  def apply[F[_]: MonadCancelThrow: Async: Logger: Console: Parallel: Metrics](
+  def make[F[_]: Async: Logger: Console: Parallel: Metrics](
     clock: Clock[F],
     uuidGen: UUIDGen[F],
     orchestrator: Orchestrator[F],
     algorithms: Algorithm[F]*
-  ): Play4sService[F] =
-    new Play4sService[F] with Play4sApi[F]:
+  ): Play4sApi[F] =
+    new Play4sApi[F]:
 
-      override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] =
-        orchestrator
-          .processImage(image.toArray)
-          .flatMap:
-            computeSudokuCore(_, clock, uuidGen, algorithms)
+      override def getSudokuHints(trace: String, hintCount: Option[Int]): F[EmptyCellHints] =
+        orchestrator.processLine(trace).flatMap {
+          _.queryDomain(Search.make, hintCount)
+            .map { case (domain, size) => EmptyCellHints(domain.asHints, EmptyCellHintsMetadata(size)) }
+        }
 
-      override def computeSudokuDeveloperMode(trace: String): F[SudokuComputationSummary] = computeSudokuCore(trace, clock, uuidGen, algorithms)
+      override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] = computeWithEntryPoint(orchestrator.processImage(image.toArray))
 
-      private def computeSudokuCore(
-        trace: String,
-        clock: Clock[F],
-        uuidGen: UUIDGen[F],
-        algorithms: Seq[Algorithm[F]],
-      ): F[SudokuComputationSummary] =
+      override def computeSudokuDeveloperMode(trace: String): F[SudokuComputationSummary] =
+        Metrics[F].incrementCounter("totalPuzzlesSolved") *>
+          computeWithEntryPoint(trace.pure)
+
+      private def computeWithEntryPoint(entryPoint: F[String]): F[SudokuComputationSummary] =
+        entryPoint.flatMap { trace =>
+          for
+            start         <- clock.monotonic
+            requestedAt   <- clock.getCurrentTimestamp
+            gameId        <- uuidGen.randomUUID.map(uuid => GameId(uuid.toString))
+            state         <- orchestrator.processLine(trace)
+            maybeSolution <-
+              orchestrator.createBoard(state).flatMap { gameBoard =>
+                orchestrator
+                  .solve(gameBoard, Search.make, algorithms*)
+                  .guarantee(gameBoard.delete())
+                  .flatTap {
+                    _.map(_.strategy.value).mkString.pure
+                      .flatMap:
+                        Metrics[F].recordHistogram("algorithmsUsage", _)
+                  }
+              }
+            end           <- clock.monotonic
+            duration       = (end - start).toMillis
+            currentMax    <- Metrics[F].getGauge("maxSolveTime")
+            currentMin    <- Metrics[F].getGauge("minSolveTime")
+            _             <- Metrics[F].updateGauge("averageSolveTime", duration.toDouble)
+            _             <- Metrics[F].updateGauge("maxSolveTime", math.max(duration.toDouble, currentMax))
+            _             <-
+              Async[F].ifM(Metrics[F].getGauge("minSolveTime").map(_ == -1.0))(
+                Metrics[F].updateGauge("minSolveTime", duration.toDouble),
+                Metrics[F].updateGauge("minSolveTime", math.min(duration.toDouble, currentMin)),
+              )
+          yield SudokuComputationSummary(
+            id = gameId,
+            duration = duration,
+            requestedAt = requestedAt,
+            concurrentExecutionDetails =
+              ConcurrentExecutionDetails(
+                strategies = Strategy.BACKTRACKING :: Strategy.CONSTRAINT_PROPAGATION :: Nil,
+                earliestCompleted = maybeSolution.map(_.strategy),
+              ),
+            solution = maybeSolution.map(_.boardState),
+          )
+        }
+
+      override def getSudokuMetrics(): F[GameMetrics] =
         for {
-          start         <- clock.monotonic
-          requestedAt   <-
-            clock.realTime.map: t =>
-              val seconds = t.toSeconds
-              val nanos   = (t - seconds.seconds).toNanos
-              Timestamp(seconds, nanos.toInt)
-          gameId        <- uuidGen.randomUUID.map(uuid => GameId(uuid.toString))
-          gameBoard     <- orchestrator.processLine(trace).flatMap(orchestrator.createBoard(_))
-          maybeSolution <- orchestrator.solve(gameBoard, Search(), algorithms*)
-          _             <- gameBoard.delete()
-          end           <- clock.monotonic
-          duration       = (end - start).toMillis
-        } yield SudokuComputationSummary(
-          id = gameId,
-          duration = duration,
-          requestedAt = requestedAt,
-          concurrentExecutionDetails =
-            ConcurrentExecutionDetails(
-              strategies = Strategy.BACKTRACKING :: Strategy.CONSTRAINT_PROPAGATION :: Nil,
-              earliestCompleted = maybeSolution.map(_.strategy),
-            ),
-          solution = maybeSolution.map(_.boardState),
+          totalPuzzlesSolved   <- Metrics[F].getCounter("totalPuzzlesSolved")
+          averageSolveTime     <- Metrics[F].getGauge("averageSolveTime")
+          maxSolveTime         <- Metrics[F].getGauge("maxSolveTime")
+          minSolveTime         <- Metrics[F].getGauge("minSolveTime")
+          algorithmsUsageStats <- Metrics[F].getHistogram("algorithmsUsage")
+        } yield GameMetrics(
+          totalPuzzlesSolved,
+          averageSolveTime,
+          maxSolveTime,
+          minSolveTime,
+          algorithmsUsage =
+            AlgorithmUsage(Strategy.BACKTRACKING, algorithmsUsageStats(Strategy.BACKTRACKING.value)) ::
+              AlgorithmUsage(Strategy.CONSTRAINT_PROPAGATION, algorithmsUsageStats(Strategy.CONSTRAINT_PROPAGATION.value)) ::
+              Nil,
         )
+
+  extension [F[_]: Clock: Async](clock: Clock[F])
+
+    def getCurrentTimestamp: F[Timestamp] =
+      Clock[F].realTime.map { t =>
+        val seconds = t.toSeconds
+        val nanos   = (t - seconds.seconds).toNanos
+        Timestamp(seconds, nanos.toInt)
+      }
 
 }

@@ -3,7 +3,6 @@ $version: "2"
 namespace com.theproductcollectiveco.play4s.game.sudoku
 
 use smithy4s.meta#vector
-use com.theproductcollectiveco.play4s.game.sudoku.public#ComputeSudoku
 
 @pattern("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 @documentation("Game ID; should be a UUID")
@@ -11,19 +10,28 @@ string GameId
 
 // A vector of integers.
 @vector
-list VectorList {
+list VectorIntegerList {
     member: Integer
 }
 
-// A vector whose members are VectorList.
+// A vector whose members are VectorIntegerList.
 @vector
 list NestedVectorList {
-    member: VectorList
+    member: VectorIntegerList
 }
 
 // A list of algorithms
 list StrategyList {
     member: Strategy
+}
+
+// A list whose members are VectorIntegerList.
+list CellHintList {
+    member: CellHint
+}
+
+list IntegerList {
+    member: Integer
 }
 
 // A structure that contains a nested vector of integers.
@@ -81,4 +89,81 @@ structure GameMetadata {
 
 structure SudokuComputationSummary with [GameMetadata] {
     solution: BoardState
+}
+
+structure EmptyCell {
+    @documentation("The row index of the cell.")
+    @required
+    row: Integer
+    @documentation("The column index of the cell.")
+    @required
+    col: Integer
+}
+
+// Define a structure to represent a hint for a specific cell.
+structure CellHint {
+    @documentation("The coordinates of the cell.")
+    @required
+    emptyCell: EmptyCell
+
+    @required
+    @documentation("The possible digits for the cell.")
+    possibleDigits: IntegerList
+}
+
+
+@mixin
+structure GetHintsRequest {
+    @required
+    trace: String
+    @documentation("The number of hints to retrieve.")
+    hintCount: Integer
+}
+
+structure EmptyCellHintsMetadata {
+    @documentation("The total number of empty cells.")
+    @required
+    totalEmptyCells: Integer
+}
+
+structure EmptyCellHints {
+    @documentation("A list of hints, each containing cell coordinates and possible digits.")
+    @required
+    hints: CellHintList
+
+    @documentation("Metadata about the empty cells.")
+    @required
+    metadata: EmptyCellHintsMetadata
+}
+
+structure AlgorithmUsage {
+    @documentation("The strategy used for solving Sudoku.")
+    @required
+    strategy: Strategy
+
+    @documentation("The number of times this strategy was used.")
+    @required
+    usageCount: Long
+}
+
+list AlgorithmUsageList {
+    member: AlgorithmUsage
+}
+
+structure GameMetrics {
+    @documentation("Total number of Sudoku puzzles solved.")
+    @required
+    totalPuzzlesSolved: Long
+    @documentation("Average time taken to solve a Sudoku puzzle, in milliseconds.")
+    @required
+    averageSolveTime: Double
+    @documentation("Maximum time taken to solve a Sudoku puzzle, in milliseconds.")
+    @required
+    maxSolveTime: Double
+    @documentation("Minimum time taken to solve a Sudoku puzzle, in milliseconds.")
+    @required
+    minSolveTime: Double
+    @documentation("Histogram of algorithm usage, showing how often each algorithm was used.")
+    @required
+    algorithmsUsage: AlgorithmUsageList
 }

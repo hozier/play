@@ -4,9 +4,10 @@ import cats.effect.{Async, MonadCancelThrow}
 import cats.Parallel
 import cats.implicits.*
 import org.typelevel.log4cats.Logger
+import scala.collection.immutable.ListMap
 import com.theproductcollectiveco.play4s.Metrics
 import com.theproductcollectiveco.play4s.store.Board
-import com.theproductcollectiveco.play4s.game.sudoku.{NoSolutionFoundError, BoardState, Strategy}
+import com.theproductcollectiveco.play4s.game.sudoku.{NoSolutionFoundError, BoardState, Strategy, CellHint, EmptyCell}
 
 case class SolvedState(boardState: BoardState, strategy: Strategy)
 
@@ -16,7 +17,7 @@ trait Algorithm[F[_]] {
 
 object BacktrackingAlgorithm {
 
-  def apply[F[_]: MonadCancelThrow: Async: Logger: Parallel: Metrics](): Algorithm[F] =
+  def make[F[_]: MonadCancelThrow: Async: Logger: Parallel: Metrics]: Algorithm[F] =
     new Algorithm[F] {
 
       override def solve(
@@ -87,7 +88,7 @@ object BacktrackingAlgorithm {
 
 object ConstraintPropagationAlgorithm {
 
-  def apply[F[_]: MonadCancelThrow: Async: Parallel: Logger: Metrics](): Algorithm[F] =
+  def make[F[_]: MonadCancelThrow: Async: Parallel: Logger: Metrics]: Algorithm[F] =
     new Algorithm[F] {
 
       override def solve(
@@ -96,19 +97,12 @@ object ConstraintPropagationAlgorithm {
       ): F[Option[SolvedState]] =
         Metrics[F].time("ConstraintPropagationAlgorithm.solve") {
           board.read().flatMap { boardState =>
-            search
-              .fetchEmptyCells(boardState)
-              .map:
-                case (row, col) =>
-                  (row, col) -> (1 to boardState.value.size).toList
-                    .filter:
-                      search.verify(boardState, row, col, _)
-              .toMap
-              .some
-              .flatMap: initialDomain =>
-                propagateAndSearch(boardState, initialDomain, search)
-              .traverse:
-                SolvedState(_, Strategy.CONSTRAINT_PROPAGATION).pure
+            // format: off
+            boardState.queryDomain(search)  // format: on
+              .flatMap { (domain, _) =>
+                propagateAndSearch(boardState, domain, search).traverse:
+                  SolvedState(_, Strategy.CONSTRAINT_PROPAGATION).pure
+              }
           }
         }
 
@@ -182,3 +176,22 @@ object ConstraintPropagationAlgorithm {
     }
 
 }
+
+extension [F[_]: MonadCancelThrow: Logger: Async: Metrics](boardState: BoardState)
+
+  def queryDomain(search: Search, hintCount: Option[Int] = None): F[(Map[(Int, Int), List[Int]], Int)] =
+    Metrics[F].time("BoardState.queryDomain") {
+      for
+        emptyCells      <- search.fetchEmptyCells(boardState).pure
+        limitedCells     = hintCount.fold(emptyCells)(emptyCells.take)
+        domainCollection =
+          limitedCells.map { case (row, col) => (row, col) -> (1 to boardState.value.size).toList.filter(search.verify(boardState, row, col, _)) }
+
+        /** Minimum Remaining Values (MRV) */
+        sortedDomain = ListMap(domainCollection.toMap.toSeq.sortBy { case (_, candidates) => candidates.size }*)
+      yield (sortedDomain, emptyCells.size)
+    }
+
+extension (domain: Map[(Int, Int), List[Int]])
+
+  def asHints: List[CellHint] = domain.toList.map { case ((row, col), possibleDigits) => CellHint(EmptyCell(row, col), possibleDigits) }

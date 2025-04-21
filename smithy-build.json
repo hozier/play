@@ -12,7 +12,7 @@
             "com.theproductcollectiveco.play4s.internal.meta.health#ServiceMetaApi"
           ],
           "package": "com.theproductcollectiveco.play4s",
-          "packageVersion": "0.0.3",
+          "packageVersion": "0.0.4",
           "protocols": ["alloy#simpleRestJson"]
         }
       }
