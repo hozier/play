@@ -40,9 +40,7 @@ object Play4sService {
 
       override def computeSudoku(image: smithy4s.Blob): F[SudokuComputationSummary] = computeWithEntryPoint(orchestrator.processImage(image.toArray))
 
-      override def computeSudokuDeveloperMode(trace: String): F[SudokuComputationSummary] =
-        Metrics[F].incrementCounter("totalPuzzlesSolved") *>
-          computeWithEntryPoint(trace.pure)
+      override def computeSudokuDeveloperMode(trace: String): F[SudokuComputationSummary] = computeWithEntryPoint(trace.pure)
 
       private def computeWithEntryPoint(entryPoint: F[String]): F[SudokuComputationSummary] =
         entryPoint.flatMap { trace =>
@@ -68,6 +66,7 @@ object Play4sService {
             currentMin    <- Metrics[F].getGauge("minSolveTime")
             _             <- Metrics[F].updateGauge("averageSolveTime", duration.toDouble)
             _             <- Metrics[F].updateGauge("maxSolveTime", math.max(duration.toDouble, currentMax))
+            _             <- Metrics[F].incrementCounter("totalPuzzlesSolved")
             _             <-
               Async[F].ifM(Metrics[F].getGauge("minSolveTime").map(_ == -1.0))(
                 Metrics[F].updateGauge("minSolveTime", duration.toDouble),
@@ -99,9 +98,7 @@ object Play4sService {
           maxSolveTime,
           minSolveTime,
           algorithmsUsage =
-            AlgorithmUsage(Strategy.BACKTRACKING, algorithmsUsageStats(Strategy.BACKTRACKING.value)) ::
-              AlgorithmUsage(Strategy.CONSTRAINT_PROPAGATION, algorithmsUsageStats(Strategy.CONSTRAINT_PROPAGATION.value)) ::
-              Nil,
+            (Strategy.BACKTRACKING :: Strategy.CONSTRAINT_PROPAGATION :: Nil).map(alg => AlgorithmUsage(alg, algorithmsUsageStats(alg.value))),
         )
 
   extension [F[_]: Clock: Async](clock: Clock[F])

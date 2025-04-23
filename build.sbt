@@ -46,9 +46,9 @@ lazy val app =
         Cmd("USER", "demiourgos728"), // Switch back to the non-root user
       ),
       dockerAlias         := DockerAlias(
-        sys.env.get("AWS_ACCOUNT_ID").map(accountId => s"$accountId.dkr.ecr.us-east-1.amazonaws.com"),
+        sys.env.get("REGISTRY"),
         Some("theproductcollectiveco"),
-        "play4s-service",
+        "app-play4s-service-repository",
         Some(sys.env.getOrElse("GIT_SHA", "latest")),
       ),
       Compile / mainClass := Some("com.theproductcollectiveco.play4s.MainApp"),

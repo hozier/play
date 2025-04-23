@@ -10,6 +10,19 @@ structure InvalidInputError {
 }
 
 @error("client")
+@httpError(401)
+structure AuthError {
+    @required
+    description: String
+}
+@error("client")
+@httpError(403)
+structure ForbiddenError {
+    description: String
+}
+
+
+@error("client")
 @httpError(422)
 structure NoSolutionFoundError {
     @required

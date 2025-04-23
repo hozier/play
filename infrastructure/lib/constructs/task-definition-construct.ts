@@ -34,11 +34,18 @@ export class TaskDefinitionConstruct extends Construct {
       executionRole: taskExecutionRole,
     });
 
-    const googleCredentialsSecret = secretsmanager.Secret.fromSecretNameV2(
-      this,
-      'GoogleCredentialsSecret',
-      'google-credentials-key'
-    );
+    const secretsmanagerConfig = {
+      googleCredentialsSecret: secretsmanager.Secret.fromSecretNameV2(
+        this,
+        'GoogleCredentialsSecret',
+        'google-credentials-key'
+      ),
+      play4sCredentialsSecret: secretsmanager.Secret.fromSecretNameV2(
+        this,
+        'Play4sCredentialsSecret',
+        'play4s-credentials-key'
+      )
+    }
 
     const imageDigestResource = new cr.AwsCustomResource(this, 'ImageDigestResource', {
       onCreate: {
@@ -73,8 +80,12 @@ export class TaskDefinitionConstruct extends Construct {
         IMAGE_DIGEST: imageDigestResource.getResponseField('imageDetails.0.imageDigest'),
       },
       secrets: {
+        PLAY4S_APPLICATION_CREDENTIALS: ecs.Secret.fromSecretsManager(
+          secretsmanagerConfig.play4sCredentialsSecret,
+          'PLAY4S_APPLICATION_CREDENTIALS'
+        ),
         CREDENTIALS_JSON: ecs.Secret.fromSecretsManager(
-          googleCredentialsSecret,
+          secretsmanagerConfig.googleCredentialsSecret,
           'CREDENTIALS_JSON' // Extract only the value of the CREDENTIALS_JSON key
         ),
       },

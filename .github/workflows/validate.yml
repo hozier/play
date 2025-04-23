@@ -8,8 +8,13 @@ on:
 jobs:
   build:
     name: Build & Publish Artifact Locally
-    uses: ./.github/workflows/build.yml
-    with:
-      region: 'us-east-1'
-      stage: 'prod'
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build & Package Application
+        uses: ./.github/actions/build
+        with:
+          registry: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ 'us-east-1' }}.amazonaws.com"
+          repository: 'theproductcollectiveco/app-play4s-service-repository'
+          git_sha: ${{ github.sha }}

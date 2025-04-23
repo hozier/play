@@ -1,12 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
-import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
 import { Construct } from 'constructs';
-import { TaskDefinitionConstruct } from './constructs/task-definition-construct';
-import { LoadBalancerConstruct } from './constructs/load-balancer-construct';
-import { FargateServiceConstruct } from './constructs/fargate-service-construct';
-import { HealthCheckConstruct } from './constructs/health-check-construct';
+import { TaskDefinitionConstruct } from '../constructs/task-definition-construct';
+import { LoadBalancerConstruct } from '../constructs/load-balancer-construct';
+import { FargateServiceConstruct } from '../constructs/fargate-service-construct';
+import { HealthCheckConstruct } from '../constructs/health-check-construct';
 
 interface LoadBalancedFargateServiceStackProps extends cdk.StackProps {
   cluster: ecs.Cluster;

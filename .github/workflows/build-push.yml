@@ -20,16 +20,21 @@ on:
 
 env:
   REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region || 'us-east-1' }}.amazonaws.com"
-  REPOSITORY: "theproductcollectiveco/play4s-service"
+  REPOSITORY: "theproductcollectiveco/app-play4s-service-repository"
 
 jobs:
   build-and-publish:
     name: Build & Publish Artifact Locally
-    uses: ./.github/workflows/build.yml 
-    with:
-      region: ${{ inputs.region || 'us-east-1' }}
-      stage: ${{ inputs.stage }}
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build & Package Application
+        uses: ./.github/actions/build
+        with:
+          registry: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region }}.amazonaws.com"
+          repository: ${{ env.REPOSITORY }}
+          git_sha: ${{ github.sha }}
 
   push-to-ecr:
     name: Push
@@ -39,7 +44,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Push Docker Image
         uses: ./.github/actions/push
         with:

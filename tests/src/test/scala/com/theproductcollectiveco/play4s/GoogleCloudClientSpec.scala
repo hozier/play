@@ -16,7 +16,7 @@ object GoogleCloudClientSpec extends SimpleIOSuite {
     for {
       _               <- skipOnCI
       parser           = GoogleCloudClient[IO]
-      imageBytes      <- parser.fetchBytes("sudoku_test_image_v0.0.1.png")
+      imageBytes      <- parser.fetchResourceBytes("sudoku_test_image_v0.0.1.png")
       serializedBoard <- parser.parseImage(imageBytes)
       _               <-
         Logger[IO].debug:
