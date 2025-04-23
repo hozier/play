@@ -8,7 +8,7 @@ import com.theproductcollectiveco.play4s.config.AppConfig
 
 object HealthService {
 
-  def apply[F[_]: Async](appConfig: AppConfig): ServiceMetaApi[F] =
+  def apply[F[_]: Async](using appConfig: AppConfig): ServiceMetaApi[F] =
     new ServiceMetaApi[F] {
 
       override def getVersion(): F[RuntimeConfig] = appConfig.runtime.pure

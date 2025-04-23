@@ -1,10 +1,9 @@
 package com.theproductcollectiveco.play4s.game.sudoku.parser
 
 import com.theproductcollectiveco.play4s.game.sudoku.common.Parser
-import cats.effect.{Async, MonadCancelThrow, Resource}
+import cats.effect.{Async, MonadCancelThrow}
 import org.typelevel.log4cats.Logger
-import cats.implicits.*
-import scala.io.Source
+import fs2.io.file.Files
 
 trait TraceParser[F[_]] extends Parser[F] {
   def parseResource(fileName: String): F[List[String]]
@@ -12,21 +11,9 @@ trait TraceParser[F[_]] extends Parser[F] {
 
 object TraceClient {
 
-  def apply[F[_]: MonadCancelThrow: Async: Logger]: TraceParser[F] =
+  def apply[F[_]: MonadCancelThrow: Async: Logger: Files]: TraceParser[F] =
     new TraceParser[F] with Parser[F] {
-      override def parseResource(fileName: String): F[List[String]] =
-        Logger[F].debug(s"Reading file $fileName") *>
-          Resource
-            .fromAutoCloseable:
-              Async[F].blocking(Source.fromResource(fileName))
-            .use { source =>
-              Async[F].delay:
-                source
-                  .getLines()
-                  .toList
-                  .filterNot(_.contains("="))
-            }
-
+      override def parseResource(fileName: String): F[List[String]] = super.readResourceContents(fileName, !_.contains("="))
     }
 
 }

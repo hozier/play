@@ -10,9 +10,7 @@ inputs:
   git_sha:
     description: "Git SHA of the built image"
     required: true
-  aws_account_id:
-    description: "AWS Account Id"
-    required: true
+
 runs:
   using: "composite"
   steps:
@@ -55,7 +53,7 @@ runs:
         sbt app/docker:publishLocal
       env:
         GIT_SHA: ${{ inputs.git_sha }}
-        AWS_ACCOUNT_ID: ${{ inputs.aws_account_id }}
+        REGISTRY: ${{ inputs.registry }}
 
     - name: Save Docker image as tarball
       if: success() # Only proceed if tests pass

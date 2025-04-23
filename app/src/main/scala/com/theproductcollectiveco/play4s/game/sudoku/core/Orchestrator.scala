@@ -14,7 +14,7 @@ import fs2.io.file.Files
 import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, InitialStateSettingError}
 
 trait Orchestrator[F[_]] {
-  def fetchBytes(fileName: String): F[Array[Byte]]
+  def fetchResourceBytes(fileName: String): F[Array[Byte]]
   def processImage(image: Array[Byte]): F[String]
   def processTrace(fileName: String): F[List[String]]
   def processLine(line: String): F[BoardState]
@@ -41,7 +41,7 @@ object Orchestrator {
 
       override def processLine(line: String): F[BoardState] = traceParser.parseLine(line)
 
-      override def fetchBytes(fileName: String): F[Array[Byte]] = imageParser.fetchBytes(fileName)
+      override def fetchResourceBytes(fileName: String): F[Array[Byte]] = imageParser.fetchResourceBytes(fileName)
 
       override def solve(
         board: Board[F],

@@ -1,19 +1,73 @@
 package com.theproductcollectiveco.play4s
 
-import cats.effect.{Concurrent, MonadCancelThrow}
-import cats.syntax.all.*
-import org.http4s.*
-import org.http4s.multipart.*
-import org.http4s.circe.*
-import io.circe.{Encoder, Json}
-import org.typelevel.log4cats.Logger
-import com.theproductcollectiveco.play4s.game.sudoku.{GameId, DecodeFailureError}
-import smithy4s.Blob
 import cats.ApplicativeError
+import cats.data.{Kleisli, OptionT}
+import cats.effect.{Concurrent, MonadCancelThrow, Async, Resource}
+import cats.syntax.all.*
+
+import io.circe.{Encoder, Json}
+
+import org.http4s.*
+import org.http4s.circe.*
+import org.http4s.dsl.io.*
+import org.http4s.headers.Authorization
+import org.http4s.multipart.*
+import org.http4s.syntax.all.http4sHeaderSyntax
+import org.http4s.circe.CirceEntityEncoder.*
+import org.http4s.server.middleware.MaxActiveRequests
+
+import org.typelevel.log4cats.Logger
+
+import smithy4s.Blob
+import smithy4s.Service
+import smithy4s.http4s.SimpleRestJsonBuilder
+
+import com.theproductcollectiveco.play4s.config.AppConfig
+import com.theproductcollectiveco.play4s.game.sudoku.{AuthError, DecodeFailureError, GameId}
+import io.circe.generic.semiauto.deriveEncoder
 
 object Middleware {
 
-  given gameIdEncoder: Encoder[GameId.T] = Encoder.encodeString.contramap(_.toString)
+  given gameIdEncoder: Encoder[GameId.T]     = Encoder.encodeString.contramap(_.toString)
+  given authErrorEncoder: Encoder[AuthError] = deriveEncoder[AuthError]
+
+  extension [Alg[_[_, _, _, _, _]]: Service, F[_]: Concurrent](
+    impl: smithy4s.kinds.FunctorAlgebra[Alg, F]
+  ) {
+
+    def routes(using appConfig: AppConfig, logger: Logger[F]): Resource[F, HttpRoutes[F]] = SimpleRestJsonBuilder.routes(impl).resource
+
+    def secureRoutes(using appConfig: AppConfig, logger: Logger[F]): HttpRoutes[F] =
+      Kleisli { (req: Request[F]) =>
+        req.headers
+          .get[Authorization]
+          .map(_.value)
+          .fold(
+            OptionT.liftF(
+              Response[F](status = Unauthorized).withEntity(AuthError("Missing API Key")).pure[F]
+            )
+          ) { apiKey =>
+            OptionT.liftF(
+              Concurrent[F].ifM((apiKey == s"Bearer ${appConfig.apiKeyStore.app.apiKey.value}").pure)(
+                OptionT(
+                  SimpleRestJsonBuilder
+                    .routes(impl)
+                    .resource
+                    .use(_.run(req).value)
+                ).getOrElseF(forbiddenClientResponse),
+                forbiddenClientResponse,
+              )
+            )
+          }
+      }
+
+    private def forbiddenClientResponse: F[Response[F]] = Response[F](status = Forbidden).withEntity(AuthError("Forbidden Client")).pure
+  }
+
+  def addConcurrentRequestsLimit[F[_]: Async](
+    route: HttpRoutes[F],
+    limit: Int,
+  ): F[HttpRoutes[F]] = MaxActiveRequests.forHttpRoutes[F](limit).map(_(route))
 
   def decodeContent[F[_]: Concurrent: Logger](req: Request[F], field: String): F[Blob] =
     req.headers.get[org.http4s.headers.`Content-Type`].map(_.mediaType) match {

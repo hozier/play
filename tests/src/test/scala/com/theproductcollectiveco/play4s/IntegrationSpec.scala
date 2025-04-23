@@ -57,7 +57,7 @@ object IntegrationSpec extends SimpleIOSuite with Checkers {
       Metrics.make[IO].flatMap { metrics =>
         given Metrics[IO] = metrics
         skipOnCI *> runTest(
-          orchestrator.fetchBytes("sudoku_test_image_v0.0.1.png").flatMap(orchestrator.processImage).map(List(_)),
+          orchestrator.fetchResourceBytes("sudoku_test_image_v0.0.1.png").flatMap(orchestrator.processImage).map(List(_)),
           orchestrator,
         )
       }
