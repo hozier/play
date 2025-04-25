@@ -4,13 +4,12 @@ import cats.effect.kernel.{Async, Resource}
 import fs2.io.file.{Files, Path}
 import fs2.io.net.tls.TLSContext
 import fs2.text
-import java.security.KeyStore
-import javax.net.ssl.{KeyManagerFactory, SSLContext}
 import java.util.Base64
 import ciris.Secret
 import cats.syntax.all.*
 import cats.effect.implicits.*
 import com.theproductcollectiveco.play4s.config.AuthConfig
+import javax.net.ssl.SSLContext
 
 trait AuthProvider[F[_]] {
   def peekSecret(secret: Secret[String]): F[String]
@@ -22,8 +21,9 @@ trait AuthProvider[F[_]] {
 
 object DefaultAuthProvider {
 
-  def apply[F[_]: Async]: AuthProvider[F] =
+  def apply[F[_]: Async: Files](keyStoreBackend: KeyStoreBackend[F]): AuthProvider[F] =
     new AuthProvider[F] {
+
       override def peekSecret(secret: Secret[String]): F[String] =
         toSanitizedValue(secret).flatMap { decodedBytes =>
           fs2.Stream
@@ -39,10 +39,15 @@ object DefaultAuthProvider {
       override def toSanitizedValue(secret: Secret[String]): F[Array[Byte]] =
         Async[F]
           .fromEither {
-            val sanitizedValue = secret.value.filterNot(_.isWhitespace)
-            Either
-              .catchOnly[IllegalArgumentException](Base64.getDecoder.decode(sanitizedValue))
-              .leftMap(e => new RuntimeException(s"Failed to decode Base64: ${e.getMessage}", e))
+            val sanitizedValue = secret.value.replaceAll("[\\r\\n]", "").filterNot(_.isWhitespace)
+            Option
+              .when(sanitizedValue.matches("^[A-Za-z0-9+/=]*$"))(sanitizedValue)
+              .toRight(new RuntimeException(s"Invalid Base64 input: $sanitizedValue"))
+              .flatMap { validValue =>
+                Either
+                  .catchOnly[IllegalArgumentException](Base64.getDecoder.decode(validValue))
+                  .leftMap(e => new RuntimeException(s"Failed to decode Base64: ${e.getMessage}", e))
+              }
           }
 
       override def storeCredentials(secret: Secret[String], filePath: String)(using Files[F]): Resource[F, Unit] =
@@ -62,66 +67,12 @@ object DefaultAuthProvider {
 
       override def sslContextResource(authConfig: AuthConfig)(using Files[F]): Resource[F, SSLContext] =
         for {
-          keystore   <- loadKeyStore(authConfig)
-          sslContext <- createSSLContext(authConfig, keystore)
+          keystore   <- keyStoreBackend.loadKeyStore(authConfig.credentialsFilePath, authConfig.keyAccessSecret.map(peekSecret).sequence)
+          sslContext <- keyStoreBackend.createSSLContext(keystore, authConfig.keyAccessSecret.map(peekSecret).sequence)
         } yield sslContext
 
       override def tlsContextResource(authConfig: AuthConfig)(using Files[F]): Resource[F, TLSContext[F]] =
-        for {
-          keystore   <- loadKeyStore(authConfig)
-          sslContext <- createSSLContext(authConfig, keystore)
-          tlsContext  = TLSContext.Builder.forAsync.fromSSLContext(sslContext)
-        } yield tlsContext
-
-      private def loadKeyStore(authConfig: AuthConfig)(using Files[F]): Resource[F, KeyStore] =
-        for {
-          filePath <-
-            authConfig.credentialsFilePath
-              .liftTo[F](new IllegalArgumentException("Keystore file path is missing"))
-              .toResource
-          password <-
-            authConfig.keyAccessSecret
-              .map(peekSecret)
-              .getOrElse(new IllegalArgumentException("Keystore password is missing").raiseError)
-              .toResource
-          keystore <- Async[F].delay(KeyStore.getInstance("PKCS12")).toResource
-          _        <-
-            Files[F]
-              .readAll(Path(filePath))
-              .compile
-              .to(Array)
-              .flatMap { bytes =>
-                Async[F].delay {
-                  keystore.load(new java.io.ByteArrayInputStream(bytes), password.toCharArray)
-                }
-              }
-              .toResource
-        } yield keystore
-
-      private def createSSLContext(authConfig: AuthConfig, keystore: KeyStore): Resource[F, SSLContext] =
-        for {
-          password   <-
-            authConfig.keyAccessSecret
-              .map(peekSecret)
-              .getOrElse(new IllegalArgumentException("Keystore password is missing").raiseError)
-              .toResource
-          sslContext <-
-            Async[F].delay {
-              val keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm)
-              keyManagerFactory.init(keystore, password.toCharArray)
-
-              val sslContext                                               = SSLContext.getInstance("TLS")
-              val trustManagers: Option[Array[javax.net.ssl.TrustManager]] = None
-              val secureRandom: Option[java.security.SecureRandom]         = None
-
-              sslContext.init(
-                keyManagerFactory.getKeyManagers,
-                trustManagers.orNull,
-                secureRandom.orNull,
-              )
-              sslContext
-            }.toResource
-        } yield sslContext
+        sslContextResource(authConfig).map(TLSContext.Builder.forAsync.fromSSLContext)
     }
 
 }

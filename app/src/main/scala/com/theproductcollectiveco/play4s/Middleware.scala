@@ -40,9 +40,6 @@ object Middleware {
 
     def secureRoutes(using appConfig: AppConfig, authProvider: AuthProvider[F], logger: Logger[F]): HttpRoutes[F] =
       Kleisli { (req: Request[F]) =>
-        // Log the HTTP version
-        println(s"Request HTTP version: ${req.httpVersion}")
-
         req.headers
           .get[Authorization]
           .map(_.value)

@@ -11,7 +11,7 @@ import smithy4s.http4s.swagger.docs
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import com.theproductcollectiveco.play4s.Play4sApi
-import com.theproductcollectiveco.play4s.auth.{DefaultAuthProvider, AuthProvider}
+import com.theproductcollectiveco.play4s.auth.{DefaultAuthProvider, AuthProvider, DefaultKeyStoreBackend}
 import cats.effect.{Async, Clock, IO, Resource, ResourceApp, Sync}
 import com.theproductcollectiveco.play4s.Middleware.{secureRoutes, routes}
 import com.theproductcollectiveco.play4s.internal.meta.health.ServiceMetaApi
@@ -30,7 +30,7 @@ object MainApp extends ResourceApp.Forever {
         _,
         _,
       )                      = summon[AppConfig]
-      authProvider           = DefaultAuthProvider[IO]
+      authProvider          <- DefaultKeyStoreBackend[IO].pure.toResource.map(DefaultAuthProvider[IO])
       _                     <- authProvider.storeCredentials(googleCloudApiKey, googlePath.mkString)
       _                     <- authProvider.storeCredentials(keystore, keystorePath.mkString)
       tlsContext            <- authProvider.tlsContextResource(summon[AppConfig].apiKeyStore.keyStoreManagement)

@@ -25,7 +25,7 @@ export class PrerequisitesStack extends cdk.Stack {
 
     this.iamRole = new iam.Role(this, 'IamRole', {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
-      roleName: `${ORGANIZATION}-${SERVICE_NAME}-role`,
+      roleName: `${ORGANIZATION}/app-${SERVICE_NAME}-role`,
     });
 
     this.iamRole.addManagedPolicy(
