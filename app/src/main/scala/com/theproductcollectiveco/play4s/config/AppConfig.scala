@@ -1,46 +1,76 @@
 package com.theproductcollectiveco.play4s.config
 
-import com.theproductcollectiveco.play4s.internal.meta.health.{RuntimeConfig, ArtifactIdentifiers}
-import fs2.io.file.{Files, Path}
-import cats.effect.kernel.{Async, Resource}
-import cats.syntax.all.*
-import cats.effect.implicits.*
 import ciris.*
+import cats.syntax.all.*
+import com.comcast.ip4s.*
+import cats.effect.implicits.*
+import cats.effect.kernel.{Async, Resource}
+import com.theproductcollectiveco.play4s.internal.meta.health.{RuntimeConfig, ArtifactIdentifiers}
 
 final case class AuthConfig(
-  apiKey: Secret[String],
+  key: Secret[String],
   credentialsFilePath: Option[String] = None,
+  keyAccessSecret: Option[Secret[String]] = None,
 )
 
 final case class ApiKeyStoreConfig(
   app: AuthConfig,
   googleCloud: AuthConfig,
+  keyStoreManagement: AuthConfig,
+)
+
+final case class HttpConfig(
+  host: Hostname,
+  port: Port,
 )
 
 final case class AppConfig(
   apiKeyStore: ApiKeyStoreConfig,
   runtime: RuntimeConfig,
+  http: HttpConfig,
 )
 
 object AppConfig {
 
+  given ConfigDecoder[String, Hostname] = ConfigDecoder[String].mapOption("com.comcast.ip4s.Hostname")(Hostname.fromString)
+
+  given ConfigDecoder[String, Port] = ConfigDecoder[String].mapOption("com.comcast.ip4s.Port")(Port.fromString)
+
   def load[F[_]: Async]: Resource[F, AppConfig] =
     (
       // Defaults are provided for local development and testing purposes
-      env("CREDENTIALS_JSON").as[String].map(Secret(_)).default(Secret("{'default': 'credentials'}")),
+      env("GOOGLE_CLOUD_API_KEY_BASE64").toSecret,
       env("GOOGLE_APPLICATION_CREDENTIALS").option.default("/path/to/secrets.json".some),
-      env("PLAY4S_APPLICATION_CREDENTIALS").map(Secret(_)).default(Secret("19e96439-e2b9-4bc5-ba12-49ee91426656")),
+      env("KEYSTORE_BASE64").toSecret,
+      env("KEYSTORE_CREDENTIALS").option.default("/path/to/keystore.p12".some),
+      env("KEYSTORE_PASSWORD_BASE64").toSecret,
+      env("PLAY4S_API_KEY_BASE64").map(Secret(_)).default(Secret("MTllOTY0MzktZTJiOS00YmM1LWJhMTItNDllZTkxNDI2NjU2Cg==")),
       env("HOMEBREW_CELLAR").option.map(_.isEmpty.some), // assert against env var not present within container
       env("APP_NAME").default(BuildInfo.name),
       env("IMAGE_DIGEST").default("sha256:2d551bc2573297d9b9124034f3c89211dfca1b067a055b7b342957815f9673cd"),
+      env("SERVICE_BIND_HOST").as[Hostname].default(host"0.0.0.0"),
+      env("SERVICE_BIND_PORT").as[Port].default(port"8080"),
     )
-      .parMapN: (googleCloudApiKey, credentialsFilePath, appApiKey, onCI, appName, imageDigest) =>
-        AppConfig(
-          ApiKeyStoreConfig(
-            app = AuthConfig(appApiKey),
-            googleCloud = AuthConfig(googleCloudApiKey, credentialsFilePath),
-          ),
-          runtime =
+      .parMapN:
+        (
+          googleCloudApiKey,
+          googlePath,
+          keystore,
+          keystorePath,
+          keystorePassword,
+          appApiKey,
+          onCI,
+          appName,
+          imageDigest,
+          serviceHost,
+          servicePort,
+        ) =>
+          AppConfig(
+            ApiKeyStoreConfig(
+              app = AuthConfig(appApiKey),
+              googleCloud = AuthConfig(googleCloudApiKey, googlePath),
+              keyStoreManagement = AuthConfig(keystore, keystorePath, keystorePassword.some),
+            ),
             RuntimeConfig(
               appName = appName,
               appVersion = s"${imageDigest.stripPrefix("sha256:").take(12)}-${BuildInfo.gitSha.take(7)}",
@@ -53,26 +83,20 @@ object AppConfig {
                   gitSha = BuildInfo.gitSha,
                   imageDigest = imageDigest,
                   builtAt =
-                    smithy4s.Timestamp.fromInstant:
-                      java.time.Instant.parse(BuildInfo.buildTimestamp.trim),
+                    smithy4s.Timestamp.fromInstant(
+                      java.time.Instant.parse(BuildInfo.buildTimestamp.trim)
+                    ),
                 ),
             ),
-        )
+            HttpConfig(
+              host = serviceHost,
+              port = servicePort,
+            ),
+          )
       .load[F]
       .toResource
 
 }
 
-extension [F[_]: Async: Files](secret: Secret[String])
-
-  def storeCredentials(filePath: String): Resource[F, Unit] =
-    Files[F]
-      .createDirectories(Path(filePath).parent.getOrElse(Path(".")))
-      .flatMap { _ =>
-        fs2.Stream
-          .emits(secret.value.getBytes)
-          .through(Files[F].writeAll(Path(filePath)))
-          .compile
-          .drain
-      }
-      .toResource
+extension [F[_]: Async](configValue: ConfigValue[F, String])
+  def toSecret: ConfigValue[F, ciris.Secret[String]] = configValue.map(Secret(_)).default(Secret("{'default': 'credentials'}"))

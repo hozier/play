@@ -38,14 +38,24 @@ export class TaskDefinitionConstruct extends Construct {
       googleCredentialsSecret: secretsmanager.Secret.fromSecretNameV2(
         this,
         'GoogleCredentialsSecret',
-        'google-credentials-key'
+        'google-cloud-api-key-base64'
       ),
       play4sCredentialsSecret: secretsmanager.Secret.fromSecretNameV2(
         this,
         'Play4sCredentialsSecret',
-        'play4s-credentials-key'
-      )
-    }
+        'app-play4s-api-key-base64'
+      ),
+      keystoreSecret: secretsmanager.Secret.fromSecretNameV2(
+        this,
+        'KeystoreSecret',
+        'keystore-p12-base64'
+      ),
+      keystorePassword: secretsmanager.Secret.fromSecretNameV2(
+        this,
+        'KeystoreSecret',
+        'keystore-pwd-base64'
+      ),
+    };
 
     const imageDigestResource = new cr.AwsCustomResource(this, 'ImageDigestResource', {
       onCreate: {
@@ -67,7 +77,7 @@ export class TaskDefinitionConstruct extends Construct {
         timeout: cdk.Duration.seconds(5),
         interval: cdk.Duration.seconds(15),
         retries: 3,
-        command: ['CMD-SHELL', 'curl -f http://localhost:8080/internal/meta/health || exit 1'],
+        command: ['CMD-SHELL', 'curl -kf https://localhost:8080/internal/meta/health || exit 1'],
         startPeriod: cdk.Duration.seconds(30),
       },
       logging: ecs.LogDriver.awsLogs({
@@ -75,18 +85,23 @@ export class TaskDefinitionConstruct extends Construct {
       }),
       environment: {
         GOOGLE_APPLICATION_CREDENTIALS: '/tmp/secrets/credentials.json',
+        KEYSTORE_CREDENTIALS: '/tmp/secrets/keystore.p12',
         AWS_ENV: AWS_ENV,
         APP_NAME: APP_NAME,
         IMAGE_DIGEST: imageDigestResource.getResponseField('imageDetails.0.imageDigest'),
       },
       secrets: {
-        PLAY4S_APPLICATION_CREDENTIALS: ecs.Secret.fromSecretsManager(
+        PLAY4S_API_KEY_BASE64: ecs.Secret.fromSecretsManager(
           secretsmanagerConfig.play4sCredentialsSecret,
-          'PLAY4S_APPLICATION_CREDENTIALS'
         ),
-        CREDENTIALS_JSON: ecs.Secret.fromSecretsManager(
+        GOOGLE_CLOUD_API_KEY_BASE64: ecs.Secret.fromSecretsManager(
           secretsmanagerConfig.googleCredentialsSecret,
-          'CREDENTIALS_JSON' // Extract only the value of the CREDENTIALS_JSON key
+        ),
+        KEYSTORE_BASE64: ecs.Secret.fromSecretsManager(
+          secretsmanagerConfig.keystoreSecret
+        ),
+        KEYSTORE_PASSWORD_BASE64: ecs.Secret.fromSecretsManager(
+          secretsmanagerConfig.keystorePassword
         ),
       },
     });

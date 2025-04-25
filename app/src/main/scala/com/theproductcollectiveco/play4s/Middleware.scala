@@ -24,6 +24,7 @@ import smithy4s.http4s.SimpleRestJsonBuilder
 
 import com.theproductcollectiveco.play4s.config.AppConfig
 import com.theproductcollectiveco.play4s.game.sudoku.{AuthError, DecodeFailureError, GameId}
+import com.theproductcollectiveco.play4s.auth.AuthProvider
 import io.circe.generic.semiauto.deriveEncoder
 
 object Middleware {
@@ -37,26 +38,31 @@ object Middleware {
 
     def routes(using appConfig: AppConfig, logger: Logger[F]): Resource[F, HttpRoutes[F]] = SimpleRestJsonBuilder.routes(impl).resource
 
-    def secureRoutes(using appConfig: AppConfig, logger: Logger[F]): HttpRoutes[F] =
+    def secureRoutes(using appConfig: AppConfig, authProvider: AuthProvider[F], logger: Logger[F]): HttpRoutes[F] =
       Kleisli { (req: Request[F]) =>
+        // Log the HTTP version
+        println(s"Request HTTP version: ${req.httpVersion}")
+
         req.headers
           .get[Authorization]
           .map(_.value)
           .fold(
             OptionT.liftF(
-              Response[F](status = Unauthorized).withEntity(AuthError("Missing API Key")).pure[F]
+              Response[F](status = Unauthorized).withEntity(AuthError("Missing API Key")).pure
             )
           ) { apiKey =>
             OptionT.liftF(
-              Concurrent[F].ifM((apiKey == s"Bearer ${appConfig.apiKeyStore.app.apiKey.value}").pure)(
-                OptionT(
-                  SimpleRestJsonBuilder
-                    .routes(impl)
-                    .resource
-                    .use(_.run(req).value)
-                ).getOrElseF(forbiddenClientResponse),
-                forbiddenClientResponse,
-              )
+              authProvider.peekSecret(appConfig.apiKeyStore.app.key).map("Bearer " + _).flatMap { expectedApiKey =>
+                Concurrent[F].ifM(expectedApiKey.pure.map(_.equals(apiKey)))(
+                  OptionT(
+                    SimpleRestJsonBuilder
+                      .routes(impl)
+                      .resource
+                      .use(_.run(req).value)
+                  ).getOrElseF(forbiddenClientResponse),
+                  forbiddenClientResponse,
+                )
+              }
             )
           }
       }

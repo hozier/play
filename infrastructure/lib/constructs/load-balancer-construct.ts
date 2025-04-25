@@ -39,9 +39,10 @@ export class LoadBalancerConstruct extends Construct {
       unhealthyThresholdCount: 5,
     });
 
-    const listener = this.loadBalancer.addListener('Listener', {
-      port: 80,
-      open: true,
+    const listener = this.loadBalancer.addListener('HttpsListener', {
+      port: 443,
+      certificates: [elbv2.ListenerCertificate.fromArn('arn:aws:acm:region:account:certificate/certificate-id')],
+      protocol: elbv2.ApplicationProtocol.HTTPS,
     });
 
     listener.addAction('ForwardToTargetGroup', {
