@@ -60,8 +60,7 @@ object WebSudokuExtractor {
           .liftTo[F](DecodeFailureError(s"Missing $errorMsg"))
 
       private def validateSolutionAndMask(cheat: String, mask: String): F[(String, String)] =
-        (cheat, mask)
-          .pure[F]
+        (cheat, mask).pure
           .flatTap { case (c, m) =>
             Sync[F]
               .raiseError(InvalidInputError("Cheat and mask must each be 81 characters long"))

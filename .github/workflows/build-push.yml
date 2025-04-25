@@ -32,7 +32,7 @@ jobs:
       - name: Build & Package Application
         uses: ./.github/actions/build
         with:
-          registry: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.region }}.amazonaws.com"
+          registry:  ${{ env.REGISTRY }}
           repository: ${{ env.REPOSITORY }}
           git_sha: ${{ github.sha }}
 

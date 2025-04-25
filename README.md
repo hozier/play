@@ -1,5 +1,7 @@
 # play4s
 
+![TLS Enabled](https://img.shields.io/badge/TLS-enabled-brightgreen?style=flat-square&logo=letsencrypt&logoColor=white)
+
 ###### (a) Current Development
 
 This project focuses on exploring and implementing various puzzle-solving algorithms, with a primary emphasis on Sudoku puzzles. The backtracking algorithm is one of the key implementations, and recent refactors have made all compute solutions accessible as a service.
@@ -129,7 +131,7 @@ To retrieve the latest Load Balancer endpoint, re-trigger the GitHub Actions wor
 |                               | `IMAGE_TAG`                      | The tag assigned to the container image (e.g., latest, GIT_SHA). |
 |                               | `AWS_ACCESS_KEY_ID`              | AWS access key for authentication.                          |
 |                               | `AWS_SECRET_ACCESS_KEY`          | AWS secret access key for authentication.                   |
-| **Infrastructure/Application**| `CREDENTIALS_JSON`               | The service account key for Google Cloud API access.         |
+| **Infrastructure/Application**| `GOOGLE_CLOUD_API_KEY_BASE64`               | The service account key for Google Cloud API access.         |
 |                               | `GOOGLE_APPLICATION_CREDENTIALS` | The file path to the Google Cloud service account credentials. |
 
 ###### (f) Commands Reference
@@ -170,7 +172,7 @@ cat payload.json
 
 4. Send the request:
 ```shell
-curl -X POST localhost:8080/public/game/sudoku/solve \
+curl -X POST https://localhost:8080/public/game/sudoku/solve \
 -H "Content-Type: application/json" \
 -d @payload.json
 ```

@@ -28,7 +28,7 @@ object Dependencies {
   val weaverCats              = "com.disneystreaming" %% "weaver-cats"                % Versions.weaverCats              % Test
   val weaverScalacheck        = "com.disneystreaming" %% "weaver-scalacheck"          % Versions.weaverScalacheck        % Test
   val googleCloudVision       = "com.google.cloud"     % "google-cloud-vision"        % Versions.googleCloudVision
-  val http4sBlazeServer       = "org.http4s"          %% "http4s-blaze-server"        % Versions.http4s
+  val http4sEmberServer       = "org.http4s"          %% "http4s-ember-server"        % Versions.http4s
   val http4sEmberClient       = "org.http4s"          %% "http4s-ember-client"        % Versions.http4s
   val http4sDsl               = "org.http4s"          %% "http4s-dsl"                 % Versions.http4s
   val http4sCirce             = "org.http4s"          %% "http4s-circe"               % Versions.http4s
@@ -47,7 +47,7 @@ object Dependencies {
 
   val http4sDependencies =
     Seq(
-      http4sBlazeServer,
+      http4sEmberServer,
       http4sEmberClient,
       http4sDsl,
       http4sCirce,
