@@ -1,5 +1,6 @@
 name: "Build & Publish Artifact Locally"
 description: "Builds a Docker image and saves it as a tarball"
+
 inputs:
   registry:
     description: "Docker registry URL"
@@ -40,6 +41,23 @@ runs:
         key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
         restore-keys: |
           ${{ runner.os }}-sbt-
+
+    - name: Decode and verify keystore
+      shell: bash
+      run: |
+        mkdir -p /tmp/secrets
+        echo "$KEYSTORE_BASE64" | base64 -d > /tmp/secrets/keystore.p12
+        echo "$KEYSTORE_PASSWORD_BASE64" | base64 -d > /tmp/secrets/password.txt
+        STOREPASS=$(cat /tmp/secrets/password.txt)
+
+        echo "Verifying keystore file..."
+        keytool -list -keystore /tmp/secrets/keystore.p12 -storepass "$STOREPASS" -storetype PKCS12 || {
+          echo "❌ Failed to load keystore. Check your KEYSTORE_BASE64 and KEYSTORE_PASSWORD_BASE64 secrets."
+          exit 1
+        }
+      env:
+        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        KEYSTORE_PASSWORD_BASE64: ${{ secrets.KEYSTORE_PASSWORD_BASE64 }}
 
     - name: Clean, compile, and run tests
       shell: bash
