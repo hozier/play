@@ -96,6 +96,7 @@ runs:
       run: |
         export KEYSTORE_BASE64=$(base64 < "$KEYSTORE_PATH" | tr -d '\n')
         export KEYSTORE_PASSWORD_BASE64=$(base64 < "$KEYSTORE_PASSWORD_PATH" | tr -d '\n')
+        export DEFAULT_AUTH_JWT=true
 
         sbt clean compile tests/test
 

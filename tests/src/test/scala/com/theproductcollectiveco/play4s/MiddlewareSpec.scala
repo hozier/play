@@ -20,7 +20,7 @@ import fs2.io.file.Files
 
 object MiddlewareSpec extends SimpleIOSuite {
 
-  test("routes accepts valid JWT and rejects invalid") {
+  test("secureRoutes accepts valid JWT and rejects invalid") {
     for {
       appConfig            <- AppConfig.load[IO]
       given Async[IO]       = IO.asyncForIO
@@ -60,7 +60,7 @@ object MiddlewareSpec extends SimpleIOSuite {
       secretWithAlias      <- authProvider.retrieveSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
       _                    <- Logger[IO].info(Map("jwtSigningSecret" -> secretWithAlias).asJson.noSpaces)
       _                    <- Logger[IO].info(Map("token" -> token).asJson.noSpaces)
-      _                    <- Logger[IO].info(Map("goodRequest" -> goodRequest.asCurl.toString).asJson.noSpaces)
+      _                    <- Logger[IO].info(Map("goodRequest" -> goodRequest.toString).asJson.noSpaces)
       _                    <- Logger[IO].info(Map("goodResponse" -> goodResponse.toString).asJson.noSpaces)
 
     } yield expect(goodResponse.status == Status.Ok) and
