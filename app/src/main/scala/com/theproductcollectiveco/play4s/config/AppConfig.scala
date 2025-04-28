@@ -44,7 +44,7 @@ object AppConfig {
       env("GOOGLE_CLOUD_API_KEY_BASE64").toSecret,
       env("GOOGLE_APPLICATION_CREDENTIALS").option.default("/tmp/path/to/secrets.json".some),
       env("KEYSTORE_BASE64").toSecret,
-      env("KEYSTORE_CREDENTIALS").option.default("/tmp/secrets/keystore.p12".some),
+      env("KEYSTORE_CREDENTIALS").option.default("/tmp/path/to/secrets/keystore.p12".some),
       env("KEYSTORE_PASSWORD_BASE64").toSecret,
       env("PLAY4S_API_KEY_BASE64").toSecret,
       env("CI").option.map(_.contains("true").some).default(false.some),
