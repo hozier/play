@@ -67,6 +67,9 @@ runs:
 
     - name: Clean, compile, and run tests
       shell: bash
+      env:
+        KEYSTORE_BASE64: ${{ inputs.keystore_base64 }}
+        KEYSTORE_PASSWORD_BASE64: ${{ inputs.keystore_password_base64 }}
       run: |
         sbt clean compile tests/test
 
