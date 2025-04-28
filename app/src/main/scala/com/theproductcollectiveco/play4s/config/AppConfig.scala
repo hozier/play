@@ -4,6 +4,7 @@ import ciris.*
 import cats.syntax.all.*
 import com.comcast.ip4s.*
 import cats.effect.kernel.Async
+import io.circe.{Encoder, Json}
 import com.theproductcollectiveco.play4s.internal.meta.health.{RuntimeConfig, ArtifactIdentifiers}
 
 final case class AuthConfig(
@@ -35,6 +36,8 @@ object AppConfig {
 
   given ConfigDecoder[String, Port] = ConfigDecoder[String].mapOption("com.comcast.ip4s.Port")(Port.fromString)
 
+  given Encoder[Secret[String]] = Encoder.instance(secret => Json.fromString(secret.value))
+
   def load[F[_]: Async]: F[AppConfig] =
     (
       // Defaults are provided for local development and testing purposes
@@ -45,7 +48,7 @@ object AppConfig {
       env("KEYSTORE_PASSWORD_BASE64").map(Secret(_)).default(Secret("MTllOTY0MzktZTJiOS00YmM1LWJhMTItNDllZTkxNDI2NjU2Cg==")),
       env("PLAY4S_API_KEY_BASE64").map(Secret(_)).default(Secret("MTllOTY0MzktZTJiOS00YmM1LWJhMTItNDllZTkxNDI2NjU2Cg==")),
       env("CI").option.map(_.contains("true").some).default(false.some),
-      env("DEFAULT_AUTH_JWT").option.map(_.contains("false").some).default(true.some), // use jwt validation as default
+      env("DEFAULT_AUTH_JWT").option.map(_.contains("true").some).default(true.some), // use jwt validation as default
       env("APP_NAME").default(BuildInfo.name),
       env("IMAGE_DIGEST").default("sha256:2d551bc2573297d9b9124034f3c89211dfca1b067a055b7b342957815f9673cd"),
       env("SERVICE_BIND_HOST").as[Hostname].default(host"0.0.0.0"),

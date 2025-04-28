@@ -3,18 +3,22 @@ package com.theproductcollectiveco.play4s.auth
 import cats.effect.{IO, Async}
 import weaver.SimpleIOSuite
 import com.theproductcollectiveco.play4s.auth.*
-import com.theproductcollectiveco.play4s.config.AppConfig
 import com.theproductcollectiveco.play4s.api.HealthService
+import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
+import com.theproductcollectiveco.play4s.Middleware.secureRoutes
+import com.theproductcollectiveco.play4s.config.AppConfig
+import com.theproductcollectiveco.play4s.config.AppConfig.given
 import org.http4s.*
-import org.http4s.dsl.io.*
 import org.http4s.implicits.*
-import java.time.Instant
+import io.circe.syntax.*
+import io.circe.generic.auto.*
+import io.circe.Encoder
+import ciris.Secret
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import org.typelevel.ci.CIStringSyntax
-import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
-import com.theproductcollectiveco.play4s.Middleware.secureRoutes
 import fs2.io.file.Files
+import java.time.Instant
 
 object MiddlewareSpec extends SimpleIOSuite {
 
@@ -56,6 +60,13 @@ object MiddlewareSpec extends SimpleIOSuite {
       badResponse          <- app.run(badRequest)
       body                 <- goodResponse.as[String]
       secretWithAlias      <- authProvider.retrieveSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
+      _                    <-
+        Logger[IO].info(
+          Map(
+            "appConfig.apiKeyStore.keyStoreManagement" -> appConfig.apiKeyStore.keyStoreManagement.asJson,
+            "appConfig.runtime"                        -> appConfig.runtime.asJson,
+          ).asJson.noSpaces
+        )
     } yield expect(goodResponse.status == Status.Ok) and
       expect(body.nonEmpty) and
       expect(badResponse.status == Status.Forbidden)
