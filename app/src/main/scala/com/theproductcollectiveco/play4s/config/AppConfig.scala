@@ -45,7 +45,7 @@ object AppConfig {
       env("KEYSTORE_PASSWORD_BASE64").map(Secret(_)).default(Secret("MTllOTY0MzktZTJiOS00YmM1LWJhMTItNDllZTkxNDI2NjU2Cg==")),
       env("PLAY4S_API_KEY_BASE64").map(Secret(_)).default(Secret("MTllOTY0MzktZTJiOS00YmM1LWJhMTItNDllZTkxNDI2NjU2Cg==")),
       env("CI").option.map(_.contains("true").some).default(false.some),
-      env("DEFAULT_AUTH_JWT").option.map(_.contains("true").some).default(false.some),
+      env("DEFAULT_AUTH_JWT").option.map(_.contains("false").some).default(true.some),
       env("APP_NAME").default(BuildInfo.name),
       env("IMAGE_DIGEST").default("sha256:2d551bc2573297d9b9124034f3c89211dfca1b067a055b7b342957815f9673cd"),
       env("SERVICE_BIND_HOST").as[Hostname].default(host"0.0.0.0"),
