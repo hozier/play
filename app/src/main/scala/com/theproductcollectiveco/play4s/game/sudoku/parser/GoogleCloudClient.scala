@@ -1,9 +1,10 @@
 package com.theproductcollectiveco.play4s.game.sudoku.parser
 
-import com.theproductcollectiveco.play4s.game.sudoku.common.Parser
 import cats.effect.{Async, Resource}
-import com.google.cloud.vision.v1.{ImageAnnotatorClient, Image, Feature, AnnotateImageRequest, TextAnnotation}
+import com.google.cloud.vision.v1.{AnnotateImageRequest, Feature, Image, ImageAnnotatorClient, TextAnnotation}
 import com.google.protobuf.ByteString
+import com.theproductcollectiveco.play4s.game.sudoku.common.Parser
+
 import scala.jdk.CollectionConverters.*
 
 trait ImageParser[F[_]] extends Parser[F] {

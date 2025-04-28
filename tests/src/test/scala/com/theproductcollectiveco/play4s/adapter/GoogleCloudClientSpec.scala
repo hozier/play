@@ -1,13 +1,12 @@
 package com.theproductcollectiveco.play4s.adapter
 
 import cats.effect.IO
-import weaver.SimpleIOSuite
 import com.theproductcollectiveco.play4s.game.sudoku.parser.GoogleCloudClient
-import org.typelevel.log4cats.slf4j.Slf4jLogger
-import org.typelevel.log4cats.Logger
 import com.theproductcollectiveco.play4s.tools.SpecKit.Fixtures.*
 import com.theproductcollectiveco.play4s.tools.SpecKit.Operations.*
-import weaver.*
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+import weaver.{SimpleIOSuite, *}
 
 object GoogleCloudClientSpec extends SimpleIOSuite {
   given Logger[IO] = Slf4jLogger.getLogger[IO]

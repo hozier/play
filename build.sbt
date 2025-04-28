@@ -7,6 +7,8 @@ val commonSettings =
   Seq(
     organization                     := "com.theproductcollectiveco",
     scalaVersion                     := "3.4.0",
+    semanticdbVersion                := scalafixSemanticdb.revision,
+    semanticdbEnabled                := true,
     Compile / parallelExecution      := true,
     fork                             := true,
     javaOptions ++= Seq(

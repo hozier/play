@@ -1,13 +1,14 @@
 package com.theproductcollectiveco.play4s.game.sudoku.core
 
-import cats.effect.{Async, MonadCancelThrow}
 import cats.Parallel
+import cats.effect.{Async, MonadCancelThrow}
 import cats.implicits.*
-import org.typelevel.log4cats.Logger
-import scala.collection.immutable.ListMap
 import com.theproductcollectiveco.play4s.Metrics
+import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, CellHint, EmptyCell, NoSolutionFoundError, Strategy}
 import com.theproductcollectiveco.play4s.store.Board
-import com.theproductcollectiveco.play4s.game.sudoku.{NoSolutionFoundError, BoardState, Strategy, CellHint, EmptyCell}
+import org.typelevel.log4cats.Logger
+
+import scala.collection.immutable.ListMap
 
 case class SolvedState(boardState: BoardState, strategy: Strategy)
 

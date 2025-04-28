@@ -1,19 +1,19 @@
 package com.theproductcollectiveco.play4s.core
 
 import cats.Parallel
-import cats.effect.{IO, Async}
+import cats.effect.{Async, IO}
 import cats.effect.std.Console
-import cats.implicits.*
 import cats.effect.syntax.all.*
-import weaver.SimpleIOSuite
-import weaver.scalacheck.Checkers
+import cats.implicits.*
+import com.theproductcollectiveco.play4s.Metrics
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Orchestrator, Search, SolvedState}
-import org.typelevel.log4cats.Logger
+import com.theproductcollectiveco.play4s.tools.SpecKit
 import com.theproductcollectiveco.play4s.tools.SpecKit.Generators.*
 import com.theproductcollectiveco.play4s.tools.SpecKit.Operations.skipOnCI
 import com.theproductcollectiveco.play4s.tools.SpecKit.SharedInstances.given
-import com.theproductcollectiveco.play4s.Metrics
-import com.theproductcollectiveco.play4s.tools.SpecKit
+import org.typelevel.log4cats.Logger
+import weaver.SimpleIOSuite
+import weaver.scalacheck.Checkers
 
 object CoreIntegrationSpec extends SimpleIOSuite with Checkers {
 

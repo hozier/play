@@ -1,11 +1,11 @@
 package com.theproductcollectiveco.play4s.config
 
-import ciris.*
-import cats.syntax.all.*
-import com.comcast.ip4s.*
 import cats.effect.kernel.Async
+import cats.syntax.all.*
+import ciris.*
+import com.comcast.ip4s.*
+import com.theproductcollectiveco.play4s.internal.meta.health.{ArtifactIdentifiers, RuntimeConfig}
 import io.circe.{Encoder, Json}
-import com.theproductcollectiveco.play4s.internal.meta.health.{RuntimeConfig, ArtifactIdentifiers}
 
 final case class AuthConfig(
   key: Secret[String],

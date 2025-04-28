@@ -1,11 +1,11 @@
 package com.theproductcollectiveco.play4s.auth
 
 import cats.effect.*
-import weaver.SimpleIOSuite
 import com.theproductcollectiveco.play4s.config.AppConfig
 import fs2.io.file.Files
-import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+import weaver.SimpleIOSuite
 
 object DefaultAuthProviderSpec extends SimpleIOSuite {
 

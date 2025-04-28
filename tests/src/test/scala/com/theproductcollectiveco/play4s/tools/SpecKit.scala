@@ -1,17 +1,17 @@
 package com.theproductcollectiveco.play4s.tools
 
-import weaver.SimpleIOSuite
-import cats.effect.IO
-import weaver.*
 import cats.Show
-import org.scalacheck.Gen
-import org.typelevel.log4cats.Logger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
+import cats.effect.IO
 import com.theproductcollectiveco.play4s.Metrics
 import com.theproductcollectiveco.play4s.config.AppConfig
 import com.theproductcollectiveco.play4s.game.sudoku.BoardState
-import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Search, Orchestrator}
-import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudClient}
+import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Orchestrator, Search}
+import com.theproductcollectiveco.play4s.game.sudoku.parser.{GoogleCloudClient, TraceClient}
+import org.scalacheck.Gen
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+import weaver.{SimpleIOSuite, *}
+
 import scala.annotation.unused
 
 object SpecKit {

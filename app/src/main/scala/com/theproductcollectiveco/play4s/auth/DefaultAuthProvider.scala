@@ -1,14 +1,14 @@
 package com.theproductcollectiveco.play4s.auth
 
+import cats.effect.Ref
+import cats.effect.implicits.*
 import cats.effect.kernel.{Async, Resource}
+import cats.syntax.all.*
+import ciris.Secret
+import com.theproductcollectiveco.play4s.config.{toSanitizedValue, AuthConfig}
 import fs2.io.file.{Files, Path}
 import fs2.io.net.tls.TLSContext
-import ciris.Secret
-import cats.syntax.all.*
-import cats.effect.implicits.*
-import com.theproductcollectiveco.play4s.config.{AuthConfig, toSanitizedValue}
 import javax.net.ssl.SSLContext
-import cats.effect.Ref
 
 trait AuthProvider[F[_]] {
   def retrieveSecret(alias: String, authConfig: AuthConfig): F[String]

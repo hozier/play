@@ -1,10 +1,10 @@
 package com.theproductcollectiveco.play4s.api
 
-import com.theproductcollectiveco.play4s.internal.meta.health.{ServiceMetaApi, CheckHealthOutput, RuntimeConfig}
-import com.theproductcollectiveco.play4s.internal.meta.health.HealthStatus.HEALTHY
-import cats.implicits.*
 import cats.effect.Async
+import cats.implicits.*
 import com.theproductcollectiveco.play4s.config.AppConfig
+import com.theproductcollectiveco.play4s.internal.meta.health.{CheckHealthOutput, RuntimeConfig, ServiceMetaApi}
+import com.theproductcollectiveco.play4s.internal.meta.health.HealthStatus.HEALTHY
 
 object HealthService {
 

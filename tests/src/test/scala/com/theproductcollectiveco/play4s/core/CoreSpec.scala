@@ -1,16 +1,16 @@
 package com.theproductcollectiveco.play4s.core
 
 import cats.effect.IO
-import org.scalacheck.Gen
-import weaver.SimpleIOSuite
-import weaver.scalacheck.Checkers
-import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Search, Orchestrator}
+import com.theproductcollectiveco.play4s.Metrics
+import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, NoSolutionFoundError}
+import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Orchestrator, Search}
+import com.theproductcollectiveco.play4s.tools.SpecKit
 import com.theproductcollectiveco.play4s.tools.SpecKit.Fixtures
 import com.theproductcollectiveco.play4s.tools.SpecKit.Generators.*
 import com.theproductcollectiveco.play4s.tools.SpecKit.SharedInstances.given
-import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, NoSolutionFoundError}
-import com.theproductcollectiveco.play4s.Metrics
-import com.theproductcollectiveco.play4s.tools.SpecKit
+import org.scalacheck.Gen
+import weaver.SimpleIOSuite
+import weaver.scalacheck.Checkers
 
 object CoreSpec extends SimpleIOSuite with Checkers {
 

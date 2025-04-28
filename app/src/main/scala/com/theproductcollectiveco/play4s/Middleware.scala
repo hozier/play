@@ -1,27 +1,22 @@
 package com.theproductcollectiveco.play4s
 
 import cats.data.{Kleisli, OptionT}
-import cats.effect.Async
+import cats.effect.{Async, Resource}
 import cats.syntax.all.*
-import cats.effect.Resource
-
+import com.theproductcollectiveco.play4s.auth.JwtProvider
+import com.theproductcollectiveco.play4s.game.sudoku.AuthError
 import io.circe.Encoder
 import io.circe.generic.auto.*
-
 import org.http4s.*
 import org.http4s.circe.*
+import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.dsl.io.*
 import org.http4s.headers.Authorization
-import org.http4s.syntax.all.http4sHeaderSyntax
-import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.server.middleware.MaxActiveRequests
+import org.http4s.syntax.all.http4sHeaderSyntax
 import org.typelevel.log4cats.Logger
-
 import smithy4s.Service
 import smithy4s.http4s.SimpleRestJsonBuilder
-
-import com.theproductcollectiveco.play4s.game.sudoku.AuthError
-import com.theproductcollectiveco.play4s.auth.JwtProvider
 
 object Middleware {
 

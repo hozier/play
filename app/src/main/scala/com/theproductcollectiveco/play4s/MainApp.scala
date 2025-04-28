@@ -1,25 +1,25 @@
 package com.theproductcollectiveco.play4s
 
-import cats.syntax.all.*
-import fs2.io.file.Files
-import org.http4s.implicits.*
+import cats.effect.{Async, Clock, IO, Resource, ResourceApp, Sync}
+import cats.effect.IO.asyncForIO
 import cats.effect.implicits.*
 import cats.effect.std.UUIDGen
-import cats.effect.IO.asyncForIO
+import cats.syntax.all.*
+import com.theproductcollectiveco.play4s.Middleware.{routes, secureRoutes}
+import com.theproductcollectiveco.play4s.Play4sApi
+import com.theproductcollectiveco.play4s.api.{HealthService, Play4sService}
+import com.theproductcollectiveco.play4s.auth.{AuthProvider, DefaultAuthProvider, DefaultJwtProvider, DefaultKeyStoreBackend, JwtProvider}
+import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
+import com.theproductcollectiveco.play4s.config.{ApiKeyStoreConfig, AppConfig, AuthConfig}
+import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Orchestrator}
+import com.theproductcollectiveco.play4s.game.sudoku.parser.{GoogleCloudClient, TraceClient}
+import com.theproductcollectiveco.play4s.internal.meta.health.ServiceMetaApi
+import fs2.io.file.Files
 import org.http4s.ember.server.EmberServerBuilder
-import smithy4s.http4s.swagger.docs
+import org.http4s.implicits.*
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import com.theproductcollectiveco.play4s.Play4sApi
-import com.theproductcollectiveco.play4s.auth.{DefaultAuthProvider, AuthProvider, DefaultKeyStoreBackend, JwtProvider, DefaultJwtProvider}
-import cats.effect.{Async, Clock, IO, Resource, ResourceApp, Sync}
-import com.theproductcollectiveco.play4s.Middleware.{secureRoutes, routes}
-import com.theproductcollectiveco.play4s.internal.meta.health.ServiceMetaApi
-import com.theproductcollectiveco.play4s.api.{HealthService, Play4sService}
-import com.theproductcollectiveco.play4s.game.sudoku.parser.{GoogleCloudClient, TraceClient}
-import com.theproductcollectiveco.play4s.config.{AppConfig, ApiKeyStoreConfig, AuthConfig}
-import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Orchestrator}
-import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
+import smithy4s.http4s.swagger.docs
 
 object MainApp extends ResourceApp.Forever {
 

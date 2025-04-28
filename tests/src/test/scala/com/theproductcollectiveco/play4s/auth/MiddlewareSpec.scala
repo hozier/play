@@ -1,19 +1,20 @@
 package com.theproductcollectiveco.play4s.auth
 
-import cats.effect.{IO, Async}
-import weaver.SimpleIOSuite
-import com.theproductcollectiveco.play4s.auth.*
-import com.theproductcollectiveco.play4s.api.HealthService
-import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
+import cats.effect.{Async, IO}
+import cats.effect.std.UUIDGen
 import com.theproductcollectiveco.play4s.Middleware.secureRoutes
+import com.theproductcollectiveco.play4s.api.HealthService
+import com.theproductcollectiveco.play4s.auth.*
+import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
 import com.theproductcollectiveco.play4s.config.AppConfig
+import fs2.io.file.Files
 import org.http4s.*
 import org.http4s.implicits.*
-import cats.effect.std.UUIDGen
-import org.typelevel.log4cats.slf4j.Slf4jLogger
-import org.typelevel.log4cats.Logger
 import org.typelevel.ci.CIStringSyntax
-import fs2.io.file.Files
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+import weaver.SimpleIOSuite
+
 import java.time.Instant
 
 object MiddlewareSpec extends SimpleIOSuite {

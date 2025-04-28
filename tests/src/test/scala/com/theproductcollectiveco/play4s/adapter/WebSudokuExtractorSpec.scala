@@ -1,17 +1,17 @@
 package com.theproductcollectiveco.play4s.adapter
 
 import cats.effect.IO
-import weaver.SimpleIOSuite
-import weaver.scalacheck.Checkers
-import com.theproductcollectiveco.play4s.game.sudoku.parser.WebSudokuExtractor
-import org.typelevel.log4cats.Logger
-import org.http4s.ember.client.EmberClientBuilder
-import scala.util.Random
-import weaver.*
 import com.theproductcollectiveco.play4s.Metrics
 import com.theproductcollectiveco.play4s.core.CoreIntegrationSpec.solve
+import com.theproductcollectiveco.play4s.game.sudoku.parser.WebSudokuExtractor
 import com.theproductcollectiveco.play4s.tools.SpecKit.Generators.*
 import com.theproductcollectiveco.play4s.tools.SpecKit.SharedInstances.given
+import org.http4s.ember.client.EmberClientBuilder
+import org.typelevel.log4cats.Logger
+import weaver.{SimpleIOSuite, *}
+import weaver.scalacheck.Checkers
+
+import scala.util.Random
 
 object WebSudokuExtractorSpec extends SimpleIOSuite with Checkers:
 

@@ -1,12 +1,13 @@
 package com.theproductcollectiveco.play4s.auth
 
-import cats.effect.{Async, Sync, Resource}
+import cats.effect.{Async, Resource, Sync}
 import cats.effect.implicits.*
 import cats.syntax.all.*
+import com.theproductcollectiveco.play4s.config.{peek, AuthConfig}
 import fs2.io.file.{Files, Path}
 import javax.net.ssl.{KeyManagerFactory, SSLContext}
+
 import java.security.KeyStore
-import com.theproductcollectiveco.play4s.config.{AuthConfig, peek}
 
 trait KeyStoreBackend[F[_]] {
   def load(authConfig: AuthConfig): Resource[F, LoadedKeyStore[F]]

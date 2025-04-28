@@ -1,16 +1,15 @@
 package com.theproductcollectiveco.play4s.auth
 
+import cats.effect.Async
+import cats.syntax.all.*
+import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
+import com.theproductcollectiveco.play4s.config.{peek, AppConfig}
 import io.circe.{Encoder, Json}
 import io.circe.generic.auto.*
-import cats.effect.Async
 import io.circe.syntax.*
-import cats.syntax.all.*
 import org.typelevel.log4cats.Logger
-
-import com.theproductcollectiveco.play4s.config.{AppConfig, peek}
-import pdi.jwt.{JwtCirce, JwtOptions, JwtAlgorithm}
+import pdi.jwt.{JwtAlgorithm, JwtCirce, JwtOptions}
 import pdi.jwt.exceptions.JwtExpirationException
-import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
 
 trait JwtProvider[F[_]] {
   def decodeJwt(token: String): F[Json]
