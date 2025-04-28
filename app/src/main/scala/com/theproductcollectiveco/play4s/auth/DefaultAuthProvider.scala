@@ -35,7 +35,14 @@ object DefaultAuthProvider {
         Files[F]
           .createDirectories(Path(filePath).parent.getOrElse(Path(".")))
           .flatMap { _ =>
-            secret.toSanitizedValue.flatMap(decodedBytes => fs2.Stream.emits(decodedBytes).through(Files[F].writeAll(Path(filePath))).compile.drain)
+            toSanitizedValue(secret)
+              .flatMap { decodedBytes =>
+                fs2.Stream
+                  .emits(decodedBytes)
+                  .through(Files[F].writeAll(Path(filePath)))
+                  .compile
+                  .drain
+              }
           }
           .toResource
 

@@ -6,7 +6,6 @@ import com.theproductcollectiveco.play4s.config.AppConfig
 import fs2.io.file.Files
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
-import io.circe.syntax.*
 
 object DefaultAuthProviderSpec extends SimpleIOSuite {
 

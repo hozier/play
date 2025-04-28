@@ -32,8 +32,8 @@ object MiddlewareSpec extends SimpleIOSuite {
       _                    <- authProvider.initializeSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
       jwtProvider           = DefaultJwtProvider[IO](appConfig, authProvider)
       now                   = Instant.now()
-      grant                 =
-        jwtProvider.createGrant(
+      token                <-
+        jwtProvider.generateJwt(
           handle = GenericHandle.Username("test-user-id"),
           expiration = Some(now.getEpochSecond + 3600),
           issuedAt = Some(now.getEpochSecond),
@@ -41,7 +41,6 @@ object MiddlewareSpec extends SimpleIOSuite {
           metadata = Some(Map("env" -> "test")),
           oneTimeUse = false,
         )
-      token                <- jwtProvider.generateJwt(grant)
       healthService         = HealthService.make[IO]
       given JwtProvider[IO] = jwtProvider
       securedApp            = healthService.secureRoutes.orNotFound

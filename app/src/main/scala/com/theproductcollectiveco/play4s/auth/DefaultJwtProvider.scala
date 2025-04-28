@@ -14,23 +14,11 @@ import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
 
 trait JwtProvider[F[_]] {
   def decodeJwt(token: String): F[Json]
-  def generateJwt(grant: Grant): F[String]
   def decodeBearerToken(token: String): F[Grant]
   def prependBearerToApiKey: F[String]
   def isPrimaryAuth: F[Boolean]
 
-  def createGrant(
-    handle: GenericHandle,
-    expiration: Option[Long],
-    issuedAt: Option[Long],
-    roles: List[String],
-    tokenId: Option[String] = Some(java.util.UUID.randomUUID().toString),
-    metadata: Option[Map[String, String]] = Some(Map("project" -> "play4s", "env" -> "production")),
-    oneTimeUse: Boolean,
-    issuer: Option[String] = Some("app.play4s-service.io"),
-  ): Grant
-
-  def jwtTokenBuilder(
+  def generateJwt(
     handle: GenericHandle,
     expiration: Option[Long] = Some(System.currentTimeMillis() / 1000 + 3600),
     issuedAt: Option[Long] = Some(System.currentTimeMillis() / 1000),
@@ -98,16 +86,7 @@ object DefaultJwtProvider {
         Async[F]
           .fromOption(appConfig.runtime.withJwt, new RuntimeException("Missing primary authentication mechanism configuration"))
 
-      override def generateJwt(grant: Grant): F[String] =
-        authProvider
-          .retrieveSecret(alias = "jwtSigningSecret", authConfig = appConfig.apiKeyStore.keyStoreManagement)
-          .flatMap { secretWithAliasjwtSecretKey =>
-            Async[F].delay {
-              JwtCirce.encode(grant.asJson.noSpaces, secretWithAliasjwtSecretKey, JwtAlgorithm.HS256)
-            }
-          }
-
-      override def jwtTokenBuilder(
+      override def generateJwt(
         handle: GenericHandle,
         expiration: Option[Long] = Some(System.currentTimeMillis() / 1000 + 3600),
         issuedAt: Option[Long] = Some(System.currentTimeMillis() / 1000),
@@ -117,34 +96,24 @@ object DefaultJwtProvider {
         oneTimeUse: Boolean = false,
         issuer: Option[String] = Some("app.play4s-service.com"),
       ): F[String] =
-        generateJwt(
-          createGrant(handle, expiration, issuedAt, roles, tokenId, metadata, oneTimeUse, issuer)
-        ).flatMap(validateAndLogJwt(_))
+        authProvider
+          .retrieveSecret(alias = "jwtSigningSecret", authConfig = appConfig.apiKeyStore.keyStoreManagement)
+          .flatMap { secretWithAliasjwtSecretKey =>
+            Async[F].delay {
+              JwtCirce.encode(
+                Grant(
+                  MagicLink(
+                    Payload(handle, expiration, issuedAt, roles, tokenId, metadata),
+                    oneTimeUse,
+                    issuer,
+                  )
+                ).asJson.noSpaces,
+                secretWithAliasjwtSecretKey,
+                JwtAlgorithm.HS256,
+              )
+            }
+          }
 
-      override def createGrant(
-        handle: GenericHandle,
-        expiration: Option[Long],
-        issuedAt: Option[Long],
-        roles: List[String],
-        tokenId: Option[String],
-        metadata: Option[Map[String, String]],
-        oneTimeUse: Boolean,
-        issuer: Option[String],
-      ): Grant =
-        Grant(
-          MagicLink(
-            Payload(handle, expiration, issuedAt, roles, tokenId, metadata),
-            oneTimeUse,
-            issuer,
-          )
-        )
-
-      private def validateAndLogJwt(
-        token: String
-      ): F[String] =
-        decodeJwt(token).flatMap { json =>
-          Async[F].fromEither(json.as[Grant]).flatMap(grant => Logger[F].info(s"JWT validation succeeded with grant $grant").as(s"Bearer $token"))
-        }
     }
 
 }

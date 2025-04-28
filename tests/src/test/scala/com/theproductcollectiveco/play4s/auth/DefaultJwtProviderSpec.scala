@@ -30,8 +30,8 @@ object DefaultJwtProviderSpec extends SimpleIOSuite {
       secretWithAlias <- authProvider.retrieveSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
       now              = Instant.now()
       jwtProvider      = DefaultJwtProvider[IO](appConfig, authProvider)
-      grant            =
-        jwtProvider.createGrant(
+      token           <-
+        jwtProvider.generateJwt(
           handle = GenericHandle.Username("test-user-id"),
           expiration = Some(now.getEpochSecond + 3600),
           issuedAt = Some(now.getEpochSecond),
@@ -39,7 +39,6 @@ object DefaultJwtProviderSpec extends SimpleIOSuite {
           metadata = Some(Map("env" -> "test")),
           oneTimeUse = false,
         )
-      token           <- jwtProvider.generateJwt(grant)
       decodedJson     <- jwtProvider.decodeJwt(token)
       _               <- Logger[IO].info(Map("jwtSigningSecret" -> secretWithAlias).asJson.noSpaces)
       _               <- Logger[IO].info(Map("token" -> token).asJson.noSpaces)

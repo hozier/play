@@ -41,13 +41,10 @@ object MainApp extends ResourceApp.Forever {
       given Async[IO]        = asyncForIO
       given AuthProvider[IO] = authProvider
       given JwtProvider[IO]  = DefaultJwtProvider[IO](summon[AppConfig], authProvider)
-
-      /** Temporary JWT generation for testing purposes until the new endpoint is implemented */
-      _                 <- summon[JwtProvider[IO]].jwtTokenBuilder(GenericHandle.Username("whoami")).flatMap(Logger[IO].info(_)).toResource
-      given Metrics[IO] <- Metrics.make[IO].toResource
-      imageParser        = GoogleCloudClient[IO]
-      traceParser        = TraceClient[IO]
-      play4sService      =
+      given Metrics[IO]     <- Metrics.make[IO].toResource
+      imageParser            = GoogleCloudClient[IO]
+      traceParser            = TraceClient[IO]
+      play4sService          =
         Play4sService.make[IO](
           clock = Clock[IO],
           uuidGen = UUIDGen.fromSync[IO](Sync[IO]),
@@ -55,12 +52,12 @@ object MainApp extends ResourceApp.Forever {
           algorithms = BacktrackingAlgorithm.make[IO],
           ConstraintPropagationAlgorithm.make[IO],
         )
-      metaRoutes        <- HealthService.make[IO].routes
-      swaggerRoutes      = docs[IO](Play4sApi, ServiceMetaApi)
-      play4sThrottle    <- Middleware.addConcurrentRequestsLimit(play4sService.secureRoutes, 10).toResource
-      allRoutes          = metaRoutes <+> swaggerRoutes <+> play4sThrottle
-      wrappedRoutes      = org.http4s.server.middleware.Logger.httpRoutes(logHeaders = true, logBody = true)(allRoutes)
-      _                 <-
+      metaRoutes            <- HealthService.make[IO].routes
+      swaggerRoutes          = docs[IO](Play4sApi, ServiceMetaApi)
+      play4sThrottle        <- Middleware.addConcurrentRequestsLimit(play4sService.secureRoutes, 10).toResource
+      allRoutes              = metaRoutes <+> swaggerRoutes <+> play4sThrottle
+      wrappedRoutes          = org.http4s.server.middleware.Logger.httpRoutes(logHeaders = true, logBody = true)(allRoutes)
+      _                     <-
         EmberServerBuilder
           .default[IO]
           .withHttp2
