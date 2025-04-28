@@ -38,11 +38,11 @@ object AppConfig {
   def load[F[_]: Async]: F[AppConfig] =
     (
       // Defaults are provided for local development and testing purposes
-      env("GOOGLE_CLOUD_API_KEY_BASE64").toSecret,
+      env("GOOGLE_CLOUD_API_KEY_BASE64").map(Secret(_)),
       env("GOOGLE_APPLICATION_CREDENTIALS").option.default("/tmp/path/to/secrets.json".some),
-      env("KEYSTORE_BASE64").toSecret,
+      env("KEYSTORE_BASE64").map(Secret(_)),
       env("KEYSTORE_CREDENTIALS").option.default("/tmp/secrets/keystore.p12".some),
-      env("KEYSTORE_PASSWORD_BASE64").toSecret,
+      env("KEYSTORE_PASSWORD_BASE64").map(Secret(_)),
       env("PLAY4S_API_KEY_BASE64").map(Secret(_)).default(Secret("MTllOTY0MzktZTJiOS00YmM1LWJhMTItNDllZTkxNDI2NjU2Cg==")),
       env("CI").option.map(_.contains("true").some).default(false.some),
       env("DEFAULT_AUTH_JWT").option.map(_.contains("true").some).default(false.some),
@@ -98,10 +98,6 @@ object AppConfig {
       .load[F]
 
 }
-
-extension [F[_]: Async](configValue: ConfigValue[F, String])
-
-  def toSecret: ConfigValue[F, ciris.Secret[String]] = configValue.map(Secret(_)).default(Secret("""'{"default": "credentials"}'""")) // "eyJkZWZhdWx0IjogImNyZWRlbnRpYWxzIn0=")) // '{"default": "credentials"}'
 
 extension [F[_]: Async](secret: Secret[String])
 
