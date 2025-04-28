@@ -52,7 +52,7 @@ export class TaskDefinitionConstruct extends Construct {
       ),
       keystorePassword: secretsmanager.Secret.fromSecretNameV2(
         this,
-        'KeystoreSecret',
+        'KeystoreSecretPassword',
         'keystore-pwd-base64'
       ),
     };

@@ -18,5 +18,3 @@ jobs:
           registry: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ 'us-east-1' }}.amazonaws.com"
           repository: 'theproductcollectiveco/app-play4s-service-repository'
           git_sha: ${{ github.sha }}
-          keystore_base64: ${{ secrets.KEYSTORE_BASE64 }}
-          keystore_password_base64: ${{ secrets.KEYSTORE_PASSWORD_BASE64 }}
