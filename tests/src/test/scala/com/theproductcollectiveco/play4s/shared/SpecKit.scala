@@ -123,7 +123,7 @@ object SpecKit {
   object Operations extends SimpleIOSuite:
 
     def skipOnCI: IO[Unit] =
-      AppConfig.load[IO].use { config =>
+      AppConfig.load[IO].toResource.use { config =>
         IO.whenA(config.runtime.onCI.contains(true)) {
           ignore("Skip call outs to Google Cloud API on CI")
         }

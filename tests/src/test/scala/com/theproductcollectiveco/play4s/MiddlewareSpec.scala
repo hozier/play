@@ -1,26 +1,63 @@
 package com.theproductcollectiveco.play4s
 
-import cats.effect.IO
+import cats.effect.{IO, Async}
+import weaver.SimpleIOSuite
+import com.theproductcollectiveco.play4s.auth.*
+import com.theproductcollectiveco.play4s.config.AppConfig
+import com.theproductcollectiveco.play4s.api.HealthService
 import org.http4s.*
-import org.http4s.circe.*
-import io.circe.Json
+import org.http4s.dsl.io.*
+import org.http4s.implicits.*
+import java.time.Instant
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
-import smithy4s.Blob
-import weaver.scalacheck.Checkers
-import weaver.SimpleIOSuite
+import org.typelevel.ci.CIStringSyntax
+import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
+import com.theproductcollectiveco.play4s.Middleware.secureRoutes
+import fs2.io.file.Files
 
-object MiddlewareSpec extends SimpleIOSuite with Checkers {
+object MiddlewareSpec extends SimpleIOSuite {
 
-  given Logger[IO] = Slf4jLogger.getLogger[IO]
-
-  test("decodeJsonToBlob should decode JSON content") {
-    val json = Json.obj("testField" -> Json.fromString("Y29tLnRoZXByb2R1Y3Rjb2xsZWN0aXZlY28ucGxheTRzLk1pZGRsZXdhcmVTcGVj"))
-    val req  = Request[IO](method = Method.POST).withEntity(json)
-
-    Middleware.decodeContent[IO](req, "testField").map { blob =>
-      expect(blob.toArray.sameElements("com.theproductcollectiveco.play4s.MiddlewareSpec".getBytes))
-    }
+  test("secureRoutes accepts valid JWT and rejects invalid") {
+    for {
+      appConfig            <- AppConfig.load[IO]
+      given Async[IO]       = IO.asyncForIO
+      given Logger[IO]      = Slf4jLogger.getLogger[IO]
+      given AppConfig       = appConfig
+      keyStoreBackend       = DefaultKeyStoreBackend[IO]
+      authProvider         <- DefaultAuthProvider[IO](keyStoreBackend)
+      _                    <-
+        authProvider
+          .storeCredentials(appConfig.apiKeyStore.keyStoreManagement.key, appConfig.apiKeyStore.keyStoreManagement.credentialsFilePath.get)
+          .use_
+      _                    <- authProvider.initializeSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
+      jwtProvider           = DefaultJwtProvider[IO](appConfig, authProvider)
+      now                   = Instant.now()
+      grant                 =
+        jwtProvider.createGrant(
+          handle = GenericHandle.Username("test-user-id"),
+          expiration = Some(now.getEpochSecond + 3600),
+          issuedAt = Some(now.getEpochSecond),
+          roles = List("user"),
+          metadata = Some(Map("env" -> "test")),
+          oneTimeUse = false,
+        )
+      token                <- jwtProvider.generateJwt(grant)
+      healthService         = HealthService.make[IO]
+      given JwtProvider[IO] = jwtProvider
+      securedApp            = healthService.secureRoutes.orNotFound
+      goodRequest           =
+        Request[IO](Method.GET, uri"/internal/meta/version")
+          .putHeaders(Header.Raw(ci"Authorization", s"Bearer $token"))
+      badRequest            =
+        Request[IO](Method.GET, uri"/internal/meta/version")
+          .putHeaders(Header.Raw(ci"Authorization", "Bearer invalid-token"))
+      goodResponse         <- securedApp.run(goodRequest)
+      badResponse          <- securedApp.run(badRequest)
+      body                 <- goodResponse.as[String]
+    } yield expect(goodResponse.status == Status.Ok) and
+      expect(body.nonEmpty) and
+      expect(badResponse.status == Status.Forbidden)
   }
 
 }
