@@ -58,7 +58,7 @@ runs:
         aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
         aws-region: ${{ inputs.region }}
 
-    - name: Load critical keystore secrets from AWS
+    - name: Load keystore secrets from AWS for tests
       shell: bash
       run: |
         echo "Fetching keystore secrets..."
