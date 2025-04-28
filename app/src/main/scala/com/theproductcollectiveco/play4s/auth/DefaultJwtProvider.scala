@@ -20,13 +20,13 @@ trait JwtProvider[F[_]] {
 
   def generateJwt(
     handle: GenericHandle,
-    expiration: Option[Long] = Some(System.currentTimeMillis() / 1000 + 3600),
-    issuedAt: Option[Long] = Some(System.currentTimeMillis() / 1000),
-    roles: List[String] = List("user"),
-    tokenId: Option[String] = Some(java.util.UUID.randomUUID().toString),
-    metadata: Option[Map[String, String]] = Some(Map("project" -> "play4s", "env" -> "production")),
-    oneTimeUse: Boolean = false,
-    issuer: Option[String] = Some("app.play4s-service.io"),
+    expiration: Option[Long],
+    issuedAt: Option[Long],
+    roles: List[String],
+    tokenId: Option[String],
+    metadata: Option[Map[String, String]],
+    oneTimeUse: Boolean,
+    issuer: Option[String],
   ): F[String]
 
 }
@@ -94,7 +94,7 @@ object DefaultJwtProvider {
         tokenId: Option[String] = Some(java.util.UUID.randomUUID().toString),
         metadata: Option[Map[String, String]] = Some(Map("project" -> "play4s", "env" -> "production")),
         oneTimeUse: Boolean = false,
-        issuer: Option[String] = Some("app.play4s-service.com"),
+        issuer: Option[String] = Some("app.play4s-service.io"),
       ): F[String] =
         authProvider
           .retrieveSecret(alias = "jwtSigningSecret", authConfig = appConfig.apiKeyStore.keyStoreManagement)
