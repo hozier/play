@@ -10,6 +10,15 @@ inputs:
   git_sha:
     description: "Git SHA of the built image"
     required: true
+  aws_access_key_id:
+    description: "AWS account details"
+    required: true
+  aws_secret_access_key:
+    description: "AWS account details"
+    required: true
+  region:
+    description: "AWS region"
+    required: true
 
 runs:
   using: "composite"
@@ -40,6 +49,13 @@ runs:
         key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
         restore-keys: |
           ${{ runner.os }}-sbt-
+
+    - name: Configure AWS CLI
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        aws-access-key-id: ${{ inputs.aws_access_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: ${{ inputs.region }}
 
     - name: Load keystore secrets from AWS Secrets Manager
       shell: bash
