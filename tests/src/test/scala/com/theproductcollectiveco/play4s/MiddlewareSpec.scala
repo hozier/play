@@ -8,15 +8,15 @@ import com.theproductcollectiveco.play4s.api.HealthService
 import org.http4s.*
 import org.http4s.dsl.io.*
 import org.http4s.implicits.*
-import cats.syntax.all.*
 import io.circe.syntax.*
 import java.time.Instant
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import org.typelevel.ci.CIStringSyntax
 import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
-import com.theproductcollectiveco.play4s.Middleware.routes
+import com.theproductcollectiveco.play4s.Middleware.secureRoutes
 import fs2.io.file.Files
+// import cats.syntax.all.*
 
 object MiddlewareSpec extends SimpleIOSuite {
 
@@ -47,7 +47,7 @@ object MiddlewareSpec extends SimpleIOSuite {
       token                <- jwtProvider.generateJwt(grant)
       healthService         = HealthService.make[IO]
       given JwtProvider[IO] = jwtProvider
-      app                  <- healthService.routes.map(_.orNotFound).use(_.pure)
+      app                   = healthService.secureRoutes.orNotFound
       goodRequest           =
         Request[IO](Method.GET, uri"/internal/meta/version")
           .putHeaders(Header.Raw(ci"Authorization", s"Bearer $token"))
@@ -64,9 +64,8 @@ object MiddlewareSpec extends SimpleIOSuite {
       _                    <- Logger[IO].info(Map("goodResponse" -> goodResponse.toString).asJson.noSpaces)
 
     } yield expect(goodResponse.status == Status.Ok) and
-      expect(body.nonEmpty)
-    //  and
-    // expect(badResponse.status == Status.Forbidden)
+      expect(body.nonEmpty) and
+      expect(badResponse.status == Status.Forbidden)
   }
 
 }
