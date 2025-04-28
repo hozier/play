@@ -63,8 +63,8 @@ object MiddlewareSpec extends SimpleIOSuite {
       _                    <-
         Logger[IO].info(
           Map(
-            "appConfig.apiKeyStore.keyStoreManagement" -> appConfig.apiKeyStore.keyStoreManagement.asJson,
             "appConfig.runtime"                        -> appConfig.runtime.asJson,
+            "appConfig.apiKeyStore.keyStoreManagement" -> appConfig.apiKeyStore.keyStoreManagement.asJson,
           ).asJson.noSpaces
         )
     } yield expect(goodResponse.status == Status.Ok) and
