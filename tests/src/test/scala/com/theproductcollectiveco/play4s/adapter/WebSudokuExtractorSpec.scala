@@ -1,4 +1,4 @@
-package com.theproductcollectiveco.play4s
+package com.theproductcollectiveco.play4s.adapter
 
 import cats.effect.IO
 import weaver.SimpleIOSuite
@@ -8,8 +8,10 @@ import org.typelevel.log4cats.Logger
 import org.http4s.ember.client.EmberClientBuilder
 import scala.util.Random
 import weaver.*
-import com.theproductcollectiveco.play4s.SpecKit.Generators.*
-import com.theproductcollectiveco.play4s.SpecKit.SharedInstances.given
+import com.theproductcollectiveco.play4s.Metrics
+import com.theproductcollectiveco.play4s.core.CoreIntegrationSpec.solve
+import com.theproductcollectiveco.play4s.tools.SpecKit.Generators.*
+import com.theproductcollectiveco.play4s.tools.SpecKit.SharedInstances.given
 
 object WebSudokuExtractorSpec extends SimpleIOSuite with Checkers:
 
@@ -27,7 +29,7 @@ object WebSudokuExtractorSpec extends SimpleIOSuite with Checkers:
               solutions                          <-
                 Metrics.make[IO].flatMap { metrics =>
                   given Metrics[IO] = metrics
-                  IntegrationSpec.solve(validatedStartingTrace :: Nil, orchestrator)
+                  solve(validatedStartingTrace :: Nil, orchestrator)
                 }
               _                                  <- Logger[IO].debug(s"Fetched puzzle processed with solution: $solutions")
               actual                              = solutions.headOption.flatMap(_.map(_.boardState.value.flatten.mkString))

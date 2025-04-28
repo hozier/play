@@ -1,4 +1,4 @@
-package com.theproductcollectiveco.play4s
+package com.theproductcollectiveco.play4s.auth
 
 import cats.effect.{IO, Async}
 import weaver.SimpleIOSuite

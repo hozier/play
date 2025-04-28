@@ -1,4 +1,4 @@
-package com.theproductcollectiveco.play4s
+package com.theproductcollectiveco.play4s.core
 
 import cats.Parallel
 import cats.effect.{IO, Async}
@@ -9,11 +9,13 @@ import weaver.SimpleIOSuite
 import weaver.scalacheck.Checkers
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Orchestrator, Search, SolvedState}
 import org.typelevel.log4cats.Logger
-import com.theproductcollectiveco.play4s.SpecKit.Generators.*
-import com.theproductcollectiveco.play4s.SpecKit.Operations.skipOnCI
-import com.theproductcollectiveco.play4s.SpecKit.SharedInstances.given
+import com.theproductcollectiveco.play4s.tools.SpecKit.Generators.*
+import com.theproductcollectiveco.play4s.tools.SpecKit.Operations.skipOnCI
+import com.theproductcollectiveco.play4s.tools.SpecKit.SharedInstances.given
+import com.theproductcollectiveco.play4s.Metrics
+import com.theproductcollectiveco.play4s.tools.SpecKit
 
-object IntegrationSpec extends SimpleIOSuite with Checkers {
+object CoreIntegrationSpec extends SimpleIOSuite with Checkers {
 
   def runTest[F[_]: Async: Parallel: Console: Logger: Metrics](
     entryPoint: F[List[String]],
