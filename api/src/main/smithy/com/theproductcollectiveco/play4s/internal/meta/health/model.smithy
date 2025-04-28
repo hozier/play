@@ -33,6 +33,8 @@ structure RuntimeConfig {
     artifactIdentifiers: ArtifactIdentifiers
 
     onCI: Boolean
+
+    withJwt: Boolean
 }
 
 structure ArtifactIdentifiers {

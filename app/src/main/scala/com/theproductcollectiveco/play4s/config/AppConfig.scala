@@ -1,11 +1,11 @@
 package com.theproductcollectiveco.play4s.config
 
-import ciris.*
+import cats.effect.kernel.Async
 import cats.syntax.all.*
+import ciris.*
 import com.comcast.ip4s.*
-import cats.effect.implicits.*
-import cats.effect.kernel.{Async, Resource}
-import com.theproductcollectiveco.play4s.internal.meta.health.{RuntimeConfig, ArtifactIdentifiers}
+import com.theproductcollectiveco.play4s.internal.meta.health.{ArtifactIdentifiers, RuntimeConfig}
+import io.circe.{Encoder, Json}
 
 final case class AuthConfig(
   key: Secret[String],
@@ -36,16 +36,19 @@ object AppConfig {
 
   given ConfigDecoder[String, Port] = ConfigDecoder[String].mapOption("com.comcast.ip4s.Port")(Port.fromString)
 
-  def load[F[_]: Async]: Resource[F, AppConfig] =
+  given Encoder[Secret[String]] = Encoder.instance(secret => Json.fromString(secret.value))
+
+  def load[F[_]: Async]: F[AppConfig] =
     (
       // Defaults are provided for local development and testing purposes
       env("GOOGLE_CLOUD_API_KEY_BASE64").toSecret,
-      env("GOOGLE_APPLICATION_CREDENTIALS").option.default("/path/to/secrets.json".some),
+      env("GOOGLE_APPLICATION_CREDENTIALS").option.default("/tmp/path/to/secrets.json".some),
       env("KEYSTORE_BASE64").toSecret,
-      env("KEYSTORE_CREDENTIALS").option.default("/path/to/keystore.p12".some),
+      env("KEYSTORE_CREDENTIALS").option.default("/tmp/path/to/secrets/keystore.p12".some),
       env("KEYSTORE_PASSWORD_BASE64").toSecret,
-      env("PLAY4S_API_KEY_BASE64").map(Secret(_)).default(Secret("MTllOTY0MzktZTJiOS00YmM1LWJhMTItNDllZTkxNDI2NjU2Cg==")),
-      env("HOMEBREW_CELLAR").option.map(_.isEmpty.some), // assert against env var not present within container
+      env("PLAY4S_API_KEY_BASE64").toSecret,
+      env("CI").option.map(_.contains("true").some).default(false.some),
+      env("DEFAULT_AUTH_JWT").option.map(_.contains("true").some).default(true.some), // use jwt validation as default
       env("APP_NAME").default(BuildInfo.name),
       env("IMAGE_DIGEST").default("sha256:2d551bc2573297d9b9124034f3c89211dfca1b067a055b7b342957815f9673cd"),
       env("SERVICE_BIND_HOST").as[Hostname].default(host"0.0.0.0"),
@@ -60,6 +63,7 @@ object AppConfig {
           keystorePassword,
           appApiKey,
           onCI,
+          primaryAuthenticationMechanism,
           appName,
           imageDigest,
           serviceHost,
@@ -75,6 +79,7 @@ object AppConfig {
               appName = appName,
               appVersion = s"${imageDigest.stripPrefix("sha256:").take(12)}-${BuildInfo.gitSha.take(7)}",
               onCI = onCI,
+              withJwt = primaryAuthenticationMechanism,
               sbtVersion = BuildInfo.sbtVersion,
               scalaVersion = BuildInfo.scalaVersion,
               organization = BuildInfo.organization,
@@ -94,9 +99,38 @@ object AppConfig {
             ),
           )
       .load[F]
-      .toResource
 
 }
 
 extension [F[_]: Async](configValue: ConfigValue[F, String])
-  def toSecret: ConfigValue[F, ciris.Secret[String]] = configValue.map(Secret(_)).default(Secret("{'default': 'credentials'}"))
+
+  def toSecret: ConfigValue[F, ciris.Secret[String]] =
+    configValue.map(Secret(_)).default(Secret("{'default': 'credentials', 'value': '<replace-full-json-with-validated-base64-encoded-string>'}"))
+
+extension [F[_]: Async](secret: Secret[String])
+
+  def peek: F[String] =
+    secret.toSanitizedValue.flatMap { decodedBytes =>
+      fs2.Stream
+        .emits(decodedBytes)
+        .through(fs2.text.utf8.decode)
+        .through(fs2.text.lines)
+        .compile
+        .toList
+        .headOption
+        .liftTo[F](new IllegalArgumentException("Failed to extract encoded secret"))
+    }
+
+  def toSanitizedValue: F[Array[Byte]] =
+    Async[F]
+      .fromEither {
+        val sanitized = secret.value.replaceAll("[\\r\\n]", "").filterNot(_.isWhitespace)
+        Option
+          .when(sanitized.matches("^[A-Za-z0-9+/=]*$"))(sanitized)
+          .toRight(new RuntimeException(s"Invalid Base64 input: $sanitized"))
+          .flatMap { validValue =>
+            Either
+              .catchOnly[IllegalArgumentException](java.util.Base64.getDecoder.decode(validValue))
+              .leftMap(e => new RuntimeException(s"Failed to decode Base64: ${e.getMessage}", e))
+          }
+      }

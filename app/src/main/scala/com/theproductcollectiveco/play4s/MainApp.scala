@@ -1,42 +1,46 @@
 package com.theproductcollectiveco.play4s
 
-import cats.syntax.all.*
-import fs2.io.file.Files
-import org.http4s.implicits.*
+import cats.effect.{Async, Clock, IO, Resource, ResourceApp, Sync}
+import cats.effect.IO.asyncForIO
 import cats.effect.implicits.*
 import cats.effect.std.UUIDGen
-import cats.effect.IO.asyncForIO
+import cats.syntax.all.*
+import com.theproductcollectiveco.play4s.Middleware.{routes, secureRoutes}
+import com.theproductcollectiveco.play4s.Play4sApi
+import com.theproductcollectiveco.play4s.api.{HealthService, Play4sService}
+import com.theproductcollectiveco.play4s.auth.{AuthProvider, DefaultAuthProvider, DefaultJwtProvider, DefaultKeyStoreBackend, JwtProvider}
+import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
+import com.theproductcollectiveco.play4s.config.{ApiKeyStoreConfig, AppConfig, AuthConfig}
+import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Orchestrator}
+import com.theproductcollectiveco.play4s.game.sudoku.parser.{GoogleCloudClient, TraceClient}
+import com.theproductcollectiveco.play4s.internal.meta.health.ServiceMetaApi
+import fs2.io.file.Files
 import org.http4s.ember.server.EmberServerBuilder
-import smithy4s.http4s.swagger.docs
+import org.http4s.implicits.*
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import com.theproductcollectiveco.play4s.Play4sApi
-import com.theproductcollectiveco.play4s.auth.{DefaultAuthProvider, AuthProvider}
-import cats.effect.{Async, Clock, IO, Resource, ResourceApp, Sync}
-import com.theproductcollectiveco.play4s.Middleware.{secureRoutes, routes}
-import com.theproductcollectiveco.play4s.internal.meta.health.ServiceMetaApi
-import com.theproductcollectiveco.play4s.api.{HealthService, Play4sService}
-import com.theproductcollectiveco.play4s.game.sudoku.parser.{GoogleCloudClient, TraceClient}
-import com.theproductcollectiveco.play4s.config.{AppConfig, ApiKeyStoreConfig, AuthConfig}
-import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Orchestrator}
+import smithy4s.http4s.swagger.docs
 
 object MainApp extends ResourceApp.Forever {
 
   override def run(args: List[String]): Resource[IO, Unit] =
     for {
-      given AppConfig       <- AppConfig.load[IO]
+      given AppConfig  <- AppConfig.load[IO].toResource
+      given Logger[IO] <- Slf4jLogger.create[IO].toResource
       AppConfig(
         ApiKeyStoreConfig(_, AuthConfig(googleCloudApiKey, googlePath, _), AuthConfig(keystore, keystorePath, _)),
         _,
         _,
-      )                      = summon[AppConfig]
-      authProvider           = DefaultAuthProvider[IO]
+      )                 = summon[AppConfig]
+
+      authProvider          <- DefaultKeyStoreBackend[IO].pure.flatMap(DefaultAuthProvider[IO]).toResource
       _                     <- authProvider.storeCredentials(googleCloudApiKey, googlePath.mkString)
       _                     <- authProvider.storeCredentials(keystore, keystorePath.mkString)
       tlsContext            <- authProvider.tlsContextResource(summon[AppConfig].apiKeyStore.keyStoreManagement)
-      given AuthProvider[IO] = authProvider
-      given Logger[IO]      <- Slf4jLogger.create[IO].toResource
+      _                     <- authProvider.initializeSecret(alias = "jwtSigningSecret", summon[AppConfig].apiKeyStore.keyStoreManagement).toResource
       given Async[IO]        = asyncForIO
+      given AuthProvider[IO] = authProvider
+      given JwtProvider[IO]  = DefaultJwtProvider[IO](summon[AppConfig], authProvider)
       given Metrics[IO]     <- Metrics.make[IO].toResource
       imageParser            = GoogleCloudClient[IO]
       traceParser            = TraceClient[IO]
@@ -48,7 +52,7 @@ object MainApp extends ResourceApp.Forever {
           algorithms = BacktrackingAlgorithm.make[IO],
           ConstraintPropagationAlgorithm.make[IO],
         )
-      metaRoutes            <- HealthService[IO].routes
+      metaRoutes            <- HealthService.make[IO].routes
       swaggerRoutes          = docs[IO](Play4sApi, ServiceMetaApi)
       play4sThrottle        <- Middleware.addConcurrentRequestsLimit(play4sService.secureRoutes, 10).toResource
       allRoutes              = metaRoutes <+> swaggerRoutes <+> play4sThrottle

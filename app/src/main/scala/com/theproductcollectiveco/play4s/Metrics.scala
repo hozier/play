@@ -1,10 +1,10 @@
 package com.theproductcollectiveco.play4s
 
-import io.circe.Json
+import cats.effect.{Clock, Ref, Sync}
 import cats.implicits.*
+import io.circe.Json
 import io.circe.syntax.*
 import org.typelevel.log4cats.Logger
-import cats.effect.{Clock, Ref, Sync}
 
 trait Metrics[F[_]] {
   def time[A](name: String)(fa: F[A]): F[A]

@@ -1,25 +1,25 @@
 package com.theproductcollectiveco.play4s.api
 
-import cats.implicits.*
-import cats.effect.syntax.all.*
-import cats.effect.{Clock, Async}
-import cats.effect.std.UUIDGen
 import cats.Parallel
-import cats.effect.std.Console
-import com.theproductcollectiveco.play4s.{Play4sApi, Metrics}
+import cats.effect.{Async, Clock}
+import cats.effect.std.{Console, UUIDGen}
+import cats.effect.syntax.all.*
+import cats.implicits.*
+import com.theproductcollectiveco.play4s.{Metrics, Play4sApi}
 import com.theproductcollectiveco.play4s.game.sudoku.{
-  SudokuComputationSummary,
-  GameId,
-  Strategy,
+  AlgorithmUsage,
   ConcurrentExecutionDetails,
   EmptyCellHints,
   EmptyCellHintsMetadata,
+  GameId,
   GameMetrics,
-  AlgorithmUsage,
+  Strategy,
+  SudokuComputationSummary,
 }
-import com.theproductcollectiveco.play4s.game.sudoku.core.{Algorithm, Orchestrator, Search, queryDomain, asHints}
+import com.theproductcollectiveco.play4s.game.sudoku.core.{asHints, queryDomain, Algorithm, Orchestrator, Search}
 import org.typelevel.log4cats.Logger
 import smithy4s.Timestamp
+
 import scala.concurrent.duration.DurationLong
 
 object Play4sService {

@@ -1,17 +1,17 @@
 package com.theproductcollectiveco.play4s.game.sudoku.core
 
-import cats.effect.{Async, MonadCancelThrow}
-import cats.effect.kernel.Ref
-import org.typelevel.log4cats.Logger
-import cats.effect.std.Console
-import cats.implicits.*
-import cats.effect.syntax.spawn.*
-import com.theproductcollectiveco.play4s.store.Board
-import com.theproductcollectiveco.play4s.game.sudoku.parser.*
 import cats.Parallel
 import cats.data.NonEmptyList
-import fs2.io.file.Files
+import cats.effect.{Async, MonadCancelThrow}
+import cats.effect.kernel.Ref
+import cats.effect.std.Console
+import cats.effect.syntax.spawn.*
+import cats.implicits.*
 import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, InitialStateSettingError}
+import com.theproductcollectiveco.play4s.game.sudoku.parser.*
+import com.theproductcollectiveco.play4s.store.Board
+import fs2.io.file.Files
+import org.typelevel.log4cats.Logger
 
 trait Orchestrator[F[_]] {
   def fetchResourceBytes(fileName: String): F[Array[Byte]]

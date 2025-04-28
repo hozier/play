@@ -1,13 +1,13 @@
 package com.theproductcollectiveco.play4s.store
 
-import cats.effect.{Async, MonadCancelThrow}
-import cats.implicits.*
-import io.circe.syntax.*
 import cats.data.OptionT
+import cats.effect.{Async, MonadCancelThrow}
 import cats.effect.kernel.Ref
 import cats.effect.std.Console
+import cats.implicits.*
+import com.theproductcollectiveco.play4s.game.sudoku.{BoardNotCreatedError, BoardState, InitialStateSettingError}
+import io.circe.syntax.*
 import org.typelevel.log4cats.Logger
-import com.theproductcollectiveco.play4s.game.sudoku.{InitialStateSettingError, BoardNotCreatedError, BoardState}
 
 trait Board[F[_]] {
   def read(): F[BoardState]

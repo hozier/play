@@ -1,16 +1,17 @@
-package com.theproductcollectiveco.play4s
+package com.theproductcollectiveco.play4s.tools
 
-import weaver.SimpleIOSuite
-import cats.effect.IO
-import weaver.*
 import cats.Show
+import cats.effect.IO
+import com.theproductcollectiveco.play4s.Metrics
+import com.theproductcollectiveco.play4s.config.AppConfig
+import com.theproductcollectiveco.play4s.game.sudoku.BoardState
+import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Orchestrator, Search}
+import com.theproductcollectiveco.play4s.game.sudoku.parser.{GoogleCloudClient, TraceClient}
 import org.scalacheck.Gen
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import com.theproductcollectiveco.play4s.config.AppConfig
-import com.theproductcollectiveco.play4s.game.sudoku.BoardState
-import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Search, Orchestrator}
-import com.theproductcollectiveco.play4s.game.sudoku.parser.{TraceClient, GoogleCloudClient}
+import weaver.{SimpleIOSuite, *}
+
 import scala.annotation.unused
 
 object SpecKit {
@@ -123,7 +124,7 @@ object SpecKit {
   object Operations extends SimpleIOSuite:
 
     def skipOnCI: IO[Unit] =
-      AppConfig.load[IO].use { config =>
+      AppConfig.load[IO].toResource.use { config =>
         IO.whenA(config.runtime.onCI.contains(true)) {
           ignore("Skip call outs to Google Cloud API on CI")
         }

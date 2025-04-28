@@ -2,11 +2,11 @@ package com.theproductcollectiveco.play4s.game.sudoku.parser
 
 import cats.effect.{Async, Sync}
 import cats.syntax.all.*
-import org.http4s.client.Client
-import org.http4s.{Header, Method, Request, Uri}
-import org.typelevel.log4cats.Logger
-import org.typelevel.ci.*
 import com.theproductcollectiveco.play4s.game.sudoku.{DecodeFailureError, InvalidInputError}
+import org.http4s.{Header, Method, Request, Uri}
+import org.http4s.client.Client
+import org.typelevel.ci.*
+import org.typelevel.log4cats.Logger
 
 trait SudokuExtractor[F[_]] {
   def fetchTxtRepresentation(puzzleNumber: Long): F[(String, String)]

@@ -1,15 +1,14 @@
-package com.theproductcollectiveco.play4s
+package com.theproductcollectiveco.play4s.store
 
 import cats.effect.{IO, Ref}
+import com.theproductcollectiveco.play4s.game.sudoku.{BoardNotCreatedError, BoardState, InitialStateSettingError}
+import com.theproductcollectiveco.play4s.tools.SpecKit.Fixtures.*
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import weaver.SimpleIOSuite
 import weaver.scalacheck.Checkers
-import org.typelevel.log4cats.slf4j.Slf4jLogger
-import org.typelevel.log4cats.Logger
-import com.theproductcollectiveco.play4s.store.Board
-import com.theproductcollectiveco.play4s.SpecKit.Fixtures.*
-import com.theproductcollectiveco.play4s.game.sudoku.{InitialStateSettingError, BoardNotCreatedError, BoardState}
 
-object StoreSpec extends SimpleIOSuite with Checkers {
+object BoardSpec extends SimpleIOSuite with Checkers {
 
   given Logger[IO] = Slf4jLogger.getLogger[IO]
 

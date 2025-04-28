@@ -7,6 +7,8 @@ val commonSettings =
   Seq(
     organization                     := "com.theproductcollectiveco",
     scalaVersion                     := "3.4.0",
+    semanticdbVersion                := scalafixSemanticdb.revision,
+    semanticdbEnabled                := true,
     Compile / parallelExecution      := true,
     fork                             := true,
     javaOptions ++= Seq(
@@ -42,7 +44,7 @@ lazy val app =
       dockerBuildOptions ++= Seq("--platform", "linux/amd64"),
       dockerCommands ++= Seq(
         Cmd("USER", "root"),         // Switch to root user
-        Cmd("RUN", "apt-get update && apt-get install -y curl"),
+        Cmd("RUN", "apt-get update && apt-get install -y curl && apt-get install -y jq"),
         Cmd("USER", "demiourgos728"), // Switch back to the non-root user
       ),
       dockerAlias         := DockerAlias(

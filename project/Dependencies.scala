@@ -15,28 +15,30 @@ object Versions {
   val circe                   = "0.14.1"
   val ciris                   = "3.7.0"
   val logstash                = "7.4"
+  val jsonCirce               = "10.0.4"
 }
 
 object Dependencies {
-  val catsEffect              = "org.typelevel"       %% "cats-effect"                % Versions.catsEffect
-  val catsEffectKernel        = "org.typelevel"       %% "cats-effect-kernel"         % Versions.catsEffect
-  val catsEffectStd           = "org.typelevel"       %% "cats-effect-std"            % Versions.catsEffect
-  val log4catsSlf4j           = "org.typelevel"       %% "log4cats-slf4j"             % Versions.log4catsSlf4j
-  val logbackClassic          = "ch.qos.logback"       % "logback-classic"            % Versions.logbackClassic
-  val catsEffectTestingSpecs2 = "org.typelevel"       %% "cats-effect-testing-specs2" % Versions.catsEffectTestingSpecs2 % Test
-  val munitCatsEffect         = "org.typelevel"       %% "munit-cats-effect"          % Versions.munitCatsEffect         % Test
-  val weaverCats              = "com.disneystreaming" %% "weaver-cats"                % Versions.weaverCats              % Test
-  val weaverScalacheck        = "com.disneystreaming" %% "weaver-scalacheck"          % Versions.weaverScalacheck        % Test
-  val googleCloudVision       = "com.google.cloud"     % "google-cloud-vision"        % Versions.googleCloudVision
-  val http4sEmberServer       = "org.http4s"          %% "http4s-ember-server"        % Versions.http4s
-  val http4sEmberClient       = "org.http4s"          %% "http4s-ember-client"        % Versions.http4s
-  val http4sDsl               = "org.http4s"          %% "http4s-dsl"                 % Versions.http4s
-  val http4sCirce             = "org.http4s"          %% "http4s-circe"               % Versions.http4s
-  val circeGeneric            = "io.circe"            %% "circe-generic"              % Versions.circe
-  val circeParser             = "io.circe"            %% "circe-parser"               % Versions.circe
-  val circeCore               = "io.circe"            %% "circe-core"                 % Versions.circe
-  val ciris                   = "is.cir"              %% "ciris"                      % Versions.ciris
-  val logstash                = "net.logstash.logback" % "logstash-logback-encoder"   % Versions.logstash
+  val catsEffect              = "org.typelevel"        %% "cats-effect"                % Versions.catsEffect
+  val catsEffectKernel        = "org.typelevel"        %% "cats-effect-kernel"         % Versions.catsEffect
+  val catsEffectStd           = "org.typelevel"        %% "cats-effect-std"            % Versions.catsEffect
+  val log4catsSlf4j           = "org.typelevel"        %% "log4cats-slf4j"             % Versions.log4catsSlf4j
+  val logbackClassic          = "ch.qos.logback"        % "logback-classic"            % Versions.logbackClassic
+  val catsEffectTestingSpecs2 = "org.typelevel"        %% "cats-effect-testing-specs2" % Versions.catsEffectTestingSpecs2 % Test
+  val munitCatsEffect         = "org.typelevel"        %% "munit-cats-effect"          % Versions.munitCatsEffect         % Test
+  val weaverCats              = "com.disneystreaming"  %% "weaver-cats"                % Versions.weaverCats              % Test
+  val weaverScalacheck        = "com.disneystreaming"  %% "weaver-scalacheck"          % Versions.weaverScalacheck        % Test
+  val googleCloudVision       = "com.google.cloud"      % "google-cloud-vision"        % Versions.googleCloudVision
+  val http4sEmberServer       = "org.http4s"           %% "http4s-ember-server"        % Versions.http4s
+  val http4sEmberClient       = "org.http4s"           %% "http4s-ember-client"        % Versions.http4s
+  val http4sDsl               = "org.http4s"           %% "http4s-dsl"                 % Versions.http4s
+  val http4sCirce             = "org.http4s"           %% "http4s-circe"               % Versions.http4s
+  val circeGeneric            = "io.circe"             %% "circe-generic"              % Versions.circe
+  val circeParser             = "io.circe"             %% "circe-parser"               % Versions.circe
+  val circeCore               = "io.circe"             %% "circe-core"                 % Versions.circe
+  val ciris                   = "is.cir"               %% "ciris"                      % Versions.ciris
+  val logstash                = "net.logstash.logback"  % "logstash-logback-encoder"   % Versions.logstash
+  val jwt                     = "com.github.jwt-scala" %% "jwt-circe"                  % Versions.jsonCirce
 
   def smithy4sDependencies(smithy4sVersion: String) =
     Seq(
@@ -57,7 +59,7 @@ object Dependencies {
     )
 
   val imageProcessingDependencies = Seq(googleCloudVision)
-  val coreDependencies            = Seq(catsEffect, catsEffectKernel, catsEffectStd, ciris, logstash) ++ imageProcessingDependencies ++ http4sDependencies
+  val coreDependencies            = Seq(catsEffect, catsEffectKernel, catsEffectStd, ciris, logstash, jwt) ++ imageProcessingDependencies ++ http4sDependencies
   val loggingDependencies         = Seq(log4catsSlf4j, logbackClassic)
   val testDependencies            = Seq(catsEffectTestingSpecs2, munitCatsEffect, weaverCats, weaverScalacheck, ciris, logstash)
 }

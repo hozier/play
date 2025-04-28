@@ -1,5 +1,6 @@
 name: "Build & Publish Artifact Locally"
 description: "Builds a Docker image and saves it as a tarball"
+
 inputs:
   registry:
     description: "Docker registry URL"
@@ -9,6 +10,15 @@ inputs:
     required: true
   git_sha:
     description: "Git SHA of the built image"
+    required: true
+  aws_access_key_id:
+    description: "AWS account details"
+    required: true
+  aws_secret_access_key:
+    description: "AWS account details"
+    required: true
+  region:
+    description: "AWS region"
     required: true
 
 runs:
@@ -41,28 +51,57 @@ runs:
         restore-keys: |
           ${{ runner.os }}-sbt-
 
+    - name: Configure AWS CLI
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        aws-access-key-id: ${{ inputs.aws_access_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: ${{ inputs.region }}
+
+    - name: Load keystore secrets from AWS for tests
+      shell: bash
+      run: |
+        echo "Fetching keystore secrets..."
+        KEYSTORE_BASE64=$(aws secretsmanager get-secret-value --secret-id keystore-p12-base64 --query SecretString --output text | sed 's/[\r\n]//g')
+        KEYSTORE_PASSWORD_BASE64=$(aws secretsmanager get-secret-value --secret-id keystore-pwd-base64 --query SecretString --output text | sed 's/[\r\n]//g')
+        if [[ -z "$KEYSTORE_BASE64" || -z "$KEYSTORE_PASSWORD_BASE64" ]]; then
+          echo "❌ Failed to fetch secrets."
+          exit 1
+        fi
+        {
+          echo "KEYSTORE_BASE64<<EOF"
+          echo "$KEYSTORE_BASE64"
+          echo "EOF"
+        } >> $GITHUB_ENV
+        {
+          echo "KEYSTORE_PASSWORD_BASE64<<EOF"
+          echo "$KEYSTORE_PASSWORD_BASE64"
+          echo "EOF"
+        } >> $GITHUB_ENV
+        echo "✅ Secrets sanitized and exported successfully."
+
     - name: Clean, compile, and run tests
       shell: bash
       run: |
         sbt clean compile tests/test
 
     - name: Build Docker image
-      if: success() # Only proceed if tests pass
+      if: success()
       shell: bash
-      run: |
-        sbt app/docker:publishLocal
       env:
         GIT_SHA: ${{ inputs.git_sha }}
         REGISTRY: ${{ inputs.registry }}
+      run: |
+        sbt app/docker:publishLocal
 
     - name: Save Docker image as tarball
-      if: success() # Only proceed if tests pass
+      if: success()
       shell: bash
       run: |
         docker save -o image.tar ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.git_sha }}
 
     - name: Upload Docker image
-      if: success() # Only proceed if tests pass
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: docker-image

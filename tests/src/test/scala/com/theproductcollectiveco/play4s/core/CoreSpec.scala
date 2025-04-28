@@ -1,13 +1,16 @@
-package com.theproductcollectiveco.play4s
+package com.theproductcollectiveco.play4s.core
 
 import cats.effect.IO
+import com.theproductcollectiveco.play4s.Metrics
+import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, NoSolutionFoundError}
+import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Orchestrator, Search}
+import com.theproductcollectiveco.play4s.tools.SpecKit
+import com.theproductcollectiveco.play4s.tools.SpecKit.Fixtures
+import com.theproductcollectiveco.play4s.tools.SpecKit.Generators.*
+import com.theproductcollectiveco.play4s.tools.SpecKit.SharedInstances.given
 import org.scalacheck.Gen
 import weaver.SimpleIOSuite
 import weaver.scalacheck.Checkers
-import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Search, Orchestrator}
-import com.theproductcollectiveco.play4s.SpecKit.Generators.*
-import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, NoSolutionFoundError}
-import com.theproductcollectiveco.play4s.SpecKit.SharedInstances.given
 
 object CoreSpec extends SimpleIOSuite with Checkers {
 
@@ -32,8 +35,8 @@ object CoreSpec extends SimpleIOSuite with Checkers {
   test("Search should verify Sudoku constraints correctly") {
     forall(searchGen) { search =>
       for {
-        valid   <- IO(search.verify(BoardState(SpecKit.Fixtures.initialBoardState), 0, 2, 4))
-        invalid <- IO(search.verify(BoardState(SpecKit.Fixtures.initialBoardState), 0, 2, 5))
+        valid   <- IO(search.verify(BoardState(Fixtures.initialBoardState), 0, 2, 4))
+        invalid <- IO(search.verify(BoardState(Fixtures.initialBoardState), 0, 2, 5))
       } yield expect(valid) and expect(!invalid)
     }
   }

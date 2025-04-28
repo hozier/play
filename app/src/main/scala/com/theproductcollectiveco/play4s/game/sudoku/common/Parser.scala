@@ -1,12 +1,13 @@
 package com.theproductcollectiveco.play4s.game.sudoku.common
 
+import cats.effect.{Async, MonadCancelThrow}
+import cats.implicits.*
+import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, InitialStateSettingError, InvalidInputError}
 import fs2.io.file.{Files, Path}
 import fs2.text
-import cats.implicits.*
-import java.nio.file.Paths
 import org.typelevel.log4cats.Logger
-import cats.effect.{Async, MonadCancelThrow}
-import com.theproductcollectiveco.play4s.game.sudoku.{BoardState, InvalidInputError, InitialStateSettingError}
+
+import java.nio.file.Paths
 
 trait Parser[F[_]] {
 

@@ -1,9 +1,9 @@
 package com.theproductcollectiveco.play4s.game.sudoku.parser
 
-import com.theproductcollectiveco.play4s.game.sudoku.common.Parser
 import cats.effect.{Async, MonadCancelThrow}
-import org.typelevel.log4cats.Logger
+import com.theproductcollectiveco.play4s.game.sudoku.common.Parser
 import fs2.io.file.Files
+import org.typelevel.log4cats.Logger
 
 trait TraceParser[F[_]] extends Parser[F] {
   def parseResource(fileName: String): F[List[String]]
