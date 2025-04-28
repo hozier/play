@@ -26,7 +26,6 @@ object DefaultAuthProviderSpec extends SimpleIOSuite {
           .use_
       _               <- authProvider.initializeSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
       secretWithAlias <- authProvider.retrieveSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
-      _               <- Logger[IO].info(Map("jwtSigningSecret" -> secretWithAlias).asJson.noSpaces)
     } yield expect(secretWithAlias.nonEmpty)
   }
 

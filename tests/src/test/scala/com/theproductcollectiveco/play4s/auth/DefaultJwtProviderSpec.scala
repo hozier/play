@@ -27,6 +27,7 @@ object DefaultJwtProviderSpec extends SimpleIOSuite {
           )
           .use_
       _               <- authProvider.initializeSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
+      secretWithAlias <- authProvider.retrieveSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
       now              = Instant.now()
       jwtProvider      = DefaultJwtProvider[IO](appConfig, authProvider)
       grant            =
@@ -40,6 +41,7 @@ object DefaultJwtProviderSpec extends SimpleIOSuite {
         )
       token           <- jwtProvider.generateJwt(grant)
       decodedJson     <- jwtProvider.decodeJwt(token)
+      _               <- Logger[IO].info(Map("jwtSigningSecret" -> secretWithAlias).asJson.noSpaces)
       _               <- Logger[IO].info(Map("token" -> token).asJson.noSpaces)
       _               <- Logger[IO].info(Map("decodedJson" -> decodedJson).asJson.noSpaces)
       usernameOpt      =
