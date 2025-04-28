@@ -101,7 +101,7 @@ object AppConfig {
 
 extension [F[_]: Async](configValue: ConfigValue[F, String])
 
-  def toSecret: ConfigValue[F, ciris.Secret[String]] = configValue.map(Secret(_)).default(Secret("eyJkZWZhdWx0IjogImNyZWRlbnRpYWxzIn0=")) // '{"default": "credentials"}'
+  def toSecret: ConfigValue[F, ciris.Secret[String]] = configValue.map(Secret(_)).default(Secret("""'{"default": "credentials"}'""")) // "eyJkZWZhdWx0IjogImNyZWRlbnRpYWxzIn0=")) // '{"default": "credentials"}'
 
 extension [F[_]: Async](secret: Secret[String])
 
