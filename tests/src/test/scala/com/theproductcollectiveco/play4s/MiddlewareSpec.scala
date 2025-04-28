@@ -8,7 +8,6 @@ import com.theproductcollectiveco.play4s.api.HealthService
 import org.http4s.*
 import org.http4s.dsl.io.*
 import org.http4s.implicits.*
-import io.circe.syntax.*
 import java.time.Instant
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
@@ -16,7 +15,6 @@ import org.typelevel.ci.CIStringSyntax
 import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
 import com.theproductcollectiveco.play4s.Middleware.secureRoutes
 import fs2.io.file.Files
-// import cats.syntax.all.*
 
 object MiddlewareSpec extends SimpleIOSuite {
 
@@ -58,11 +56,6 @@ object MiddlewareSpec extends SimpleIOSuite {
       badResponse          <- app.run(badRequest)
       body                 <- goodResponse.as[String]
       secretWithAlias      <- authProvider.retrieveSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
-      _                    <- Logger[IO].info(Map("jwtSigningSecret" -> secretWithAlias).asJson.noSpaces)
-      _                    <- Logger[IO].info(Map("token" -> token).asJson.noSpaces)
-      _                    <- Logger[IO].info(Map("goodRequest" -> goodRequest.toString).asJson.noSpaces)
-      _                    <- Logger[IO].info(Map("goodResponse" -> goodResponse.toString).asJson.noSpaces)
-
     } yield expect(goodResponse.status == Status.Ok) and
       expect(body.nonEmpty) and
       expect(badResponse.status == Status.Forbidden)
