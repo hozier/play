@@ -11,6 +11,12 @@ inputs:
   git_sha:
     description: "Git SHA of the built image"
     required: true
+  keystore_base64:
+    description: "Base64 encoded keystore content"
+    required: true
+  keystore_password_base64:
+    description: "Base64 encoded keystore password"
+    required: true
 
 runs:
   using: "composite"
@@ -44,6 +50,9 @@ runs:
 
     - name: Decode and verify keystore
       shell: bash
+      env:
+        KEYSTORE_BASE64: ${{ inputs.keystore_base64 }}
+        KEYSTORE_PASSWORD_BASE64: ${{ inputs.keystore_password_base64 }}
       run: |
         mkdir -p /tmp/secrets
         echo "$KEYSTORE_BASE64" | base64 -d > /tmp/secrets/keystore.p12
@@ -55,9 +64,6 @@ runs:
           echo "❌ Failed to load keystore. Check your KEYSTORE_BASE64 and KEYSTORE_PASSWORD_BASE64 secrets."
           exit 1
         }
-      env:
-        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        KEYSTORE_PASSWORD_BASE64: ${{ secrets.KEYSTORE_PASSWORD_BASE64 }}
 
     - name: Clean, compile, and run tests
       shell: bash
@@ -65,22 +71,22 @@ runs:
         sbt clean compile tests/test
 
     - name: Build Docker image
-      if: success() # Only proceed if tests pass
+      if: success()
       shell: bash
-      run: |
-        sbt app/docker:publishLocal
       env:
         GIT_SHA: ${{ inputs.git_sha }}
         REGISTRY: ${{ inputs.registry }}
+      run: |
+        sbt app/docker:publishLocal
 
     - name: Save Docker image as tarball
-      if: success() # Only proceed if tests pass
+      if: success()
       shell: bash
       run: |
         docker save -o image.tar ${{ inputs.registry }}/${{ inputs.repository }}:${{ inputs.git_sha }}
 
     - name: Upload Docker image
-      if: success() # Only proceed if tests pass
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: docker-image
