@@ -9,6 +9,7 @@ import com.theproductcollectiveco.play4s.Middleware.secureRoutes
 import com.theproductcollectiveco.play4s.config.AppConfig
 import org.http4s.*
 import org.http4s.implicits.*
+import cats.effect.std.UUIDGen
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import org.typelevel.ci.CIStringSyntax
@@ -32,14 +33,17 @@ object MiddlewareSpec extends SimpleIOSuite {
       _                    <- authProvider.initializeSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
       jwtProvider           = DefaultJwtProvider[IO](appConfig, authProvider)
       now                   = Instant.now()
+      uuid                 <- UUIDGen.fromSync[IO](Async[IO]).randomUUID.map(_.toString)
       token                <-
         jwtProvider.generateJwt(
           handle = GenericHandle.Username("test-user-id"),
           expiration = Some(now.getEpochSecond + 3600),
           issuedAt = Some(now.getEpochSecond),
+          tokenId = Some(uuid),
           roles = List("user"),
           metadata = Some(Map("env" -> "test")),
           oneTimeUse = false,
+          issuer = Some("app.play4s-service.io"),
         )
       healthService         = HealthService.make[IO]
       given JwtProvider[IO] = jwtProvider

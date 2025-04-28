@@ -8,6 +8,7 @@ import fs2.io.file.Files
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.Logger
 import java.time.Instant
+import cats.effect.std.UUIDGen
 import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
 
 object DefaultJwtProviderSpec extends SimpleIOSuite {
@@ -30,19 +31,20 @@ object DefaultJwtProviderSpec extends SimpleIOSuite {
       secretWithAlias <- authProvider.retrieveSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
       now              = Instant.now()
       jwtProvider      = DefaultJwtProvider[IO](appConfig, authProvider)
+      uuid            <- UUIDGen.fromSync[IO](Async[IO]).randomUUID.map(_.toString)
       token           <-
         jwtProvider.generateJwt(
           handle = GenericHandle.Username("test-user-id"),
           expiration = Some(now.getEpochSecond + 3600),
           issuedAt = Some(now.getEpochSecond),
           roles = List("user"),
+          tokenId = Some(uuid),
           metadata = Some(Map("env" -> "test")),
           oneTimeUse = false,
+          issuer = Some("app.play4s-service.io"),
         )
       decodedJson     <- jwtProvider.decodeJwt(token)
-      _               <- Logger[IO].info(Map("jwtSigningSecret" -> secretWithAlias).asJson.noSpaces)
-      _               <- Logger[IO].info(Map("token" -> token).asJson.noSpaces)
-      _               <- Logger[IO].info(Map("decodedJson" -> decodedJson).asJson.noSpaces)
+      _               <- Logger[IO].info(Map("jwtSigningSecret" -> secretWithAlias.asJson, "token" -> token.asJson, "decodedJson" -> decodedJson).asJson.noSpaces)
       usernameOpt      =
         decodedJson.hcursor
           .downField("magicLink")
