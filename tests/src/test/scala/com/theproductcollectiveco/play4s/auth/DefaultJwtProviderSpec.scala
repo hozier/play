@@ -4,58 +4,39 @@ import cats.effect.*
 import cats.effect.std.UUIDGen
 import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
 import com.theproductcollectiveco.play4s.config.AppConfig
+import com.theproductcollectiveco.play4s.tools.SpecKit.Tasks.{requestTestToken, setupAuthProvider}
 import fs2.io.file.Files
 import io.circe.syntax.*
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import weaver.SimpleIOSuite
 
-import java.time.Instant
-
 object DefaultJwtProviderSpec extends SimpleIOSuite {
 
   test("generateJwt and decodeJwt round-trip correctly") {
     for {
       appConfig       <- AppConfig.load[IO]
-      given Async[IO]  = IO.asyncForIO
       given Logger[IO] = Slf4jLogger.getLogger[IO]
-      keyStoreBackend  = DefaultKeyStoreBackend[IO]
-      authProvider    <- DefaultAuthProvider[IO](keyStoreBackend)
-      _               <-
-        authProvider
-          .storeCredentials(
-            appConfig.apiKeyStore.keyStoreManagement.key,
-            appConfig.apiKeyStore.keyStoreManagement.credentialsFilePath.get,
-          )
-          .use_
+      authProvider    <- setupAuthProvider(appConfig)
+      jwtProvider      = DefaultJwtProvider[IO](appConfig, authProvider)
       _               <- authProvider.initializeSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
       secretWithAlias <- authProvider.retrieveSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
-      now              = Instant.now()
-      jwtProvider      = DefaultJwtProvider[IO](appConfig, authProvider)
-      uuid            <- UUIDGen.fromSync[IO](Async[IO]).randomUUID.map(_.toString)
-      token           <-
-        jwtProvider.generateJwt(
-          handle = GenericHandle.Username("test-user-id"),
-          expiration = Some(now.getEpochSecond + 3600),
-          issuedAt = Some(now.getEpochSecond),
-          roles = List("user"),
-          tokenId = Some(uuid),
-          metadata = Some(Map("env" -> "test")),
-          oneTimeUse = false,
-          issuer = Some("app.play4s-service.io"),
-        )
+      token           <- requestTestToken(jwtProvider)
       decodedJson     <- jwtProvider.decodeJwt(token)
-      _               <- Logger[IO].info(Map("jwtSigningSecret" -> secretWithAlias.asJson, "token" -> token.asJson, "decodedJson" -> decodedJson).asJson.noSpaces)
-      usernameOpt      =
-        decodedJson.hcursor
-          .downField("magicLink")
-          .downField("payload")
-          .downField("genericHandle")
-          .downField("Username")
-          .downField("value")
-          .as[String]
-          .toOption
-    } yield expect(usernameOpt.contains("test-user-id"))
+      _               <-
+        Logger[IO].info:
+          Map("jwtSigningSecret" -> secretWithAlias.asJson, "token" -> token.value.asJson, "decodedJson" -> decodedJson).asJson.noSpaces
+      username        <-
+        IO.fromEither:
+          decodedJson.hcursor
+            .downField("magicLink")
+            .downField("payload")
+            .downField("genericHandle")
+            .downField("UsernameCase")
+            .downField("username")
+            .downField("value")
+            .as[String]
+    } yield expect(username.equals("test-user-id"))
   }
 
 }

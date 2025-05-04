@@ -1,12 +1,17 @@
 package com.theproductcollectiveco.play4s.tools
 
 import cats.Show
-import cats.effect.IO
+import cats.effect.{Async, Clock, IO}
+import cats.effect.std.{SecureRandom, UUIDGen}
+import cats.syntax.all.*
 import com.theproductcollectiveco.play4s.Metrics
+import com.theproductcollectiveco.play4s.auth.*
 import com.theproductcollectiveco.play4s.config.AppConfig
 import com.theproductcollectiveco.play4s.game.sudoku.BoardState
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, Orchestrator, Search}
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{GoogleCloudClient, TraceClient}
+import com.theproductcollectiveco.play4s.internal.auth.{GenericHandle, Token, Username}
+import fs2.io.file.Files
 import org.scalacheck.Gen
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -15,6 +20,47 @@ import weaver.{SimpleIOSuite, *}
 import scala.annotation.unused
 
 object SpecKit {
+
+  object Tasks:
+
+    def setupAuthProvider[F[_]: Async: Logger: Files](appConfig: AppConfig) =
+      for {
+        authProvider <- DefaultKeyStoreBackend[F].pure.flatMap(DefaultAuthProvider[F])
+        _            <-
+          appConfig.apiKeyStore.keyStoreManagement.credentialsFilePath
+            .liftTo[F](new IllegalArgumentException("Missing credentials file path"))
+            .flatMap {
+              authProvider
+                .storeCredentials(
+                  appConfig.apiKeyStore.keyStoreManagement.key,
+                  _,
+                )
+                .use_
+            }
+      } yield authProvider
+
+    def requestTestToken[F[_]: Async: Clock: UUIDGen](
+      jwtProvider: JwtProvider[F]
+    ): F[Token] =
+      SecureRandom.javaSecuritySecureRandom[F].flatMap { security =>
+        given SecureRandom[F] = security
+        UUIDGen.fromSecureRandom.randomUUID.map(_.toString).flatMap { uuid =>
+          Clock[F].realTimeInstant.flatMap { now =>
+            jwtProvider.generateJwt(
+              handle = GenericHandle.username(Username("test-user-id")),
+              expiration = now.getEpochSecond + 3600,
+              issuedAt = now.getEpochSecond,
+              roles = "anonymous" :: Nil,
+              tokenId = uuid,
+              additionalClaims = Map("env" -> "test").some,
+              oneTimeUse = false,
+              issuer = "app.play4s-service.io",
+            )
+          }
+        }
+      }
+
+  end Tasks
 
   object Fixtures:
 

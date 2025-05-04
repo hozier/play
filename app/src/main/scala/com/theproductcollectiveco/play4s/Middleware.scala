@@ -13,7 +13,6 @@ import org.http4s.circe.CirceEntityEncoder.*
 import org.http4s.dsl.io.*
 import org.http4s.headers.Authorization
 import org.http4s.server.middleware.MaxActiveRequests
-import org.http4s.syntax.all.http4sHeaderSyntax
 import org.typelevel.log4cats.Logger
 import smithy4s.Service
 import smithy4s.http4s.SimpleRestJsonBuilder
@@ -28,50 +27,44 @@ object Middleware {
 
     def secureRoutes(using jwtProvider: JwtProvider[F]): HttpRoutes[F] =
       Kleisli { req =>
-        val authHeader = req.headers.get[Authorization].map(_.value)
-        authHeader.fold(unauthorizedResponse) { credentials =>
-          OptionT(
-            jwtProvider.isPrimaryAuth
-              .ifM(
-                withJwt(req, credentials).value,
-                withApiKey(req, credentials).value,
-              )
-          )
-        }
+        req.headers
+          .get[Authorization]
+          .fold(unauthorizedResponse) { credentials =>
+            OptionT(
+              jwtProvider.isPrimaryAuth
+                .ifM(
+                  withJwt(req, credentials).value,
+                  withApiKey(req, credentials).value,
+                )
+            )
+          }
       }
 
-    private def withJwt(req: Request[F], jwt: String)(using
+    private def withJwt(req: Request[F], bearerToken: Authorization)(using
       jwtProvider: JwtProvider[F]
     ): OptionT[F, Response[F]] =
-      OptionT.liftF(
+      OptionT.liftF:
         jwtProvider
-          .decodeBearerToken(jwt)
-          .flatMap { grant =>
-            Logger[F].debug(s"Decoded JWT payload: ${grant.magicLink.payload}") *>
-              SimpleRestJsonBuilder
-                .routes(impl)
-                .resource
+          .isAuthorized(bearerToken)
+          .ifM(
+            Logger[F].debug("Decoded JWT is Authorized") *>
+              routes
                 .use(_.run(req).value)
-                .flatMap(responseOpt => OptionT.fromOption[F](responseOpt).getOrElseF(forbiddenClientResponse))
-          }
-          .handleErrorWith(error => Logger[F].error(error)("JWT validation failed") *> forbiddenClientResponse)
-      )
-
-    private def withApiKey(req: Request[F], apiKey: String)(using
-      jwtProvider: JwtProvider[F]
-    ): OptionT[F, Response[F]] =
-      OptionT.liftF(
-        jwtProvider.prependBearerToApiKey.flatMap { expectedApiKey =>
-          Async[F].ifM(expectedApiKey.pure.map(_.equals(apiKey)))(
-            SimpleRestJsonBuilder
-              .routes(impl)
-              .resource
-              .use(_.run(req).value)
-              .flatMap(responseOpt => OptionT.fromOption[F](responseOpt).getOrElseF(forbiddenClientResponse)),
+                .flatMap(OptionT.fromOption[F](_).getOrElseF(forbiddenClientResponse)),
             forbiddenClientResponse,
           )
-        }
-      )
+          .handleErrorWith(Logger[F].error(_)("JWT validation failed") *> forbiddenClientResponse)
+
+    private def withApiKey(req: Request[F], apiKey: Authorization)(using
+      jwtProvider: JwtProvider[F]
+    ): OptionT[F, Response[F]] =
+      OptionT.liftF:
+        Async[F].ifM(jwtProvider.prependBearerToApiKey.map(_.equals(apiKey)))(
+          routes
+            .use(_.run(req).value)
+            .flatMap(OptionT.fromOption[F](_).getOrElseF(forbiddenClientResponse)),
+          forbiddenClientResponse,
+        )
 
     private def forbiddenClientResponse: F[Response[F]] = Response[F](status = Forbidden).withEntity(AuthError("Forbidden Client")).pure
 

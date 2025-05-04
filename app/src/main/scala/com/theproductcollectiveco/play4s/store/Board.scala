@@ -1,6 +1,5 @@
 package com.theproductcollectiveco.play4s.store
 
-import cats.data.OptionT
 import cats.effect.{Async, MonadCancelThrow}
 import cats.effect.kernel.Ref
 import cats.effect.std.Console
@@ -27,8 +26,8 @@ object Board {
       .as:
         new Board[F] {
           override def read(): F[BoardState] =
-            Logger[F].debug("Getting board state") *> OptionT(store.get)
-              .getOrElseF(BoardNotCreatedError("Board not created").raiseError[F, BoardState])
+            Logger[F].debug("Getting board state") *>
+              store.get.flatMap(_.liftTo[F](BoardNotCreatedError("Board not created")))
 
           override def update(externalState: BoardState): F[Unit] =
             for {

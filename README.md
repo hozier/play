@@ -109,6 +109,7 @@ To retrieve the latest Load Balancer endpoint, re-trigger the GitHub Actions wor
 
 | Endpoint Path                         | Description                     |
 | ------------------------------------- | ------------------------------- |
+| `/internal/auth/token`                | JWT generation endpoint         | 
 | `/internal/meta/health`               | Health check endpoint           | 
 | `/internal/meta/version`              | Runtime build details endpoint  | 
 | `/internal/game/sudoku/hints`         | Generate playable cell hints    |
@@ -146,17 +147,26 @@ To retrieve the latest Load Balancer endpoint, re-trigger the GitHub Actions wor
 
 **Run the application:**
 ```shell
-project app; run
+sbt clean reload compile app/run
 ```
 
 **Run tests:**
 ```shell
-test
+sbt test
 ```
 
 **Build Docker Images:**
 ```shell
 sbt app/docker:publishLocal
+```
+
+**Run Docker Images:**
+```shell
+# Refer to section (e) under Infrastructure/Application for the 
+# required environment variables needed to configure the .env file.
+docker run --platform linux/amd64 --env-file .env -p 8080:8080 \
+    -v /tmp/secrets:/tmp/secrets \
+    --user root \
 ```
 
 ###### (g) Generating Test Image Data

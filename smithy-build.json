@@ -9,7 +9,8 @@
         "smithy4s-codegen": {
           "service": [
             "com.theproductcollectiveco.play4s.game.sudoku#Play4sApi",
-            "com.theproductcollectiveco.play4s.internal.meta.health#ServiceMetaApi"
+            "com.theproductcollectiveco.play4s.internal.meta.health#ServiceMetaApi",
+            "com.theproductcollectiveco.play4s.internal.auth#ServiceAuthApi"
           ],
           "package": "com.theproductcollectiveco.play4s",
           "packageVersion": "0.0.4",
@@ -22,7 +23,8 @@
         "openapi": {
           "service": [
             "com.theproductcollectiveco.play4s.game.sudoku#Play4sApi",
-            "com.theproductcollectiveco.play4s.internal.meta.health#ServiceMetaApi"
+            "com.theproductcollectiveco.play4s.internal.meta.health#ServiceMetaApi",
+            "com.theproductcollectiveco.play4s.internal.auth#ServiceAuthApi"
           ],
           "outputFile": "build/openapi/openapi.json"
         }
