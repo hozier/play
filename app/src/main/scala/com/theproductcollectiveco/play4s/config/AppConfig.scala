@@ -107,9 +107,9 @@ extension [F[_]: Async](configValue: ConfigValue[F, String])
   def toSecret: ConfigValue[F, ciris.Secret[String]] =
     configValue.map(Secret(_)).default(Secret("{'default': 'credentials', 'value': '<replace-full-json-with-validated-base64-encoded-string>'}"))
 
-extension [F[_]: Async](secret: Secret[String])
+extension (secret: Secret[String])
 
-  def peek: F[String] =
+  def peek[F[_]: Async]: F[String] =
     secret.toSanitizedValue.flatMap { decodedBytes =>
       fs2.Stream
         .emits(decodedBytes)
@@ -121,7 +121,7 @@ extension [F[_]: Async](secret: Secret[String])
         .liftTo[F](new IllegalArgumentException("Failed to extract encoded secret"))
     }
 
-  def toSanitizedValue: F[Array[Byte]] =
+  def toSanitizedValue[F[_]: Async]: F[Array[Byte]] =
     Async[F]
       .fromEither {
         val sanitized = secret.value.replaceAll("[\\r\\n]", "").filterNot(_.isWhitespace)

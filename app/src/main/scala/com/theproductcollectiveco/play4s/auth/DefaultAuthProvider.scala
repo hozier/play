@@ -20,7 +20,7 @@ trait AuthProvider[F[_]] {
 
 object DefaultAuthProvider {
 
-  def apply[F[_]: Async: Files](keyStoreBackend: KeyStoreBackend[F]): F[AuthProvider[F]] =
+  def apply[F[_]: Async](keyStoreBackend: KeyStoreBackend[F]): F[AuthProvider[F]] =
     for {
       loadedKeyStoreRef <- Ref.of[F, Option[LoadedKeyStore[F]]](None)
     } yield new AuthProvider[F] {
