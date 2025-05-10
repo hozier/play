@@ -29,6 +29,13 @@ structure NoSolutionFoundError {
     description: String
 }
 
+@error("client")
+@httpError(429)
+structure AuthValidationError  {
+    @required
+    description: String
+}
+
 @error("server")
 @httpError(500)
 structure BoardNotCreatedError {
@@ -46,6 +53,13 @@ structure InitialStateSettingError {
 @error("server")
 @httpError(500)
 structure DecodeFailureError  {
+    @required
+    description: String
+}
+
+@error("server")
+@httpError(500)
+structure AuthProcessingError  {
     @required
     description: String
 }

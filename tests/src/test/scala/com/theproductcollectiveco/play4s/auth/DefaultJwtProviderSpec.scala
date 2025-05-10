@@ -4,6 +4,7 @@ import cats.effect.*
 import cats.effect.std.UUIDGen
 import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
 import com.theproductcollectiveco.play4s.config.AppConfig
+import com.theproductcollectiveco.play4s.internal.auth.Alias
 import com.theproductcollectiveco.play4s.tools.SpecKit.Tasks.{requestTestToken, setupAuthProvider}
 import fs2.io.file.Files
 import io.circe.syntax.*
@@ -19,8 +20,8 @@ object DefaultJwtProviderSpec extends SimpleIOSuite {
       given Logger[IO] = Slf4jLogger.getLogger[IO]
       authProvider    <- setupAuthProvider(appConfig)
       jwtProvider      = DefaultJwtProvider[IO](appConfig, authProvider)
-      _               <- authProvider.initializeSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
-      secretWithAlias <- authProvider.retrieveSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
+      _               <- authProvider.initializeSecret(Alias("jwtSigningSecret"), appConfig.apiKeyStore.keyStoreManagement)
+      secretWithAlias <- authProvider.retrieveSecret(Alias("jwtSigningSecret"), appConfig.apiKeyStore.keyStoreManagement)
       token           <- requestTestToken(jwtProvider)
       decodedJson     <- jwtProvider.decodeJwt(token)
       _               <-
