@@ -3,16 +3,20 @@ package com.theproductcollectiveco.play4s.auth
 import cats.effect.Ref
 import cats.effect.implicits.*
 import cats.effect.kernel.{Async, Resource}
+import cats.effect.std.{SecureRandom, UUIDGen}
 import cats.syntax.all.*
 import ciris.Secret
 import com.theproductcollectiveco.play4s.config.{toSanitizedValue, AuthConfig}
+import com.theproductcollectiveco.play4s.game.sudoku.AuthProcessingError
+import com.theproductcollectiveco.play4s.internal.auth.Alias
 import fs2.io.file.{Files, Path}
 import fs2.io.net.tls.TLSContext
 import javax.net.ssl.SSLContext
 
 trait AuthProvider[F[_]] {
-  def retrieveSecret(alias: String, authConfig: AuthConfig): F[String]
-  def initializeSecret(alias: String, authConfig: AuthConfig): F[Unit]
+  def retrieveSecret(alias: Alias, authConfig: AuthConfig): F[String]
+  def initializeSecret(alias: Alias, authConfig: AuthConfig, providedSecret: Option[String] = None): F[Unit]
+  def removeSecret(alias: Alias, authConfig: AuthConfig): F[Unit]
   def storeCredentials(secret: Secret[String], filePath: String)(using Files[F]): Resource[F, Unit]
   def sslContextResource(authConfig: AuthConfig)(using Files[F]): Resource[F, SSLContext]
   def tlsContextResource(authConfig: AuthConfig)(using Files[F]): Resource[F, TLSContext[F]]
@@ -52,20 +56,25 @@ object DefaultAuthProvider {
       override def tlsContextResource(authConfig: AuthConfig)(using Files[F]): Resource[F, TLSContext[F]] =
         sslContextResource(authConfig).map(TLSContext.Builder.forAsync.fromSSLContext)
 
-      override def retrieveSecret(alias: String, authConfig: AuthConfig): F[String] =
+      override def retrieveSecret(alias: Alias, authConfig: AuthConfig): F[String] =
         getOrLoadKeyStore(authConfig)
           .flatMap(_.retrieve(alias))
-          .flatMap(_.liftTo[F](new RuntimeException(s"Secret with alias '$alias' not found in keystore")))
+          .flatMap(_.liftTo[F](AuthProcessingError(s"Secret with alias '$alias' not found in keystore")))
 
-      override def initializeSecret(alias: String, authConfig: AuthConfig): F[Unit] =
+      override def removeSecret(alias: Alias, authConfig: AuthConfig): F[Unit] =
+        getOrLoadKeyStore(authConfig)
+          .flatMap(_.delete(alias))
+
+      override def initializeSecret(alias: Alias, authConfig: AuthConfig, providedSecret: Option[String] = None): F[Unit] =
         getOrLoadKeyStore(authConfig).flatMap { loaded =>
-          loaded.retrieve(alias).flatMap {
-            case Some(_) => Async[F].unit // Already exists, do nothing
-            case None    =>
-              val newSecret = java.util.UUID.randomUUID().toString
-              loaded.store(alias, newSecret)
+          SecureRandom.javaSecuritySecureRandom[F].flatMap { security =>
+            given SecureRandom[F] = security
+            UUIDGen.fromSecureRandom.randomUUID.map(_.toString).flatMap { uuid =>
+              loaded.retrieve(alias).flatMap { case Some(_) | None => loaded.store(alias, providedSecret.getOrElse(uuid)) }
+            }
           }
         }
+
     }
 
 }

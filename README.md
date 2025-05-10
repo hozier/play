@@ -110,10 +110,12 @@ To retrieve the latest Load Balancer endpoint, re-trigger the GitHub Actions wor
 | Endpoint Path                         | Description                     |
 | ------------------------------------- | ------------------------------- |
 | `/internal/auth/token`                | JWT generation endpoint         | 
+| `/internal/auth/otp/initiate`         | OTP initiation endpoint         | 
+| `/internal/auth/otp/authorize`        | OTP authorization endpoint      | 
 | `/internal/meta/health`               | Health check endpoint           | 
 | `/internal/meta/version`              | Runtime build details endpoint  | 
 | `/internal/game/sudoku/hints`         | Generate playable cell hints    |
-| `/internal/game/sudoku/metrics`    | Retrieve metrics about computations |
+| `/internal/game/sudoku/metrics`       | Retrieve metrics about computations |
 | `/internal/game/sudoku/solve`         | Developer endpoint              |
 | `/public/game/sudoku/solve`           | Sudoku puzzle-solving endpoint  |
 

@@ -8,6 +8,7 @@ import com.theproductcollectiveco.play4s.api.HealthService
 import com.theproductcollectiveco.play4s.auth.*
 import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
 import com.theproductcollectiveco.play4s.config.AppConfig
+import com.theproductcollectiveco.play4s.internal.auth.Alias
 import com.theproductcollectiveco.play4s.tools.SpecKit.Tasks.{requestTestToken, setupAuthProvider}
 import fs2.io.file.Files
 import org.http4s.*
@@ -26,7 +27,7 @@ object MiddlewareSpec extends SimpleIOSuite {
       given AppConfig       = appConfig
       authProvider         <- setupAuthProvider(appConfig)
       given JwtProvider[IO] = DefaultJwtProvider[IO](appConfig, authProvider)
-      _                    <- authProvider.initializeSecret("jwtSigningSecret", appConfig.apiKeyStore.keyStoreManagement)
+      _                    <- authProvider.initializeSecret(Alias("jwtSigningSecret"), appConfig.apiKeyStore.keyStoreManagement)
       token                <- requestTestToken(summon[JwtProvider[IO]])
       healthService         = HealthService.make[IO]
       securedApp            = healthService.secureRoutes.orNotFound
