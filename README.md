@@ -2,9 +2,18 @@
 
 ![TLS Enabled](https://img.shields.io/badge/TLS-enabled-brightgreen?style=flat-square&logo=letsencrypt&logoColor=white)
 
-###### (a) Current Development
 
-This project focuses on exploring and implementing various puzzle-solving algorithms, with a primary emphasis on Sudoku puzzles. The backtracking algorithm is one of the key implementations, and recent refactors have made all compute solutions accessible as a service.
+###### (a) Introduction: From Puzzle Solving to Platform — A Functional and Secure Compute Layer
+
+`play4s-service` and its supporting modules are built atop [cats-effect](https://github.com/typelevel/cats-effect) and
+[fs2](https://github.com/functional-streams-for-scala/fs2), fully embracing the foundational principles of functional programming. This design emphasizes purity, composability, and effect management—enabling precise control over resource lifecycles, concurrency, and asynchronous computations in a principled, type-safe manner.
+
+What began as an exploration into puzzle-solving—specifically Sudoku—has progressively transformed into a more expansive and versatile compute platform. Core algorithms have been rearchitected through a functional-first lens, enabling advanced features such as parallel solver execution during compute requests. A prime example is the constraint propagation algorithm, which drastically reduces the search space to accelerate resolution. Leveraging the concurrency model offered by Cats Effect, we can benchmark this solver by racing it against an alternative implementation adhering to the same trait—automatically short-circuiting as soon as the quicker solution emerges. This not only demonstrates tangible performance improvements but also guarantees timely and accurate results.
+
+This technical evolution represents a key inflection point: solver logic has been modularized into composable, service-oriented units, forming a scalable foundation for future expansion. These services now underpin a robust, high-performance computation layer that is both adaptable and maintainable.
+
+Complementing this architecture is a hardened authentication stack that blends API key and OTP-based verification, JWT token lifecycle governance, and secure credential storage. Together, these safeguards ensure an uncompromising streamlined, secure interaction model—for both consumers of the service and the developers who extend it.
+
 
 ###### (b) Performance Progress and Example Analytics
 
@@ -109,11 +118,13 @@ To retrieve the latest Load Balancer endpoint, re-trigger the GitHub Actions wor
 
 | Endpoint Path                         | Description                     |
 | ------------------------------------- | ------------------------------- |
-| `/internal/auth/token`                | JWT generation endpoint         | 
-| `/internal/meta/health`               | Health check endpoint           | 
-| `/internal/meta/version`              | Runtime build details endpoint  | 
+| `/internal/auth/token`                | JWT generation endpoint         |
+| `/internal/auth/otp/initiate`         | OTP initiation endpoint         |
+| `/internal/auth/otp/authorize`        | OTP authorization endpoint      |
+| `/internal/meta/health`               | Health check endpoint           |
+| `/internal/meta/version`              | Runtime build details endpoint  |
 | `/internal/game/sudoku/hints`         | Generate playable cell hints    |
-| `/internal/game/sudoku/metrics`    | Retrieve metrics about computations |
+| `/internal/game/sudoku/metrics`       | Retrieve metrics about computations |
 | `/internal/game/sudoku/solve`         | Developer endpoint              |
 | `/public/game/sudoku/solve`           | Sudoku puzzle-solving endpoint  |
 

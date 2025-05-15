@@ -6,14 +6,14 @@ use alloy#simpleRestJson
 use smithy.api#httpApiKeyAuth
 use smithy.api#auth
 
-use com.theproductcollectiveco.play4s.game.sudoku#AuthError
+use com.theproductcollectiveco.play4s.internal.auth#AuthError
 use com.theproductcollectiveco.play4s.game.sudoku#ForbiddenError
 use com.theproductcollectiveco.play4s.game.sudoku#InvalidInputError
 use com.theproductcollectiveco.play4s.game.sudoku#NoSolutionFoundError
 use com.theproductcollectiveco.play4s.game.sudoku#BoardNotCreatedError
 use com.theproductcollectiveco.play4s.game.sudoku#InitialStateSettingError
 use com.theproductcollectiveco.play4s.game.sudoku#InternalServerError
-use com.theproductcollectiveco.play4s.game.sudoku#DecodeFailureError
+use com.theproductcollectiveco.play4s.internal.auth#DecodeFailureError
 use com.theproductcollectiveco.play4s.game.sudoku.public#ComputeSudoku
 use com.theproductcollectiveco.play4s.game.sudoku.internal#ComputeSudokuDeveloperMode
 use com.theproductcollectiveco.play4s.game.sudoku.internal#GetSudokuHints

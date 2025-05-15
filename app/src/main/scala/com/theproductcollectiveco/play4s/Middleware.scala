@@ -4,7 +4,7 @@ import cats.data.{Kleisli, OptionT}
 import cats.effect.{Async, Resource}
 import cats.syntax.all.*
 import com.theproductcollectiveco.play4s.auth.JwtProvider
-import com.theproductcollectiveco.play4s.game.sudoku.AuthError
+import com.theproductcollectiveco.play4s.internal.auth.AuthError
 import io.circe.Encoder
 import io.circe.generic.auto.*
 import org.http4s.*
