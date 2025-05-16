@@ -3,17 +3,25 @@ package com.theproductcollectiveco.play4s
 import cats.effect.{Clock, IO, Resource, ResourceApp}
 import cats.effect.IO.asyncForIO
 import cats.effect.implicits.*
-import cats.effect.std.{SecureRandom, UUIDGen}
+import cats.effect.std.{SecureRandom, Supervisor, UUIDGen}
 import cats.syntax.all.*
 import com.theproductcollectiveco.play4s.Middleware.{routes, secureRoutes}
 import com.theproductcollectiveco.play4s.Play4sApi
 import com.theproductcollectiveco.play4s.api.{AuthService, HealthService, Play4sService}
-import com.theproductcollectiveco.play4s.auth.{AuthProvider, DefaultAuthProvider, DefaultJwtProvider, DefaultKeyStoreBackend, JwtProvider}
+import com.theproductcollectiveco.play4s.auth.{
+  AuthProvider,
+  DefaultAuthProvider,
+  DefaultJwtProvider,
+  DefaultKeyStoreBackend,
+  DefaultOtpProvider,
+  JwtProvider,
+  OtpProvider,
+}
 import com.theproductcollectiveco.play4s.auth.DefaultJwtProvider.*
 import com.theproductcollectiveco.play4s.config.{ApiKeyStoreConfig, AppConfig, AuthConfig}
 import com.theproductcollectiveco.play4s.game.sudoku.core.{BacktrackingAlgorithm, ConstraintPropagationAlgorithm, Orchestrator}
 import com.theproductcollectiveco.play4s.game.sudoku.parser.{GoogleCloudClient, TraceClient}
-import com.theproductcollectiveco.play4s.internal.auth.ServiceAuthApi
+import com.theproductcollectiveco.play4s.internal.auth.{Alias, ServiceAuthApi}
 import com.theproductcollectiveco.play4s.internal.meta.health.ServiceMetaApi
 import fs2.io.file.Files
 import org.http4s.ember.server.EmberServerBuilder
@@ -37,8 +45,10 @@ object MainApp extends ResourceApp.Forever {
       _                      <- authProvider.storeCredentials(googleCloudApiKey, googlePath.mkString)
       _                      <- authProvider.storeCredentials(keystore, keystorePath.mkString)
       tlsContext             <- authProvider.tlsContextResource(summon[AppConfig].apiKeyStore.keyStoreManagement)
-      _                      <- authProvider.initializeSecret(alias = "jwtSigningSecret", summon[AppConfig].apiKeyStore.keyStoreManagement).toResource
+      _                      <- authProvider.initializeSecret(alias = Alias("jwtSigningSecret"), summon[AppConfig].apiKeyStore.keyStoreManagement).toResource
       given AuthProvider[IO]  = authProvider
+      given Supervisor[IO]   <- Supervisor[IO]
+      given OtpProvider[IO]   = DefaultOtpProvider[IO](summon[AppConfig], authProvider)
       given JwtProvider[IO]   = DefaultJwtProvider[IO](summon[AppConfig], authProvider)
       given Metrics[IO]      <- Metrics.make[IO].toResource
       given SecureRandom[IO] <- SecureRandom.javaSecuritySecureRandom[IO].toResource

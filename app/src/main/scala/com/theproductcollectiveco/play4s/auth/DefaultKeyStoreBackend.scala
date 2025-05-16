@@ -4,6 +4,7 @@ import cats.effect.{Async, Resource, Sync}
 import cats.effect.implicits.*
 import cats.syntax.all.*
 import com.theproductcollectiveco.play4s.config.{peek, AuthConfig}
+import com.theproductcollectiveco.play4s.internal.auth.Alias
 import fs2.io.file.{Files, Path}
 import javax.net.ssl.{KeyManagerFactory, SSLContext}
 
@@ -14,8 +15,9 @@ trait KeyStoreBackend[F[_]] {
 }
 
 trait LoadedKeyStore[F[_]] {
-  def retrieve(alias: String): F[Option[String]]
-  def store(alias: String, secret: String): F[Unit]
+  def retrieve(alias: Alias): F[Option[String]]
+  def store(alias: Alias, secret: String): F[Unit]
+  def delete(alias: Alias): F[Unit]
   def createSSLContext: F[SSLContext]
 }
 
@@ -46,20 +48,24 @@ object DefaultKeyStoreBackend {
 
             private def protection = new KeyStore.PasswordProtection(password.toCharArray)
 
-            override def retrieve(alias: String): F[Option[String]] =
+            override def retrieve(alias: Alias): F[Option[String]] =
               Sync[F].delay {
-                Option(keystore.getEntry(alias, protection)) match {
+                Option(keystore.getEntry(alias.value, protection)) match {
                   case Some(entry: KeyStore.SecretKeyEntry) => Some(new String(entry.getSecretKey.getEncoded))
                   case _                                    => None
                 }
               }
 
-            override def store(alias: String, secret: String): F[Unit] =
+            override def store(alias: Alias, secret: String): F[Unit] =
               Sync[F].delay {
                 val secretKey = new javax.crypto.spec.SecretKeySpec(secret.replaceAll("[\\r\\n]", "").getBytes("UTF-8"), "HmacSHA256")
                 val entry     = new KeyStore.SecretKeyEntry(secretKey)
-                keystore.setEntry(alias, entry, protection)
+                keystore.setEntry(alias.value, entry, protection)
               }
+
+            override def delete(alias: Alias): F[Unit] =
+              Sync[F].delay:
+                keystore.deleteEntry(alias.value)
 
             override def createSSLContext: F[SSLContext] =
               Async[F].delay {

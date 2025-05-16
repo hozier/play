@@ -2,7 +2,7 @@ package com.theproductcollectiveco.play4s.game.sudoku.parser
 
 import cats.effect.{Async, Sync}
 import cats.syntax.all.*
-import com.theproductcollectiveco.play4s.game.sudoku.{DecodeFailureError, InvalidInputError}
+import com.theproductcollectiveco.play4s.game.sudoku.{InitialStateSettingError, InvalidInputError}
 import org.http4s.{Header, Method, Request, Uri}
 import org.http4s.client.Client
 import org.typelevel.ci.*
@@ -57,7 +57,7 @@ object WebSudokuExtractor {
         ).view
           .flatMap(_.findFirstMatchIn(html).map(_.group(1)))
           .headOption
-          .liftTo[F](DecodeFailureError(s"Missing $errorMsg"))
+          .liftTo[F](InitialStateSettingError(s"Missing $errorMsg"))
 
       private def validateSolutionAndMask(cheat: String, mask: String): F[(String, String)] =
         (cheat, mask).pure

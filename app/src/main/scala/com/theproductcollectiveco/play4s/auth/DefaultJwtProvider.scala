@@ -3,7 +3,7 @@ package com.theproductcollectiveco.play4s.auth
 import cats.effect.{Async, Clock}
 import cats.syntax.all.*
 import com.theproductcollectiveco.play4s.config.{peek, AppConfig}
-import com.theproductcollectiveco.play4s.internal.auth.{GenericHandle, Grant, MagicLink, Metadata, Payload, Token}
+import com.theproductcollectiveco.play4s.internal.auth.{Alias, AuthProcessingError, GenericHandle, Grant, MagicLink, Metadata, Payload, Token}
 import io.circe.{Encoder, Json}
 import io.circe.generic.auto.*
 import io.circe.syntax.*
@@ -52,20 +52,20 @@ object DefaultJwtProvider {
 
       override def decodeJwt(token: Token): F[Json] =
         for {
-          jwtSigningSecret <- authProvider.retrieveSecret(alias = "jwtSigningSecret", authConfig = appConfig.apiKeyStore.keyStoreManagement)
+          jwtSigningSecret <- authProvider.retrieveSecret(alias = Alias("jwtSigningSecret"), authConfig = appConfig.apiKeyStore.keyStoreManagement)
           payload          <-
             Async[F]
               .fromTry(
                 JwtCirce.decodeJson(
                   token.value,
-                  jwtSigningSecret,
+                  jwtSigningSecret.value,
                   Seq(JwtAlgorithm.HS256),
-                  JwtOptions(signature = true, expiration = true, notBefore = true, leeway = 1200),
+                  JwtOptions(signature = true, expiration = true, notBefore = true, leeway = 600),
                 )
               )
               .adaptError {
-                case e: JwtExpirationException => new RuntimeException("JWT has expired", e)
-                case e                         => new RuntimeException("Invalid JWT", e)
+                case e: JwtExpirationException => AuthProcessingError(s"Reason: JWT has expired. Details: $e")
+                case e                         => AuthProcessingError(s"Reason: Invalid JWT. Details: $e")
               }
         } yield payload
 
@@ -79,7 +79,7 @@ object DefaultJwtProvider {
 
       override def isPrimaryAuth: F[Boolean] =
         Async[F]
-          .fromOption(appConfig.runtime.withJwt, new RuntimeException("Missing primary authentication mechanism configuration"))
+          .fromOption(appConfig.runtime.withJwt, AuthProcessingError("Missing primary authentication mechanism configuration"))
 
       override def generateJwt(
         handle: GenericHandle,
@@ -92,8 +92,8 @@ object DefaultJwtProvider {
         issuer: String,
       ): F[Token] =
         authProvider
-          .retrieveSecret(alias = "jwtSigningSecret", authConfig = appConfig.apiKeyStore.keyStoreManagement)
-          .flatMap { secretWithAliasjwtSecretKey =>
+          .retrieveSecret(alias = Alias("jwtSigningSecret"), authConfig = appConfig.apiKeyStore.keyStoreManagement)
+          .flatMap { symmetricSigningKey =>
             Async[F].delay {
               Token(
                 JwtCirce.encode(
@@ -104,7 +104,7 @@ object DefaultJwtProvider {
                       issuer,
                     )
                   ).asJson.noSpaces,
-                  secretWithAliasjwtSecretKey,
+                  symmetricSigningKey.value,
                   JwtAlgorithm.HS256,
                 )
               )
